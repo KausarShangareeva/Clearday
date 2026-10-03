@@ -737,6 +737,7 @@ a.btn:not(.primary){color:var(--ink)}
 .l2-main{height:54px;padding:0 30px;font-size:16px}
 .l2-demo{font-size:14.5px;color:var(--ink3);text-decoration:underline;text-underline-offset:4px}
 .l2-demo:hover{color:var(--ink)}
+.l2-note{font-size:13.5px;color:var(--ink3)}
 .l2-preview{width:100%;max-width:1080px;margin:72px auto 0;padding:0 24px 80px}
 .l2-board{position:relative;border-radius:2rem;padding:56px 44px 120px;background-color:var(--board);background-image:radial-gradient(circle,var(--dot) 1px,transparent 1.3px);background-size:22px 22px;box-shadow:0 0 0 1px var(--line),0 40px 90px rgba(0,0,0,.08)}
 .l2-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:34px}
@@ -1807,6 +1808,7 @@ const SUN_SVG = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" str
 const MOON_SVG = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>';
 const isDark = () => document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
 function themeBtn(){ const d = isDark(); return `<button class="icon-btn theme-btn" data-act="theme" aria-label="${d ? 'Switch to day mode' : 'Switch to night mode'}" title="${d ? 'Day mode' : 'Night mode'}">${d ? SUN_SVG : MOON_SVG}</button>`; }
+const hasServer = () => typeof LIVE !== 'undefined' && LIVE.available;
 function vLanding(){
   // Static preview of the Board, built from the same folder component the app uses.
   const P = (from, fromEmail, status, seen = true, org = '') => ({from, fromEmail, status, seen, org, _raw:{}});
@@ -1822,8 +1824,10 @@ function vLanding(){
     <h1>One inbox for <br class="l2-br">everything that matters.</h1>
     <p class="l2-sub">Gmail, Outlook, Yahoo and Mail.ru, sorted into folders by what matters to you.</p>
     <div class="l2-cta">
-      <button class="btn primary l2-main" data-act="connectReal">Connect your inbox</button>
-      <button class="l2-demo" data-act="demo">or try the demo</button>
+      ${hasServer() ? `<button class="btn primary l2-main" data-act="connectReal">Connect your inbox</button>
+      <button class="l2-demo" data-act="demo">or try the demo with sample emails</button>`
+      : `<button class="btn primary l2-main" data-act="demo">Try the demo</button>
+      <span class="l2-note">Sample emails. Connecting your real inbox works in the installed app.</span>`}
     </div>
   </section>
   <section class="l2-preview" aria-hidden="true">
@@ -1874,6 +1878,7 @@ function vWho(){
   S.whoCats = S.whoCats || S.cats.filter(c => c.ai).map(c => ({name:c.name, hint:c.desc, icon:c.icon, color:c.color, terms:c.terms, personal:c.personal}));
   let inner;
   if(st === 0) inner = `
+    ${S.mode !== 'live' ? '<div class="demo-flag">Demo with sample emails</div>' : ''}
     <h2>Who are you?</h2>
     <p class="hint">Tell Clearday about yourself and what you want to keep track of. It will suggest up to 6 folders for your Board. You can change them on the next screen.</p>
     <label class="field"><span>What should we call you?</span><input class="input" id="f-name" data-bind="name" value="${esc(p.name)}" autocomplete="given-name"></label>
