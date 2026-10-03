@@ -251,35 +251,52 @@ app.post('/api/imap/connect', async (req, res) => {
 });
 
 // ---------- Sync: fetch → normalise → analyse → return ----------
-const fold = (u, i) => {
-  const dom = e => (e.split('@')[1] || '').toLowerCase().split('.').slice(-2).join('.');
-  const byId = (u.boardCats || []).find(c => c.ids.includes(i.id));
+// Folder of a mail on the Board (must match assignCat() in public/index.html):
+// 1. folders the user filled by hand (picked ids / sender rules) 2. Newsletters 3. the user category the AI chose 4. Other.
+const domOf = e => (e.split('@')[1] || '').toLowerCase().split('.').slice(-2).join('.');
+function fold(u, i) {
+  const cats = u?.boardCats || [];
+  const byId = cats.find(c => c.ids.includes(i.id));
   if (byId) return byId.name;
-  if (i.kind === 'newsletter') return 'Newsletters'; // newsletters leave the other folders and collect in their own
-  const c = (u.boardCats || []).find(c => (c.ai && i.cat === c.name) || (c.auto && (c.domains.includes(dom(i.fromEmail)) || c.senders.includes(i.fromEmail))));
-  return c ? c.name : slotLabel(u, i.acc);
-};
+  if (i.kind === 'newsletter') return 'Newsletters';
+  const rule = cats.find(c => c.auto && (c.domains.includes(domOf(i.fromEmail)) || c.senders.includes(i.fromEmail)));
+  if (rule) return rule.name;
+  const c = cats.find(c => c.name === i.cat);
+  return c ? c.name : 'Other';
+}
+const slimMsg = m => ({
+  threadId: m.threadId, fromName: m.fromName, fromEmail: m.fromEmail, subject: m.subject, date: m.date, body: String(m.body || '').slice(0, 3500),
+  snippet: m.snippet, replied: !!m.replied, listUnsubscribe: !!m.listUnsubscribe, unsub: m.unsub || '', unsubPost: m.unsubPost || '',
+  providerCategory: m.providerCategory || null, messageIdHeader: m.messageIdHeader || '', link: m.link,
+});
+const syncId = (slot, pid) => `${slot}_${pid}`.replace(/[^\w-]/g, '').slice(0, 120);
+
 app.post('/api/sync', async (req, res) => {
+  const t0 = Date.now();
   const u = getUser(req.uid);
   if (!u || !Object.keys(u.accounts).length) return res.status(400).json({ error: 'Connect at least one inbox first.' });
   if (!limit('sync:' + req.uid, +process.env.SYNC_COOLDOWN_MS || 8000)) return res.status(429).json({ error: 'Syncing already — give it a few seconds.', retry: true });
-  const { profile, categories = [], boardCats = [] } = req.body || {};
+  const { profile, boardCats = [] } = req.body || {};
   if (profile) u.profile = profile;
-  u.boardCats = cleanBoardCats(boardCats);
-  const cats = categories.length ? categories : ['Personal', 'Work', 'Finance', 'Events', 'Travel', 'News', 'Notifications', 'Promotions', 'Other'];
-  const max = Math.min(100, +process.env.MAX_PER_ACCOUNT || 50); // latest mails per inbox, never the whole mailbox
-  const hints = (u.boardCats || []).filter(c => c.ai && c.desc).map(c => ({ name: c.name, desc: c.desc }));
-  const ph = profileHash(u.profile, [cats, hints]);
-  const fetched = [], errors = [], spamRaw = [];
+  u.boardCats = cleanBoardCats(boardCats).filter(c => !/^(other|newsletters)$/i.test(c.name));
+  // The user's categories (with descriptions) are the ONLY folders the model may choose from, besides "Other".
+  const hints = u.boardCats.map(c => ({ name: c.name, desc: c.desc }));
+  const cats = hints.map(c => c.name);
+  const max = Math.min(200, +process.env.MAX_PER_ACCOUNT || 200); // latest mails per inbox, never the whole mailbox
+  const ph = profileHash(u.profile, ['v3', hints]);
+  const fetched = [], errors = [], okSlots = [], spamRaw = [];
   const wantSpam = u.settings?.spamScan !== false;
 
   await Promise.all(Object.entries(u.accounts).map(async ([slot, acc]) => {
     try {
       const token = await freshToken(acc);
+      // Snapshot of mail this inbox already analysed: those ids skip the full-body download.
+      const known = new Map();
+      for (const c of Object.values(u.cache)) if (c.m && c.meta?.slot === slot) known.set(c.meta.providerId, c.m);
+      const msgs = await PROVIDERS[acc.provider].fetchMessages(token, { max, selfEmail: acc.email, known });
+      msgs.forEach(m => { const id = syncId(slot, m.providerId); fetched.push({ slot, acc, m, id, isNew: !u.cache[id]?.m }); });
+      acc.lastSync = Date.now(); acc.error = null; okSlots.push(slot);
       const P = PROVIDERS[acc.provider];
-      const msgs = await P.fetchMessages(token, { max, selfEmail: acc.email });
-      msgs.forEach(m => fetched.push({ slot, acc, m, id: `${slot}_${m.providerId}`.replace(/[^\w-]/g, '').slice(0, 120) }));
-      acc.lastSync = Date.now(); acc.error = null;
       if (wantSpam && P.fetchSpam) {
         try { (await P.fetchSpam(token, { max: 30, selfEmail: acc.email })).forEach(m => spamRaw.push({ ...m, slot, id: `${slot}_s_${m.providerId}`.replace(/[^\w-]/g, '').slice(0, 120) })); }
         catch (e) { console.error(`spam ${slot}:`, e.message); } // spam is a bonus: never fail the sync for it
@@ -290,32 +307,38 @@ app.post('/api/sync', async (req, res) => {
       console.error(`sync ${slot}:`, e.message);
     }
   }));
+  const tFetch = Date.now() - t0;
 
-  // Only analyse what's new (or everything if the profile changed). A per-user daily budget protects the owner's AI bill.
+  // Only analyse what's new (or everything if the profile or the categories changed). A per-user daily budget protects the owner's AI bill.
   let todo = [];
   for (const f of fetched) {
     const c = u.cache[f.id];
-    if (c && c.ph === ph) continue;
-    if (f.m.providerCategory) { u.cache[f.id] = { a: heuristic(f.m, `Filed under ${f.m.providerCategory} by ${providerLabel(f.acc)}`), ph, t: Date.now() }; continue; }
-    if (!hasAI()) { u.cache[f.id] = { a: heuristic(f.m, 'Basic rules (AI key not configured)'), ph, t: Date.now() }; continue; }
+    if (c && c.ph === ph && c.a?.otherTag !== undefined) continue;
+    if (f.m.providerCategory) { u.cache[f.id] = { ...c, a: heuristic(f.m, `Filed under ${f.m.providerCategory} by ${providerLabel(f.acc)}`, hints), ph, t: Date.now() }; continue; }
+    if (!hasAI()) { u.cache[f.id] = { ...c, a: heuristic(f.m, 'Basic rules (AI key not configured)', hints), ph, t: Date.now() }; continue; }
     todo.push(f);
   }
   const room = aiRoom(u);
-  for (const f of todo.slice(room)) u.cache[f.id] = { a: heuristic(f.m, 'Daily AI limit reached, basic rules used'), ph: 'budget', t: Date.now() };
+  for (const f of todo.slice(room)) u.cache[f.id] = { ...u.cache[f.id], a: heuristic(f.m, 'Daily AI limit reached, basic rules used', hints), ph: 'budget', t: Date.now() };
   todo = todo.slice(0, room); spend(u, todo.length);
   const analyses = await classify(todo.map(f => ({ id: f.id, inbox: slotLabel(u, f.slot), ...f.m })), { profile: u.profile, categories: cats, today: todayStr(), hints, mem: memory.promptBlock(u), ctx: u });
-  for (const f of todo) u.cache[f.id] = { a: analyses[f.id] || heuristic(f.m), ph, t: Date.now() };
+  for (const f of todo) u.cache[f.id] = { ...u.cache[f.id], a: analyses[f.id] || heuristic(f.m, undefined, hints), ph, t: Date.now() };
+  const live = new Set(fetched.map(f => f.id));
   for (const f of fetched) {
-    // keep what the draft endpoint needs (no body stored)
-    u.cache[f.id].meta = { slot: f.slot, providerId: f.m.providerId, threadId: f.m.threadId, fromEmail: f.m.fromEmail, fromName: f.m.fromName, subject: f.m.subject, messageIdHeader: f.m.messageIdHeader, unsub: f.m.unsub || '', unsubPost: f.m.unsubPost || '' };
+    // keep what the draft endpoint needs, plus the trimmed snapshot (m) that lets the next sync skip the body download
+    const c = u.cache[f.id];
+    c.meta = { slot: f.slot, providerId: f.m.providerId, threadId: f.m.threadId, fromEmail: f.m.fromEmail, fromName: f.m.fromName, subject: f.m.subject, messageIdHeader: f.m.messageIdHeader, unsub: f.m.unsub || '', unsubPost: f.m.unsubPost || '' };
+    c.m = slimMsg(f.m);
+    c.t = Date.now();
   }
+  for (const [k, c] of Object.entries(u.cache)) if (c.m && okSlots.includes(c.meta?.slot) && !live.has(k)) delete c.m; // mail that left the inbox window
   pruneCache(u);
 
   const items = fetched.map(({ slot, m, id }) => {
     const a = u.cache[id].a;
     return {
       id, acc: slot, receivedAt: m.date, from: m.fromName || m.fromEmail, org: a.org || '', fromEmail: m.fromEmail,
-      subject: m.subject, body: m.body || m.snippet, cat: a.category, kind: a.kind, base: a.priority, reasons: a.reasons,
+      subject: m.subject, body: m.body || m.snippet, cat: a.category, otherTag: a.otherTag || null, kind: a.kind, base: a.priority, reasons: a.reasons,
       summary: a.summary, catch: a.catchLine, needsReply: a.needsReply,
       action: a.action ? { desc: a.action.task, deadline: a.action.deadline, how: a.action.how } : null,
       event: a.event, draft: a.draft, topics: a.newsletter?.topics || null, sums: a.newsletter?.sums || null, why: a.newsletter?.why || null, readMin: a.newsletter?.readMin || null,
@@ -331,7 +354,7 @@ app.post('/api/sync', async (req, res) => {
     u.snapshotAt = Date.now(); itemCache.delete(req.uid);
   }
   save();
-  res.json({ items, accounts: publicAccounts(u), errors, ai: hasAI(), aiProvider: aiProvider(), analysed: todo.length, spamPending: spamRaw.length });
+  res.json({ items, accounts: publicAccounts(u), errors, ai: hasAI(), aiProvider: aiProvider(), analysed: todo.length, spamPending: spamRaw.length, stats: { fetched: fetched.length, fresh: fetched.filter(f => f.isNew).length, analysed: todo.length, fetchMs: tFetch, totalMs: Date.now() - t0 } });
 
   // Spam folder → compact memory, in the background so the sync itself stays fast.
   if (spamRaw.length) setImmediate(async () => {
@@ -345,6 +368,9 @@ app.post('/api/sync', async (req, res) => {
     } catch (e) { console.error('spam memory:', e.message); }
   });
 });
+
+// Dev only (DEV_MOCK=1): make the Mock mailbox receive N new mails, to test incremental sync.
+if (process.env.DEV_MOCK === '1') app.post('/api/dev/mock/add', (req, res) => res.json({ added: mock.addMail(+req.query.n || +req.body?.n || 5) }));
 
 // ---------- Drafts (never sends) ----------
 async function saveDraft(u, id, body) {
@@ -411,8 +437,7 @@ app.delete('/api/spam', (req, res) => { const u = ensureUser(req.uid); memory.cl
 // The browser talks to Gemini Live directly with a short-lived ephemeral token; the real key stays on the server.
 const LIVE_MODEL = () => process.env.GEMINI_LIVE_MODEL || 'gemini-3.8-live';
 function liveConfig(u) {
-  const inboxes = Object.keys(u?.accounts || {}).map(s => ({ name: slotLabel(u, s), hint: 'inbox' }));
-  const cats = [...inboxes, ...(u?.boardCats || []).map(c => ({ name: c.name, hint: c.desc })), { name: 'Newsletters', hint: 'subscribed newsletters and digests' }];
+  const cats = [...(u?.boardCats || []).map(c => ({ name: c.name, hint: c.desc })), { name: 'Newsletters', hint: 'newsletters and digests' }, { name: 'Other', hint: 'login codes, receipts, notifications, promotions and everything else' }];
   return {
     responseModalities: ['AUDIO'],
     systemInstruction: liveSystemPrompt({ profile: u?.profile, cats, today: todayStr(), mem: u ? memory.promptBlock(u) : '' }),

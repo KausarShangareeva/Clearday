@@ -82,15 +82,28 @@ function extractBody(payload) {
   return plain || htmlToText(html);
 }
 
-export async function fetchMessages(token, { max, selfEmail }) {
-  // Only the most recent `max` inbox messages (newest first), never the whole mailbox.
-  const list = await g(`/messages?${new URLSearchParams({ q: 'in:inbox', maxResults: String(max) })}`, token);
+// `known`: Map(providerId -> cached message record from the user's snapshot). Known ids skip the full-body fetch
+// (only the unread flag is refreshed via one extra list call); thread/replied info is fetched only for new
+// mail and for known unreplied mail whose thread has since appeared in the Sent list.
+export async function fetchMessages(token, { max, selfEmail, known = new Map() }) {
+  max = Math.min(200, max || 200);
+  const q = p => `/messages?${new URLSearchParams({ ...p, maxResults: String(p.maxResults || max) })}`;
+  const [list, unreadList, sentList] = await Promise.all([
+    g(q({ q: 'in:inbox' }), token),
+    g(q({ q: 'in:inbox is:unread' }), token).catch(() => null),
+    g(q({ q: 'in:sent', maxResults: 100 }), token).catch(() => ({})),
+  ]);
   const ids = (list.messages || []).map(m => m.id);
-  const msgs = (await pMap(ids, id => g(`/messages/${id}?format=full`, token).catch(() => null), 8)).filter(Boolean);
+  const threadOf = new Map((list.messages || []).map(m => [m.id, m.threadId]));
+  const unreadSet = new Set((unreadList?.messages || []).map(m => m.id));
+  const sentThreads = new Set((sentList.messages || []).map(m => m.threadId));
+  const fresh = ids.filter(id => !known.has(id));
+  const msgs = (await pMap(fresh, id => g(`/messages/${id}?format=full`, token).catch(() => null), 10)).filter(Boolean);
 
   // A message counts as "replied" if its thread contains something the user SENT after it.
-  const threadIds = [...new Set(msgs.map(m => m.threadId))];
-  const threads = await pMap(threadIds, id => g(`/threads/${id}?format=minimal`, token).catch(() => null), 8);
+  const stale = ids.filter(id => known.has(id) && !known.get(id).replied && sentThreads.has(threadOf.get(id)));
+  const threadIds = [...new Set([...msgs.map(m => m.threadId), ...stale.map(id => threadOf.get(id))])];
+  const threads = await pMap(threadIds, id => g(`/threads/${id}?format=minimal`, token).catch(() => null), 10);
   const lastSent = new Map();
   threads.forEach(t => {
     if (!t) return;
@@ -98,7 +111,7 @@ export async function fetchMessages(token, { max, selfEmail }) {
     lastSent.set(t.id, sent.length ? Math.max(...sent) : 0);
   });
 
-  return msgs.map(m => {
+  const out = msgs.map(m => {
     const from = parseAddress(header(m.payload, 'From'));
     const labels = m.labelIds || [];
     const date = +m.internalDate;
@@ -117,7 +130,16 @@ export async function fetchMessages(token, { max, selfEmail }) {
       messageIdHeader: header(m.payload, 'Message-ID') || header(m.payload, 'Message-Id'),
       link: `https://mail.google.com/mail/u/?authuser=${encodeURIComponent(selfEmail)}#all/${m.threadId}`,
     };
-  }).filter(m => m.fromEmail !== selfEmail);
+  });
+  const byId = new Map(out.map(m => [m.providerId, m]));
+  const merged = ids.map(id => {
+    if (byId.has(id)) return byId.get(id);
+    const k = known.get(id);
+    if (!k) return null; // fetch failed
+    const replied = k.replied || ((lastSent.get(k.threadId) || 0) > +new Date(k.date));
+    return { ...k, providerId: id, unread: unreadSet.has(id), replied };
+  }).filter(Boolean);
+  return merged.filter(m => m.fromEmail !== selfEmail);
 }
 
 // Lightweight index of the whole mailbox (sender, subject, snippet) for category analysis.

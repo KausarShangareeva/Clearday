@@ -832,6 +832,8 @@ select.input{appearance:auto}
 @media (max-width:860px){ .l-right{grid-column:2;flex-direction:row;align-items:center;justify-self:start} .art{padding:34px 0 36px} }
 
 
+.board-tabs{margin:0 0 12px}.board-tabs .muted{margin-left:4px;font-size:12px}
+.other-tags{margin:0 0 12px;display:flex;gap:6px;flex-wrap:wrap}.other-tags .muted{margin-left:3px;font-size:11px}
 /* "Who are you?" onboarding */
 .who-mic{margin-top:12px;gap:8px}
 .who-mic.on{background:var(--crit);color:#fff;border-color:var(--crit)}
@@ -1717,6 +1719,7 @@ function runPipeline(){
     e.needsReply = (e._raw.needsReply ?? e.kind === 'personal') && RANK.indexOf(e.priority) <= 2;
     e.link = e._raw.link || null;
     e.status = e.replied ? 'replied' : e.needsReply ? 'awaiting' : 'fyi';
+    e.otherTag = otherTagOf(e);
     e.boardCat = assignCat(e);
     out.push(e);
   }
@@ -1754,7 +1757,7 @@ const S = {
   profile: store.get('profile', null) || defaultProfile(),
   accounts: store.get('accounts', {}),
   corr: Object.assign({vip:[], ignore:[], override:{}, done:[], seen:['s3','u4','e1','t1','w3','u5','p3','u2'], replied:['s3','u4','w3','u5','p3']}, store.get('corr', {})),
-  boardOpen: null, boardScope: 'priority', boardDeal: false,
+  boardOpen: null, boardScope: 'all', otherTag: 'all', boardDeal: false,
   emails: [],
   openId: null,
   inboxPrio: 'all', inboxAcc: 'all', query: '',
@@ -1833,7 +1836,7 @@ function liveToRaw(it){
 async function liveSync({quiet} = {}){
   LIVE.syncing = true; if(S.view === 'app') render({noFocus:true});
   try{
-    const r = await api('/api/sync', {method:'POST', body:{profile:S.profile, categories:[...UserProfileService.categoriesFor(S.profile).map(c => c[0]), ...(S.cats || []).filter(c => c.ai).map(c => c.name)], boardCats:(S.cats || []).map(c => ({name:c.name, desc:c.desc, ids:c.ids, domains:c.domains, senders:c.senders, auto:c.auto, ai:!!c.ai}))}});
+    const r = await api('/api/sync', {method:'POST', body:{profile:S.profile, boardCats:(S.cats || []).map(c => ({name:c.name, desc:c.desc, ids:c.ids, domains:c.domains, senders:c.senders, auto:c.auto, ai:!!c.ai}))}});
     setLiveAccounts(r.accounts);
     MAILBOX = r.items.map(liveToRaw);
     LIVE.lastSync = new Date(); LIVE.errors = r.errors || []; LIVE.ai = r.ai; if(r.aiProvider) LIVE.aiProvider = r.aiProvider; loadMemory(); loadCondense();
@@ -2090,14 +2093,14 @@ function vWho(){
   if(st === 0) inner = `
     ${S.mode !== 'live' ? '<div class="demo-flag">Demo with sample emails</div>' : ''}
     <h2>Who are you?</h2>
-    <p class="hint">Tell Clearday about yourself and what you want to keep track of. It will suggest up to 6 folders for your Board. You can change them on the next screen.</p>
+    <p class="hint">Tell Clearday about yourself and what you want to keep track of. It will suggest up to 6 folders for your Board, and every email is sorted into one of them. You can change them on the next screen.</p>
     <label class="field"><span>What should we call you?</span><input class="input" id="f-name" data-bind="name" value="${esc(p.name)}" autocomplete="given-name"></label>
     <label class="field"><span>Who are you, and what should your mail be sorted into?</span>
       <textarea class="input" rows="5" id="f-about" data-bind="about" placeholder="e.g. I'm a master's student and I'm building a startup with two friends. I want to keep track of thesis meetings, investors, rent and bills, and friends.">${esc(p.about || '')}</textarea></label>
     <button class="btn sm who-mic ${S.dictating ? 'on' : ''}" type="button" data-act="whoDictate"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>${S.dictating ? 'Stop listening' : 'Speak instead'}</button>`;
   else inner = `
     <h2>Your folders</h2>
-    <p class="hint">Up to 6. Rename them, say what belongs in each, remove some or add your own. Your inbox folders stay on the Board too.</p>
+    <p class="hint">Up to 6. Rename them, say what belongs in each, remove some or add your own. Newsletters and Other (login codes, receipts, notifications) are always added for you.</p>
     <div class="who-cats">${S.whoCats.map((c, i) => `<div class="who-cat" style="--c:${c.color}">
       <button class="who-ico" data-act="whoIcon" data-i="${i}" aria-label="Change icon">${ICON(c.icon || 'star', 18)}</button>
       <div class="who-fields"><input class="input" data-who="${i}:name" value="${esc(c.name)}" placeholder="Folder name" maxlength="30" aria-label="Folder name"><input class="input" data-who="${i}:hint" value="${esc(c.hint || '')}" placeholder="What belongs here?" maxlength="160" aria-label="What belongs in this folder"></div>
@@ -2110,7 +2113,7 @@ function vWho(){
       <div style="display:flex;align-items:center;gap:14px"><span class="muted" style="font-size:13px">${st + 1} of 3</span><div class="progress"><i style="width:${(st + 1) / 3 * 100}%"></i></div></div></div>
     <div class="setup-body"><div class="q">${inner}
       <div class="q-actions">
-        ${st > 0 ? `<button class="btn ghost" data-act="whoBack">Back</button>` : `<button class="btn ghost" data-act="${hasEmails ? 'whoCancel' : 'home'}">Cancel</button>`}
+        ${st > 0 ? `<button class="btn ghost" data-act="whoBack">Back</button>` : `<button class="btn ghost" data-act="${hasEmails && !S.forceCats ? 'whoCancel' : 'home'}">Cancel</button><button class="btn ghost" data-act="whoSkip">Skip, use Other only</button>`}
         <span class="spacer"></span>
         ${st === 0 ? `<button class="btn primary" data-act="whoNext" ${S.catsBusy ? 'disabled' : ''}>${S.catsBusy ? 'Thinking…' : 'Suggest my folders'}</button>` : `<button class="btn primary" data-act="whoDone">${hasEmails ? 'Save and sort my mail' : 'Connect inboxes'}</button>`}
       </div></div></div></div>`;
@@ -2133,7 +2136,7 @@ function whoCommit(){
     const prev = S.cats.find(x => x.ai && x.name === c.name);
     return {id: prev?.id || 'c_' + Date.now().toString(36) + i, name:c.name.trim(), desc:(c.hint || '').trim(), icon:c.icon || 'star', color:c.color || CAT_COLORS[i % CAT_COLORS.length], ai:true, terms:c.terms || null, personal:!!c.personal, ids:[], domains:[], senders:[], auto:false, pending:true, createdAt:Date.now()};
   });
-  S.cats = [...ai, ...keep]; saveCats(); S.whoCats = null;
+  S.cats = [...ai, ...keep]; saveCats(); S.whoCats = null; S.forceCats = false; store.set('catsSkipped:' + (S.mode === 'live' ? 'live' : 'demo'), false);
 }
 // Demo: fill AI folders with matching emails once the mailbox is loaded (live mode lets the AI classifier do this).
 function materializeAiCats(){
@@ -2639,13 +2642,12 @@ const STATUS_LABEL = {awaiting:'Awaiting reply', replied:'Replied', fyi:'No repl
 // "Needs attention" = someone waits on you, there is an action/deadline, or it was rated critical/important (and you haven't dealt with it).
 const needsAttention = e => !e.replied && !e.done && (e.status === 'awaiting' || e.requiresAction || RANK.indexOf(e.priority) <= 1);
 function boardEmails(catId, all){
-  const custom = String(catId).startsWith('c_');
-  return S.emails.filter(e => S.accounts[e.acc]?.enabled !== false && e.boardCat === catId && !(e.kind === 'newsletter' && (S.corr.unsub || []).includes(unsubKey(e))) &&
-    (custom || catId === 'newsletters' || all || S.boardScope === 'all' || (RANK.indexOf(e.priority) <= 2 && e.kind !== 'newsletter')));
+  return S.emails.filter(e => S.accounts[e.acc]?.enabled !== false && e.boardCat === catId && !(e.kind === 'newsletter' && (S.corr.unsub || []).includes(unsubKey(e))));
 }
-/* ---------- Board categories (inbox folders + your own categories) ---------- */
+/* ---------- Board folders: the user's own categories + Newsletters + Other (always last). No per-inbox folders. ---------- */
 const CAT_COLORS = ['#8B5CF6','#0EA5A4','#F59E0B','#10B981','#F43F5E','#6366F1','#0891B2','#D946EF'];
 const CAT_ICONS = ['star','coin','users','calendar','plane','heart','tag','book'];
+const OTHER_TAGS = ['Security codes','Receipts','Notifications','Promotions','Social','Misc'];
 const catKey = () => 'cats:' + (S.mode === 'live' ? 'live' : 'demo');
 function saveCats(){ store.set(catKey(), S.cats); syncState(); }
 // The server is the source of truth for folders, read/replied marks and the profile, so a returning user (or a new device) gets them back.
@@ -2655,20 +2657,29 @@ function syncState(){
   clearTimeout(stateTimer);
   stateTimer = setTimeout(() => { api('/api/state', {method:'PUT', body:{corr:S.corr, boardCats:S.cats || [], profile:S.profile}}).catch(() => {}); }, 1200);
 }
-function boardCats(){
-  const base = connectedAccs().filter(a => S.accounts[a.id].enabled !== false)
-    .map(a => ({id:'acc:' + a.id, name:a.name, color:`var(--acc-${a.id})`, icon:ACC_SVG[a.id] || 'user', kind:'inbox', email:a.email}));
-  const news = S.emails.some(e => e.boardCat === 'newsletters') ? [{id:'newsletters', name:'Newsletters', color:'#6366F1', icon:'news', kind:'news', desc:'Subscriptions and digests, grouped by sender'}] : [];
-  return [...base, ...news, ...S.cats.map(c => ({...c, kind:'custom'}))];
+const SYSTEM_CATS = [
+  {id:'newsletters', name:'Newsletters', color:'#6366F1', icon:'news', kind:'news', desc:'Newsletters and digests, summarised for you'},
+  {id:'other', name:'Other', color:'#94A3B8', icon:'tag', kind:'system', desc:'Login codes, receipts, notifications, promotions and anything that fits none of your folders'},
+];
+function boardCats(){ return [...S.cats.map(c => ({...c, kind:'custom'})), ...SYSTEM_CATS]; }
+// Tag for mail in "Other": the server's otherTag when present, else a quick local guess (demo, or a deleted category).
+function otherTagOf(e){
+  const t = e._raw && e._raw.otherTag;
+  if(OTHER_TAGS.includes(t)) return t;
+  if(/verification code|security code|one[- ]time|\botp\b|login code|sign-?in|two-?factor/i.test(`${e.subject} ${String(e.body || '').slice(0, 500)}`)) return 'Security codes';
+  return ({receipt:'Receipts', promo:'Promotions', social:'Social', notice:'Notifications', alert:'Security codes'})[e.kind] || 'Misc';
 }
+// Same order as fold() in server/index.js: your hand-picked folders and sender rules, then Newsletters, then the category the AI chose, else Other.
 function assignCat(e){
-  for(const c of (S.cats || [])) if(c.ids?.includes(e.id)) return c.id; // mails you placed yourself stay where you put them
-  if(e.kind === 'newsletter') return 'newsletters'; // newsletters leave the other folders and collect in their own
-  for(const c of (S.cats || [])){
-    if(c.ai && S.mode === 'live' && (e._raw.cat === c.name || e.category === c.name)) return c.id;
+  const cats = S.cats || [];
+  for(const c of cats) if(c.ids?.includes(e.id)) return c.id; // mails you placed yourself stay where you put them
+  if(e.kind === 'newsletter') return 'newsletters'; // newsletters collect in their own folder
+  for(const c of cats){
     if(c.auto){ const d = orgDomain(e.fromEmail); if((d && c.domains?.includes(d)) || c.senders?.includes(e.fromEmail)) return c.id; }
   }
-  return 'acc:' + e.acc;
+  if(e.kind === 'newsletter') return 'newsletters';
+  if(S.mode === 'live'){ const c = cats.find(c => c.name === e._raw.cat); if(c) return c.id; }
+  return 'other';
 }
 const customCatOf = e => S.cats.find(c => c.id === e.boardCat);
 const initials = n => n.replace(/^(Prof\.|Dr\.)\s*/,'').split(/\s+/).map(w => w[0]).slice(0,2).join('').toUpperCase();
@@ -2739,7 +2750,7 @@ function letter(e, i, color){
       <span class="l-num">${i+1}</span>
       ${badge(e, 40)}
       <span class="l-main">
-        <span class="l-top">${e.seen ? '' : '<span class="l-new" title="Unread"></span>'}<span class="l-from">${esc(e.from)}</span>${e.org ? `<span class="l-org">${esc(e.org)}</span>` : ''}<span class="l-time">${timeLabel(e)}</span></span>
+        <span class="l-top">${e.seen ? '' : '<span class="l-new" title="Unread"></span>'}<span class="l-from">${connectedAccs().length > 1 ? accDot(e.acc) + ' ' : ''}${esc(e.from)}</span>${e.org ? `<span class="l-org">${esc(e.org)}</span>` : ''}<span class="l-time">${timeLabel(e)}</span></span>
         <span class="l-subj">${esc(e.subject)}</span>
         <span class="l-sum">${esc(e.summary)}</span>
       </span>
@@ -2858,32 +2869,36 @@ function pBoard(){
   const open = S.boardOpen && cats.find(c => c.id === S.boardOpen);
   if(open){
     const cat = open, list = boardEmails(cat.id, true);
-    const att = list.filter(needsAttention);
+    const all = list, att = list.filter(needsAttention);
     const tab = cat.kind === 'news' ? 'all' : (S.catTab === 'all' ? 'all' : 'attention');
-    const shown = tab === 'attention' ? att : list;
+    const isOther = cat.id === 'other';
+    const tagCount = x => list.filter(e => e.otherTag === x).length;
+    let shown = tab === 'attention' ? att : list;
+    if(isOther && S.otherTag !== 'all') shown = shown.filter(e => e.otherTag === S.otherTag);
     const ls = list.filter(e => e.seen).length, la = list.filter(e => e.status === 'awaiting').length;
     const custom = cat.kind === 'custom';
     return `<div class="board"><div class="board-in">
       <div class="board-head"><button class="btn sm ghost back" data-act="boardBack">← All categories</button></div>
       <div class="spread">
         <aside class="spread-side">
-          ${folder(cat, list, true)}
+          ${folder(cat, all, true)}
           <h2 class="sp-name">${esc(cat.name)}</h2>
-          <p class="sp-mail">${esc(custom || cat.kind === 'news' ? cat.desc : cat.email)}</p>
-          ${custom ? `<p class="sp-rule">${cat.auto && ruleText(cat) ? `New emails from ${esc(ruleText(cat))} are sorted here automatically.` : 'Holds only the emails you picked.'}</p>` : ''}
+          <p class="sp-mail">${esc(cat.desc || '')}</p>
+          ${custom ? `<p class="sp-rule">${cat.auto && ruleText(cat) ? `New emails from ${esc(ruleText(cat))} are sorted here automatically.` : 'Mail the AI recognises as belonging here lands in this folder.'}</p>` : ''}
           <div class="sp-stats">
-            <div><b>${ls}<span>/${list.length}</span></b><small>read</small></div>
+            <div><b>${ls}<span>/${all.length}</span></b><small>read</small></div>
             <div><b>${la}</b><small>to reply</small></div>
-            <div><b>${list.filter(e => e.status === 'replied').length}</b><small>replied</small></div>
+            <div><b>${all.filter(e => e.status === 'replied').length}</b><small>replied</small></div>
           </div>
-          <div class="meter" aria-label="${ls} of ${list.length} read"><i style="width:${list.length ? ls/list.length*100 : 0}%"></i></div>
+          <div class="meter" aria-label="${ls} of ${all.length} read"><i style="width:${all.length ? ls/all.length*100 : 0}%"></i></div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
-            ${ls < list.length ? `<button class="btn sm" data-act="markAllSeen" data-v="${cat.id}">Mark all as read</button>` : ''}
+            ${ls < all.length ? `<button class="btn sm" data-act="markAllSeen" data-v="${cat.id}">Mark all as read</button>` : ''}
             ${custom ? `<button class="btn sm ghost" data-act="catDelete" data-v="${cat.id}">${ICON('trash', 15)}Delete</button>` : ''}
           </div>
         </aside>
         <div class="spread-main">
           ${cat.kind === 'news' ? '' : `<div class="cat-tabs" role="tablist" aria-label="Show"><button role="tab" aria-selected="${tab === 'attention'}" class="${tab === 'attention' ? 'on' : ''}" data-act="catTab" data-v="attention">Needs attention<span class="cnt">${att.length}</span></button><button role="tab" aria-selected="${tab === 'all'}" class="${tab === 'all' ? 'on' : ''}" data-act="catTab" data-v="all">All<span class="cnt">${list.length}</span></button></div>`}
+          ${isOther ? `<div class="filters other-tags" role="group" aria-label="Filter by type"><button class="chip sm ${S.otherTag === 'all' ? 'on' : ''}" data-act="otherTag" data-v="all">All types</button>${OTHER_TAGS.filter(x => tagCount(x)).map(x => `<button class="chip sm ${S.otherTag === x ? 'on' : ''}" data-act="otherTag" data-v="${esc(x)}">${esc(x)} <span class="muted">${tagCount(x)}</span></button>`).join('')}</div>` : ''}
           <p class="sp-hint">${cat.kind === 'news' ? 'Your subscriptions, grouped by sender. Read them in the News reader, or unsubscribe.' : tab === 'attention' ? 'Someone is waiting on you, there is a deadline, or it is important. Open a letter to read it, reply, or mark it as replied.' : 'Everything in this folder, ordered by what matters most.'}</p>
           ${cat.kind === 'news' ? (list.length ? `<ol class="letters">${newsGroups(list)}</ol>` : `<div class="empty"><b>No newsletters</b>Subscriptions will collect here.</div>`)
             : shown.length ? `<ol class="letters">${shown.map((e, i) => letter(e, i, cat.color)).join('')}</ol>` : tab === 'attention' ? `<div class="empty"><b>Nothing needs you here</b>No replies, deadlines or important mail waiting in this folder. <button class="link" data-act="catTab" data-v="all">See all ${list.length}</button></div>` : `<div class="empty"><b>Nothing here yet</b>${custom ? 'New emails that match will land here.' : 'No emails in this folder.'}</div>`}
@@ -3247,6 +3262,10 @@ async function connectAcc(id){
   if(S.view === 'app'){ runPipeline(); toast(accById(id).name + ' connected'); }
   render();
 }
+// A live user must have categories (or have explicitly skipped): otherwise everything would land in Other.
+const needsCats = () => S.mode === 'live' && !S.cats.length && !store.get('catsSkipped:live', false);
+// After a category change in live mode, let the server regroup (fresh sync; analyses only what changed).
+function resortLive(){ if(S.mode === 'live' && connectedAccs().length) liveSync({quiet:true}).then(() => render({noFocus:true})).catch(e => toast(e.message)); }
 async function analyze(){
   S.view = 'analyzing'; render();
   const live = S.mode === 'live';
@@ -3266,6 +3285,7 @@ async function analyze(){
   if(live && LIVE.errors.length) setTimeout(() => toast(syncErrorText()), 400);
   if(!live) runPipeline();
   await wait(300);
+  if(needsCats()){ S.step = 0; S.whoCats = null; S.forceCats = true; S.view = 'onboarding'; persist(); render({top:true}); toast('Tell Clearday who you are so it can create your folders'); return; }
   S.view = 'app'; S.page = 'board'; S.boardOpen = null; persist(); render({top:true});
 }
 
@@ -3566,6 +3586,12 @@ const ACT = {
   whoNext(){ const a = document.getElementById('f-about'); if(a) S.profile.about = a.value; whoSuggest(); },
   whoSuggest(){ whoSuggest(); },
   whoBack(){ S.step = 0; render({noFocus:true}); },
+  whoSkip(){
+    const a = document.getElementById('f-about'); if(a) S.profile.about = a.value;
+    store.set('catsSkipped:' + (S.mode === 'live' ? 'live' : 'demo'), true); S.whoCats = null; S.forceCats = false; persist();
+    if(connectedAccs().length && S.emails.length){ runPipeline(); S.view = 'app'; S.page = 'board'; S.boardOpen = null; render({top:true}); toast('No folders for now. Everything is in Other, add folders any time.'); return; }
+    ACT.toConnect();
+  },
   whoCancel(){ S.whoCats = null; S.view = 'app'; render({top:true}); },
   whoDictate(){ whoDictate(); },
   whoAdd(){ (S.whoCats ||= []).push({name:'', hint:'', icon:CAT_ICONS[S.whoCats.length % CAT_ICONS.length], color:CAT_COLORS[S.whoCats.length % CAT_COLORS.length]}); render({noFocus:true}); setTimeout(() => document.querySelector('.who-cat:last-child input')?.focus(), 30); },
@@ -3671,18 +3697,19 @@ const ACT = {
     const f = S.catFlow, picked = f.matches.filter(m => m.checked);
     const {domains, senders} = catDomainsSenders(picked);
     const cat = {id:'c_' + Date.now().toString(36), name:f.name, desc:f.desc, icon:f.icon, color:f.color, ids:picked.map(m => m.id), auto:f.auto, domains, senders, createdAt:Date.now()};
-    S.cats.push(cat); saveCats(); S.catFlow = null; runPipeline();
+    S.cats.push(cat); saveCats(); store.set('catsSkipped:' + (S.mode === 'live' ? 'live' : 'demo'), false); S.catFlow = null; runPipeline(); resortLive();
     S.page = 'board'; S.boardOpen = cat.id; S.boardDeal = true; render({top:true, noFocus:true}); S.boardDeal = false;
     toast(`“${cat.name}” created${picked.length ? ` — ${picked.length} ${picked.length === 1 ? 'email' : 'emails'} moved here` : ''}`);
   },
   catDelete(el){
     const c = S.cats.find(x => x.id === el.dataset.v); if(!c) return;
-    if(!confirm(`Delete “${c.name}”? Its emails go back to their inbox folders. Nothing is deleted from your mailbox.`)) return;
-    S.cats = S.cats.filter(x => x.id !== c.id); saveCats(); runPipeline(); S.boardOpen = null; if(S.inboxCat === c.id) S.inboxCat = 'all';
+    if(!confirm(`Delete “${c.name}”? Its emails move to Newsletters or Other. Nothing is deleted from your mailbox.`)) return;
+    S.cats = S.cats.filter(x => x.id !== c.id); saveCats(); runPipeline(); resortLive(); S.boardOpen = null; if(S.inboxCat === c.id) S.inboxCat = 'all';
     render({noFocus:true}); toast(`“${c.name}” deleted`);
   },
   boardBack(){ S.boardOpen = null; render({noFocus:true}); },
   boardScope(el){ S.boardScope = el.dataset.v; S.boardDeal = !!S.boardOpen; render({noFocus:true}); S.boardDeal = false; },
+  otherTag(el){ S.otherTag = el.dataset.v; S.boardDeal = true; render({noFocus:true}); S.boardDeal = false; },
   boardAcc(el){ const st = S.accounts[el.dataset.id]; st.enabled = st.enabled === false; if(S.boardOpen === el.dataset.id && !st.enabled) S.boardOpen = null; persist(); render({noFocus:true}); },
   toggleReplied(el){ const id = el.dataset.id; S.corr.replied = toggleIn(S.corr.replied, id); persist(); runPipeline(); render({noFocus:true}); toast(S.corr.replied.includes(id) ? 'Marked as replied' : 'Marked as awaiting reply'); },
   markAllSeen(el){ const ids = boardEmails(el.dataset.v, true).map(e => e.id); S.corr.seen = [...new Set([...S.corr.seen, ...ids])]; persist(); runPipeline(); render({noFocus:true}); },
@@ -4093,7 +4120,9 @@ document.addEventListener('keydown', ev => {
         const snap = await api('/api/snapshot');
         if(snap.items?.length){
           MAILBOX = snap.items.map(liveToRaw); LIVE.lastSync = snap.savedAt ? new Date(snap.savedAt) : null; LIVE.errors = [];
-          runPipeline(); S.view = 'app'; S.page = 'board'; S.boardOpen = null; render({top:true});
+          runPipeline();
+          if(needsCats()){ S.step = 0; S.whoCats = null; S.forceCats = true; S.view = 'onboarding'; render({top:true}); toast('Tell Clearday who you are so it can create your folders'); return; }
+          S.view = 'app'; S.page = 'board'; S.boardOpen = null; render({top:true});
           // Show what we have right away, then refresh quietly in the background.
           liveSync({quiet:true}).then(() => setTimeout(loadSpamImportant, 6000)).catch(e => { if(e.status !== 429) toast(e.message); }).finally(() => { loadSpamImportant(); });
           return;

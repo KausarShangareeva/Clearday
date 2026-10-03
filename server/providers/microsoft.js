@@ -1,5 +1,5 @@
 // Outlook / Microsoft 365 via Microsoft identity platform + Microsoft Graph.
-import { htmlToText, stripQuoted, clip, ReauthError } from '../util.js';
+import { pMap, htmlToText, stripQuoted, clip, ReauthError } from '../util.js';
 
 const tenant = () => process.env.MICROSOFT_TENANT || 'common';
 const AUTH = () => `https://login.microsoftonline.com/${tenant()}/oauth2/v2.0/authorize`;
@@ -63,13 +63,22 @@ async function m(path, token, opts = {}) {
 
 const hdr = (x, name) => (x.internetMessageHeaders || []).find(h => h.name.toLowerCase() === name.toLowerCase())?.value || '';
 
-export async function fetchMessages(token, { max, selfEmail }) {
-  const inbox = await m(`/me/mailFolders/inbox/messages?${new URLSearchParams({
-    $top: String(max), $orderby: 'receivedDateTime desc',
-    $select: 'id,subject,from,receivedDateTime,isRead,body,bodyPreview,conversationId,webLink,internetMessageId,inferenceClassification,internetMessageHeaders',
-  })}`, token);
+// `known`: Map(providerId -> cached message record). The list call omits bodies; the full body is fetched only for new ids.
+export async function fetchMessages(token, { max, selfEmail, known = new Map() }) {
+  max = Math.min(200, max || 200);
+  const inbox = { value: [] };
+  let url = `/me/mailFolders/inbox/messages?${new URLSearchParams({
+    $top: String(Math.min(max, 100)), $orderby: 'receivedDateTime desc',
+    $select: 'id,subject,from,receivedDateTime,isRead,bodyPreview,conversationId,webLink,internetMessageId,inferenceClassification,internetMessageHeaders',
+  })}`;
+  while (url && inbox.value.length < max) {
+    const j = await m(url, token);
+    inbox.value.push(...(j.value || []));
+    url = j['@odata.nextLink'] ? j['@odata.nextLink'].replace('https://graph.microsoft.com/v1.0', '') : null;
+  }
+  inbox.value = inbox.value.slice(0, max);
   // Only look at sent mail back to the oldest inbox message we fetched.
-  const since = (inbox.value || []).reduce((a, x) => (x.receivedDateTime < a ? x.receivedDateTime : a), new Date().toISOString());
+  const since = inbox.value.reduce((a, x) => (x.receivedDateTime < a ? x.receivedDateTime : a), new Date().toISOString());
   const sent = await m(`/me/mailFolders/sentitems/messages?${new URLSearchParams({
     $top: '100', $orderby: 'sentDateTime desc', $filter: `sentDateTime ge ${since}`, $select: 'conversationId,sentDateTime',
   })}`, token).catch(() => ({ value: [] }));
@@ -78,19 +87,26 @@ export async function fetchMessages(token, { max, selfEmail }) {
     const t = +new Date(s.sentDateTime);
     if (t > (lastSent.get(s.conversationId) || 0)) lastSent.set(s.conversationId, t);
   }
-  return (inbox.value || []).map(x => {
-    const body = x.body?.contentType === 'html' ? htmlToText(x.body.content) : (x.body?.content || '');
+  const bodies = new Map();
+  await pMap(inbox.value.filter(x => !known.has(x.id)), async x => {
+    const b = await m(`/me/messages/${encodeURIComponent(x.id)}?$select=body`, token).catch(() => null);
+    if (b) bodies.set(x.id, b.body?.contentType === 'html' ? htmlToText(b.body.content) : (b.body?.content || ''));
+  }, 8);
+  return inbox.value.map(x => {
     const received = +new Date(x.receivedDateTime);
+    const replied = (lastSent.get(x.conversationId) || 0) > received;
+    const k = known.get(x.id);
+    if (k) return { ...k, providerId: x.id, unread: !x.isRead, replied: k.replied || replied };
     return {
       providerId: x.id, threadId: x.conversationId,
       fromName: x.from?.emailAddress?.name || x.from?.emailAddress?.address || 'Unknown',
       fromEmail: (x.from?.emailAddress?.address || '').toLowerCase(),
       subject: x.subject || '(no subject)',
       date: new Date(received).toISOString(),
-      body: clip(stripQuoted(body), 6000),
+      body: clip(stripQuoted(bodies.get(x.id) ?? x.bodyPreview ?? ''), 6000),
       snippet: x.bodyPreview || '',
       unread: !x.isRead,
-      replied: (lastSent.get(x.conversationId) || 0) > received,
+      replied,
       listUnsubscribe: !!hdr(x, 'List-Unsubscribe'),
       unsub: hdr(x, 'List-Unsubscribe'), unsubPost: hdr(x, 'List-Unsubscribe-Post'),
       providerCategory: null,
