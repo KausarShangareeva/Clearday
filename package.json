@@ -1,0 +1,16 @@
+{
+  "name": "clearday",
+  "version": "1.0.0",
+  "description": "Clearday — an AI chief of staff for your email. Connects real Gmail and Outlook accounts.",
+  "type": "module",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js"
+  },
+  "engines": { "node": ">=18.17" },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1"
+  }
+}
