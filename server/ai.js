@@ -2,13 +2,18 @@
 // + ReplyDraftService in one structured Claude call per batch, plus InboxAssistant and rewrites.
 import { pMap, clip } from './util.js';
 
-const API = 'https://api.anthropic.com/v1/messages';
-export const hasAI = () => !!process.env.ANTHROPIC_API_KEY;
-const FAST = () => process.env.AI_MODEL || 'claude-haiku-4-5-20251001';
-const SMART = () => process.env.AI_SMART_MODEL || 'claude-sonnet-5-5';
+import { promptBlock } from './memory.js';
 
-async function claude({ system, prompt, model, maxTokens = 4000 }) {
-  const r = await fetch(API, {
+// Two interchangeable AI backends. Gemini is used when GEMINI_API_KEY is set (it also powers live voice);
+// otherwise Claude via ANTHROPIC_API_KEY.
+const PROVIDER = () => (process.env.GEMINI_API_KEY ? 'gemini' : process.env.ANTHROPIC_API_KEY ? 'claude' : null);
+export const hasAI = () => !!PROVIDER();
+export const aiProvider = () => PROVIDER();
+const FAST = () => process.env.AI_MODEL || (PROVIDER() === 'gemini' ? 'gemini-3.5-flash-lite' : 'claude-haiku-4-5-20251001');
+const SMART = () => process.env.AI_SMART_MODEL || (PROVIDER() === 'gemini' ? 'gemini-3.8-flash' : 'claude-sonnet-5-5');
+
+async function anthropic({ system, prompt, model, maxTokens = 4000 }) {
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
     body: JSON.stringify({ model, max_tokens: maxTokens, system, messages: [{ role: 'user', content: prompt }] }),
@@ -17,6 +22,28 @@ async function claude({ system, prompt, model, maxTokens = 4000 }) {
   if (!r.ok) throw new Error(`Claude API ${r.status}: ${j.error?.message || 'request failed'}`);
   return (j.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
 }
+
+// One Gemini generateContent call. `json` asks for application/json output.
+// If the model rejects the thinking setting we retry once without it.
+async function gemini({ system, prompt, model, maxTokens = 4000, json = true, thinking = 'low' }) {
+  const call = async withThinking => {
+    const generationConfig = { maxOutputTokens: maxTokens, ...(json ? { responseMimeType: 'application/json' } : {}), ...(withThinking && thinking ? { thinkingConfig: { thinkingLevel: thinking } } : {}) };
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+      method: 'POST',
+      headers: { 'x-goog-api-key': process.env.GEMINI_API_KEY, 'content-type': 'application/json' },
+      body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig }),
+    });
+    const j = await r.json().catch(() => ({}));
+    return { r, j };
+  };
+  let { r, j } = await call(true);
+  if (!r.ok && r.status === 400 && thinking && /think/i.test(j.error?.message || '')) ({ r, j } = await call(false));
+  if (!r.ok) throw new Error(`Gemini API ${r.status}: ${j.error?.message || 'request failed'}`);
+  return (j.candidates?.[0]?.content?.parts || []).filter(p => p.text && !p.thought).map(p => p.text).join('');
+}
+
+const llm = opts => (PROVIDER() === 'gemini' ? gemini(opts) : anthropic(opts));
+const memoryNote = () => { const m = promptBlock(); return m ? `\nLocal memory about the user (honour it):\n${m}\n` : ''; };
 
 function parseJSON(text) {
   const s = text.replace(/```json|```/g, '').trim();
@@ -87,7 +114,7 @@ export async function classify(emails, { profile, categories, today }) {
       date: e.date, unread: e.unread, alreadyReplied: e.replied, bulk: e.listUnsubscribe, body: clip(e.body, 3500),
     }));
     const prompt = `Today is ${today}. The user is ${name}.
-User profile: ${JSON.stringify(profile || {})}
+User profile: ${JSON.stringify(profile || {})}${memoryNote()}
 Categories you may use (exact strings): ${JSON.stringify(categories)}
 
 For EACH email return an object:
@@ -112,7 +139,7 @@ ${JSON.stringify(payload)}
 
 Return ONLY a JSON array with one object per email, no markdown.`;
     try {
-      const arr = parseJSON(await claude({ system: SYSTEM, prompt, model: FAST(), maxTokens: 8000 }));
+      const arr = parseJSON(await llm({ system: SYSTEM, prompt, model: FAST(), maxTokens: 8000 }));
       const byId = new Map((Array.isArray(arr) ? arr : []).map(a => [a?.id, a]));
       batch.forEach(e => { results[e.id] = byId.has(e.id) ? sanitize(byId.get(e.id), e, categories) : heuristic(e, 'AI skipped this email'); });
     } catch (err) {
@@ -127,8 +154,7 @@ export async function answer({ question, history = [], context = [], profile, to
   const prompt = `You are Clearday, an AI chief of staff for email. Answer the user's question using ONLY the emails below. Be concise, warm and specific, like a sharp personal assistant speaking. Use numbered lines ("1. ...") for lists. Never claim to have sent an email: you only write drafts that the user reviews and sends.
 
 Today is ${today}.
-User profile: ${JSON.stringify(profile || {})}
-
+User profile: ${JSON.stringify(profile || {})}${memoryNote()}
 Emails (JSON):
 ${JSON.stringify(context).slice(0, 120000)}
 
@@ -137,18 +163,18 @@ User: ${question}
 
 Respond with JSON only, no markdown:
 {"answer": string, "refs": [ids of emails you relied on], "draftFor": an email id or null, "draft": reply text signed "${(profile?.name || 'me').split(' ')[0]}" or null (only when the user asks for a reply or draft)}`;
-  const r = parseJSON(await claude({ system: 'You return strict JSON.', prompt, model: SMART(), maxTokens: 2500 }));
+  const r = parseJSON(await llm({ system: 'You return strict JSON.', prompt, model: SMART(), maxTokens: 2500 }));
   return { text: str(r.answer, 4000), refs: Array.isArray(r.refs) ? r.refs.map(String) : [], draftFor: r.draftFor || null, draft: r.draft ? str(r.draft, 3000) : null };
 }
 
 export async function rewrite({ email, draft, instruction, name }) {
   const prompt = `${draft ? 'Rewrite this email reply.' : 'Write a reply to this email.'} Instruction: ${instruction}
-Keep facts consistent with the email, do not invent commitments, write in the email's language, sign it "${name}". Return ONLY the reply text, no preamble.
+${memoryNote()}Keep facts consistent with the email, do not invent commitments, write in the email's language, sign it "${name}". Return ONLY the reply text, no preamble.
 
 Email being replied to (from ${email.fromName} <${email.fromEmail}>, subject "${email.subject}"):
 ${clip(email.body, 5000)}
 ${draft ? `\nCurrent draft:\n${draft}` : ''}`;
-  return (await claude({ system: 'You write clear, natural email replies.', prompt, model: SMART(), maxTokens: 1500 })).trim();
+  return (await llm({ system: 'You write clear, natural email replies.', prompt, model: SMART(), maxTokens: 1500, json: false })).trim();
 }
 
 const CAT_ICONS = ['star', 'coin', 'users', 'calendar', 'plane', 'heart', 'tag', 'book'];
@@ -166,7 +192,7 @@ Return JSON only: {"suggestions":[{"name": short folder name, "description": one
 
 Mailbox:
 ${indexLines(items).slice(0, 150000)}`;
-  const r = parseJSON(await claude({ system: 'You return strict JSON.', prompt, model: SMART(), maxTokens: 4000 }));
+  const r = parseJSON(await llm({ system: 'You return strict JSON.', prompt, model: SMART(), maxTokens: 4000 }));
   return (r.suggestions || []).map(sg => {
     const ids = (sg.ids || []).filter(id => valid.has(id));
     const senders = [...new Set(ids.map(id => items.find(i => i.id === id)?.from).filter(Boolean))].slice(0, 3);
@@ -186,7 +212,12 @@ Return JSON only: {"matches":[{"id": id, "reason": string}]}
 
 Mailbox:
 ${indexLines(items).slice(0, 150000)}`;
-  const r = parseJSON(await claude({ system: 'You return strict JSON.', prompt, model: SMART(), maxTokens: 6000 }));
+  const r = parseJSON(await llm({ system: 'You return strict JSON.', prompt, model: SMART(), maxTokens: 6000 }));
   const seen = new Set();
   return (r.matches || []).filter(x => valid.has(x?.id) && !seen.has(x.id) && seen.add(x.id)).map(x => ({ id: x.id, reason: str(x.reason, 90) }));
+}
+
+// One-sentence note of a voice conversation, kept in local memory.
+export async function summarize(text) {
+  return (await llm({ system: 'You write one-sentence memory notes.', prompt: `Summarise this voice conversation between a user and their email assistant in one sentence (max 40 words), keeping names, decisions and open follow-ups:\n${String(text).slice(0, 6000)}`, model: FAST(), maxTokens: 200, json: false, thinking: null })).trim();
 }

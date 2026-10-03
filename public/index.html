@@ -719,6 +719,12 @@ a.btn:not(.primary){color:var(--ink)}
   .ask-panel{max-height:62vh}
 }
 
+/* live voice states on the Ask dock */
+.ask-orb.live-connecting::before,.ask-orb.live-listening::before,.ask-orb.live-speaking::before{animation:spin 2.4s linear infinite}
+.ask-orb.live-listening{box-shadow:0 0 0 6px color-mix(in srgb,var(--acc-work) 18%,transparent)}
+.ask-orb.live-speaking{box-shadow:0 0 0 7px color-mix(in srgb,var(--acc-personal) 20%,transparent)}
+.ask-orb.live-speaking .orb-bars i{animation-duration:.6s}
+.live-pill{margin-left:8px;font-size:12px;font-weight:500;padding:2px 9px;border-radius:999px;background:color-mix(in srgb,var(--crit) 12%,transparent);color:var(--crit)}
 /* modal stacking fix */
 .modal > .overlay{z-index:0}
 .modal > .modal-card{z-index:1}
@@ -1540,7 +1546,7 @@ const S = {
   theme: store.get('theme', null),
   mode: store.get('mode', 'demo'),
   cats: store.get('cats:' + store.get('mode', 'demo'), []),
-  catFlow: null, askOpen: false, inboxCat: 'all', newsTopics: [], newsView: store.get('newsView', 'list'), cardIdx: 0, cardDir: '',
+  catFlow: null, askOpen: false, liveState: 'idle', mem: null, inboxCat: 'all', newsTopics: [], newsView: store.get('newsView', 'list'), cardIdx: 0, cardDir: '',
   savedDrafts: {},
 };
 if(S.view === 'analyzing' || S.view === 'connect') S.view = 'landing';
@@ -1601,10 +1607,10 @@ function liveToRaw(it){
 async function liveSync({quiet} = {}){
   LIVE.syncing = true; if(S.view === 'app') render({noFocus:true});
   try{
-    const r = await api('/api/sync', {method:'POST', body:{profile:S.profile, categories:UserProfileService.categoriesFor(S.profile).map(c => c[0])}});
+    const r = await api('/api/sync', {method:'POST', body:{profile:S.profile, categories:UserProfileService.categoriesFor(S.profile).map(c => c[0]), boardCats:(S.cats || []).map(c => ({name:c.name, desc:c.desc, ids:c.ids, domains:c.domains, senders:c.senders, auto:c.auto}))}});
     setLiveAccounts(r.accounts);
     MAILBOX = r.items.map(liveToRaw);
-    LIVE.lastSync = new Date(); LIVE.errors = r.errors || []; LIVE.ai = r.ai;
+    LIVE.lastSync = new Date(); LIVE.errors = r.errors || []; LIVE.ai = r.ai; if(r.aiProvider) LIVE.aiProvider = r.aiProvider; loadMemory();
     runPipeline();
     if(!quiet && LIVE.errors.length) toast(syncErrorText());
     return r;
@@ -2124,7 +2130,7 @@ function pPrivacy(){
       <li>Answer questions over your mail <code>InboxAssistant</code></li>
     </ol>
     <h2>What this prototype does</h2>
-    ${S.mode === 'live' ? `<p>You're connected to real inboxes. Mail is fetched over Google's and Microsoft's official APIs when you sync, analysed by Claude through the Anthropic API, and the results (not the email bodies) are cached on the Clearday server so unchanged emails aren't analysed twice. OAuth tokens are encrypted at rest with AES-256-GCM. Drafts are saved into your own Drafts folder; Clearday has no code path that sends email.</p>` : ''}
+    ${S.mode === 'live' ? `<p>You're connected to real inboxes. Mail is fetched over Google's and Microsoft's official APIs when you sync, analysed by ${LIVE.aiProvider === 'gemini' ? 'Google Gemini through the Gemini API (live voice streams audio to Gemini only while it is on)' : 'Claude through the Anthropic API'}, and the results (not the email bodies) are cached on the Clearday server so unchanged emails aren't analysed twice. OAuth tokens are encrypted at rest with AES-256-GCM. Drafts are saved into your own Drafts folder; Clearday has no code path that sends email.</p>` : ''}
     <p style="${S.mode === 'live' ? 'display:none' : ''}">This is a hackathon prototype running in your browser on realistic demo data. Classifications for the demo mailbox are precomputed; your corrections re-rank emails live. The assistant and draft rewrites use Claude when you allow it, and a local fallback otherwise. Your profile and corrections are kept only in this browser.</p>
     <div class="warn">This is not a production system and has not been security-audited. Don't connect real accounts to a prototype without proper review.</div>
   </div></div>`;
@@ -2147,7 +2153,12 @@ function pSettings(){
     <div class="set-row"><div><b>Learned from your corrections</b><span>${c.vip.length} always-prioritised senders, ${c.ignore.length} ignored senders, ${Object.keys(c.override).length} manual priorities</span></div><button class="btn sm ghost" data-act="resetCorr" ${c.vip.length + c.ignore.length + Object.keys(c.override).length ? '' : 'disabled'}>Reset</button></div>
     <div class="set-row"><div><b>Dark mode</b><span>Follows your system unless you choose.</span></div><button class="switch ${dark ? 'on':''}" data-act="theme" role="switch" aria-checked="${dark}" aria-label="Dark mode"></button></div>
     ${S.mode === 'live'
-      ? `<div class="set-row"><div><b>Delete my data</b><span>Disconnect all inboxes and erase everything stored on the server.</span></div><button class="btn sm ghost" data-act="deleteData">Delete</button></div>`
+      ? `<div class="set-row" style="display:block"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><div><b>Memory</b><span>What Clearday remembers about you. Stored only on this server (data/memory.json).</span></div><div style="display:flex;gap:8px"><button class="btn sm" data-act="memAdd">Add</button><button class="btn sm ghost" data-act="memClear" ${(S.mem?.facts?.length || 0) + Object.keys(S.mem?.senders || {}).length + (S.mem?.summaries?.length || 0) ? '' : 'disabled'}>Clear</button></div></div>
+        <ul style="margin:10px 0 0;padding:0;list-style:none;display:grid;gap:6px">${[
+          ...(S.mem?.facts || []).map(f => [f.id, f.text]),
+          ...Object.entries(S.mem?.senders || {}).map(([k, v]) => [k, `${k}: ${v.priority ? 'treat as ' + v.priority + '. ' : ''}${v.note || ''}`]),
+          ...(S.mem?.summaries || []).map(x => [`${x.date}:${x.text.slice(0, 12)}`, `${x.date} — ${x.text}`])].map(([id, t]) => `<li style="display:flex;justify-content:space-between;gap:10px;font-size:13.5px"><span>${esc(t)}</span><button class="btn sm ghost" data-act="memDel" data-id="${esc(id)}" aria-label="Forget">✕</button></li>`).join('') || '<li class="muted" style="font-size:13.5px">Nothing yet. Tell the voice assistant "remember that…".</li>'}</ul></div>
+      <div class="set-row"><div><b>Delete my data</b><span>Disconnect all inboxes and erase everything stored on the server.</span></div><button class="btn sm ghost" data-act="deleteData">Delete</button></div>`
       : `<div class="set-row"><div><b>Reset demo</b><span>Start again from the landing page.</span></div><button class="btn sm ghost" data-act="reset">Reset</button></div>`}
   </div></div>`;
 }
@@ -2209,15 +2220,15 @@ function askDock(){
   const ctx = askContext();
   return `<div class="ask-dock ${S.askOpen ? 'open' : ''} ${S.chat.length ? 'has-chat' : ''}">
     ${S.askOpen ? `<div class="ask-panel" role="region" aria-label="Clearday answers">
-      <div class="ask-head"><span><span class="spark">✦</span> Clearday</span><div style="display:flex;gap:4px">${S.chat.length ? `<button class="btn sm ghost" data-act="askClear">Clear</button>` : ''}<button class="icon-btn" data-act="askClose" aria-label="Close answers">×</button></div></div>
+      <div class="ask-head"><span><span class="spark">✦</span> Clearday${S.liveState && S.liveState !== 'idle' ? ` <span class="live-pill">${({connecting:'Connecting…', listening:'Listening — just talk', speaking:'Speaking…'})[S.liveState] || ''}</span>` : ''}</span><div style="display:flex;gap:4px">${S.chat.length ? `<button class="btn sm ghost" data-act="askClear">Clear</button>` : ''}<button class="icon-btn" data-act="askClose" aria-label="Close answers">×</button></div></div>
       <div class="ask-scroll" id="chatScroll">${S.chat.length || S.chatBusy ? chatThread() : `<p class="ask-empty">Ask anything about your ${visible().length} emails, or pick a suggestion below.</p>`}</div>
     </div>` : ''}
     <div class="ask-chips" role="group" aria-label="Suggestions">${ctx.chips.map(q => `<button class="chip sm" data-act="ask" data-v="${esc(q)}">${esc(q)}</button>`).join('')}</div>
     <div class="ask-bar">
-      <span class="ask-orb" aria-hidden="true"><span class="orb-bars"><i></i><i></i><i></i><i></i><i></i></span></span>
+      <span class="ask-orb ${S.liveState && S.liveState !== 'idle' ? 'live-' + S.liveState : ''}" aria-hidden="true"><span class="orb-bars"><i></i><i></i><i></i><i></i><i></i></span></span>
       <textarea id="chatInput" rows="1" placeholder="${esc(ctx.placeholder)}" aria-label="Ask Clearday"></textarea>
       <kbd class="ask-kbd" title="Press / to ask">/</kbd>
-      <button class="mic ${S.listening ? 'live' : ''}" data-act="mic" aria-label="${S.listening ? 'Stop listening' : 'Talk to Clearday'}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+      <button class="mic ${S.listening || (S.liveState && S.liveState !== 'idle') ? 'live' : ''}" data-act="mic" aria-label="${S.liveState && S.liveState !== 'idle' ? 'Stop voice' : S.listening ? 'Stop listening' : 'Talk to Clearday'}" title="${liveVoiceOn() ? 'Live voice with Gemini' : 'Voice'}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
       <button class="send" data-act="send" aria-label="Ask" ${S.chatBusy ? 'disabled' : ''}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
     </div>
   </div>`;
@@ -2872,8 +2883,38 @@ async function ask(q){
 }
 
 /* ---------- voice ---------- */
+/* ---------- Gemini Live voice events (from Pranish's branch) ---------- */
+const liveVoiceOn = () => S.mode === 'live' && LIVE.voice && window.LiveVoice;
+window.addEventListener('livevoice', e => { S.liveState = e.detail; if(S.view === 'app') render({noFocus:true}); });
+window.addEventListener('livevoice-turn', e => {
+  const {user, ai} = e.detail; if(!user && !ai) return;
+  if(user) S.chat.push({role:'user', text:user});
+  if(ai) S.chat.push({role:'ai', text:ai, refs:[], live:true});
+  if(S.page === 'board') S.askOpen = true;
+  render({noFocus:true});
+});
+window.addEventListener('livevoice-tool', e => {
+  const u = e.detail.ui; if(!u) return;
+  if(u.draftFor && u.draft){
+    S.drafts[u.draftFor] = {text:u.draft, tone:'Professional'}; if(u.link) S.savedDrafts[u.draftFor] = u.link;
+    S.chat.push({role:'ai', text:u.link ? 'I saved this draft to your Drafts folder. Nothing was sent.' : 'Here is the draft. Nothing was sent.', refs:[u.draftFor], draft:u.draft, draftFor:u.draftFor, live:true});
+    render({noFocus:true});
+  }
+  if(u.memory) loadMemory();
+});
+window.addEventListener('livevoice-error', e => { S.liveState = 'idle'; render({noFocus:true}); toast(e.detail || 'Voice stopped'); });
+async function loadMemory(){
+  if(S.mode !== 'live') return;
+  try{ S.mem = await api('/api/memory'); if(S.view === 'app' && S.page === 'settings') render({noFocus:true}); }catch(e){}
+}
 let recog = null;
 function toggleMic(){
+  if(liveVoiceOn()){
+    if(S.page === 'board') S.askOpen = true;
+    if(window.LiveVoice.state === 'idle'){ S.voiceMode = false; window.LiveVoice.start(); } else window.LiveVoice.stop();
+    render({noFocus:true});
+    return;
+  }
   if(S.page === 'board' && !S.askOpen){ S.askOpen = true; render({noFocus:true}); }
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   S.voiceMode = true;
@@ -2981,7 +3022,7 @@ const ACT = {
   connectAcc(el){ connectAcc(el.dataset.id); },
   async connectAll(){ await Promise.all(ACCOUNTS.map(a => connectAcc(a.id))); },
   analyze,
-  go(el){ if(el.dataset.v === 'board' && S.page === 'board') S.boardOpen = null; S.page = el.dataset.v; S.navOpen = false; S.openId = null; if(S.page !== 'categories') S.catFilter = null; render({top:true, noFocus:true}); if(S.page === 'assistant') setTimeout(() => document.getElementById('chatInput')?.focus(), 30); },
+  go(el){ if(el.dataset.v === 'board' && S.page === 'board') S.boardOpen = null; S.page = el.dataset.v; if(S.page === 'settings') loadMemory(); S.navOpen = false; S.openId = null; if(S.page !== 'categories') S.catFilter = null; render({top:true, noFocus:true}); if(S.page === 'assistant') setTimeout(() => document.getElementById('chatInput')?.focus(), 30); },
   goInbox(el){ S.page = 'inbox'; S.inboxPrio = el.dataset.v || 'all'; render({top:true}); },
   navOpen(){ S.navOpen = true; render({noFocus:true}); },
   navClose(){ S.navOpen = false; render({noFocus:true}); },
@@ -3018,6 +3059,9 @@ const ACT = {
     }
     hide(); toast(`Unsubscribed from ${name}. You won't see these emails here anymore.`, 'Undo', undo);
   },
+  async memAdd(){ const t = prompt('What should Clearday remember?'); if(!t) return; try{ await api('/api/memory', {method:'POST', body:{text:t}}); loadMemory(); }catch(e){ toast(e.message); } },
+  async memDel(el){ try{ S.mem = await api('/api/memory/' + encodeURIComponent(el.dataset.id), {method:'DELETE'}); render({noFocus:true}); }catch(e){ toast(e.message); } },
+  async memClear(){ if(!confirm('Erase everything Clearday remembers?')) return; try{ S.mem = await api('/api/memory', {method:'DELETE'}); render({noFocus:true}); }catch(e){ toast(e.message); } },
   catNew(){ S.navOpen = false; catStart(); },
   catFilter(el){ S.inboxCat = el.dataset.v; render({noFocus:true}); },
   catCancel(){ S.catFlow = null; render({noFocus:true}); },
@@ -3176,7 +3220,7 @@ document.addEventListener('keydown', ev => {
   if(S.mode === 'live'){ if(S.view === 'app') S.view = 'landing'; S.profile = store.get('liveProfile', null) || S.profile; }
   else if(S.view === 'app'){ if(connectedAccs().length) runPipeline(); else S.view = 'landing'; }
   render();
-  try{ const h = await api('/api/health'); if(h && h.app === 'clearday'){ LIVE.available = true; LIVE.ai = h.ai; LIVE.providers = h.providers || {}; } }catch(e){}
+  try{ const h = await api('/api/health'); if(h && h.app === 'clearday'){ LIVE.available = true; LIVE.ai = h.ai; LIVE.aiProvider = h.aiProvider; LIVE.voice = !!h.voice; LIVE.providers = h.providers || {}; } }catch(e){}
   if(!LIVE.available){ if(S.mode === 'live'){ S.mode = 'demo'; S.profile = store.get('profile', null) || defaultProfile(); render(); } return; }
   const qs = new URLSearchParams(location.search);
   let me = null; try{ me = await api('/api/me'); }catch(e){}
@@ -3197,6 +3241,109 @@ document.addEventListener('keydown', ev => {
   }
   render();
 })();
+</script>
+<script type="module">
+/* ---------- Gemini Live voice (browser <-> Gemini directly via ephemeral token) ---------- */
+const LV = { session:null, state:'idle', stream:null, inCtx:null, outCtx:null, node:null, playAt:0, sources:new Set(), handle:null, inTxt:'', outTxt:'', log:[], closing:false, retries:0 };
+const setState = s => { LV.state = s; window.dispatchEvent(new CustomEvent('livevoice', {detail:s})); };
+const b64 = buf => { let s = ''; const u = new Uint8Array(buf); for(let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); };
+const unb64 = str => { const s = atob(str), u = new Uint8Array(s.length); for(let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u.buffer; };
+
+function playChunk(data){
+  const pcm = new Int16Array(data), f = new Float32Array(pcm.length);
+  for(let i = 0; i < pcm.length; i++) f[i] = pcm[i] / 32768;
+  const buf = LV.outCtx.createBuffer(1, f.length, 24000); buf.copyToChannel(f, 0);
+  const src = LV.outCtx.createBufferSource(); src.buffer = buf; src.connect(LV.outCtx.destination);
+  LV.playAt = Math.max(LV.playAt, LV.outCtx.currentTime + 0.02); src.start(LV.playAt); LV.playAt += buf.duration;
+  LV.sources.add(src); src.onended = () => { LV.sources.delete(src); if(!LV.sources.size && LV.state === 'speaking') setState('listening'); };
+  setState('speaking');
+}
+function stopPlayback(){ LV.sources.forEach(s => { try{ s.stop(); }catch(e){} }); LV.sources.clear(); LV.playAt = 0; }
+
+async function startMic(){
+  LV.stream = await navigator.mediaDevices.getUserMedia({audio:{channelCount:1, echoCancellation:true, noiseSuppression:true, autoGainControl:true}});
+  LV.inCtx = new AudioContext({sampleRate:16000});
+  const code = `class P extends AudioWorkletProcessor{process(i){const c=i[0][0];if(c){const o=new Int16Array(c.length);for(let k=0;k<c.length;k++){const v=Math.max(-1,Math.min(1,c[k]));o[k]=v<0?v*32768:v*32767}this.port.postMessage(o.buffer,[o.buffer])}return true}}registerProcessor('pcm',P)`;
+  await LV.inCtx.audioWorklet.addModule(URL.createObjectURL(new Blob([code], {type:'application/javascript'})));
+  LV.node = new AudioWorkletNode(LV.inCtx, 'pcm');
+  LV.node.port.onmessage = e => { if(LV.session && !LV.muted) try{ LV.session.sendRealtimeInput({audio:{data:b64(e.data), mimeType:'audio/pcm;rate=16000'}}); }catch(err){} };
+  LV.inCtx.createMediaStreamSource(LV.stream).connect(LV.node);
+}
+
+function flushTurn(){
+  const u = LV.inTxt.trim(), a = LV.outTxt.trim(); LV.inTxt = ''; LV.outTxt = '';
+  window.dispatchEvent(new CustomEvent('livevoice-turn', {detail:{user:u, ai:a}}));
+  if(u) LV.log.push('User: ' + u); if(a) LV.log.push('Assistant: ' + a);
+}
+
+async function onMessage(m){
+  const sc = m.serverContent;
+  if(m.sessionResumptionUpdate?.newHandle) LV.handle = m.sessionResumptionUpdate.newHandle;
+  if(m.goAway && !LV.closing){ reconnect(); return; }
+  if(m.toolCall){
+    const out = [];
+    for(const fc of m.toolCall.functionCalls){
+      let result;
+      try{
+        const r = await fetch('/api/live/tool', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({name:fc.name, args:fc.args || {}})});
+        const j = await r.json(); result = j.result || {error:'no result'};
+        window.dispatchEvent(new CustomEvent('livevoice-tool', {detail:{name:fc.name, ui:j.ui || null}}));
+      }catch(e){ result = {error:'tool failed: ' + e.message}; }
+      out.push({id:fc.id, name:fc.name, response:{result}});
+    }
+    LV.session.sendToolResponse({functionResponses:out});
+  }
+  if(!sc) return;
+  if(sc.interrupted){ stopPlayback(); if(LV.outTxt) flushTurn(); setState('listening'); }
+  if(sc.inputTranscription?.text){ if(LV.outTxt) flushTurn(); LV.inTxt += sc.inputTranscription.text; }
+  if(sc.outputTranscription?.text) LV.outTxt += sc.outputTranscription.text;
+  for(const p of sc.modelTurn?.parts || []) if(p.inlineData?.data && /audio/.test(p.inlineData.mimeType || '')) playChunk(unb64(p.inlineData.data));
+  if(sc.turnComplete) flushTurn();
+}
+
+async function connect(){
+  const r = await fetch('/api/live/token', {method:'POST'});
+  const t = await r.json(); if(!r.ok) throw new Error(t.error || 'Could not start voice');
+  const {GoogleGenAI} = await import('https://esm.sh/@google/genai');
+  const ai = new GoogleGenAI({apiKey:t.token, httpOptions:{apiVersion:'v1alpha'}});
+  const config = {...t.config, ...(LV.handle ? {sessionResumption:{handle:LV.handle}} : {})};
+  LV.session = await ai.live.connect({model:t.model, config, callbacks:{
+    onopen(){},
+    onmessage(m){ onMessage(m).catch(console.error); },
+    onerror(e){ console.error('live error', e); },
+    onclose(e){ if(!LV.closing){ if(LV.retries++ < 2) reconnect(); else { stop(); window.dispatchEvent(new CustomEvent('livevoice-error', {detail:(e && e.reason) || 'Voice session ended'})); } } },
+  }});
+}
+async function reconnect(){
+  try{ const old = LV.session; LV.session = null; try{ old && old.close(); }catch(e){} await connect(); }
+  catch(e){ stop(); window.dispatchEvent(new CustomEvent('livevoice-error', {detail:e.message})); }
+}
+
+async function start(){
+  if(LV.session || LV.state === 'connecting') return;
+  LV.closing = false; LV.log = []; LV.inTxt = LV.outTxt = ''; LV.handle = null; LV.retries = 0; LV.muted = false;
+  setState('connecting');
+  try{
+    LV.outCtx = new AudioContext({sampleRate:24000}); await LV.outCtx.resume();
+    await startMic();
+    await connect();
+    setState('listening');
+    // Greet with a spoken briefing.
+    LV.session.sendClientContent({turns:[{role:'user', parts:[{text:'(The user just opened voice mode. Greet them briefly by calling get_briefing and telling them the 2-3 things that matter most. Then ask how you can help.)'}]}], turnComplete:true});
+  }catch(e){ stop(); window.dispatchEvent(new CustomEvent('livevoice-error', {detail:/Permission|NotAllowed/i.test(e.name + e.message) ? 'Microphone access is blocked. Allow it in your browser.' : e.message})); }
+}
+function stop(){
+  LV.closing = true;
+  try{ LV.session && LV.session.close(); }catch(e){}
+  LV.session = null; stopPlayback();
+  try{ LV.node && LV.node.disconnect(); LV.stream && LV.stream.getTracks().forEach(t => t.stop()); LV.inCtx && LV.inCtx.close(); LV.outCtx && LV.outCtx.close(); }catch(e){}
+  LV.node = LV.stream = LV.inCtx = LV.outCtx = null;
+  const transcript = LV.log.join('\n'); LV.log = [];
+  if(transcript.length > 80) fetch('/api/live/summary', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({transcript})}).catch(() => {});
+  setState('idle');
+}
+window.LiveVoice = { start, stop, get state(){ return LV.state; }, toggleMute(){ LV.muted = !LV.muted; return LV.muted; } };
+window.dispatchEvent(new Event('livevoice-ready'));
 </script>
 </body>
 </html>

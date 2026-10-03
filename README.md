@@ -42,18 +42,21 @@ npm start
 
 ---
 
-## 2. Ключ Claude (AI-анализ)
+## 2. Ключ AI: Gemini (рекомендуется) или Claude
 
-1. Зайди на https://console.anthropic.com → **API Keys** → **Create Key**.
-2. Вставь ключ в `.env`: `ANTHROPIC_API_KEY=...`
+Нужен **один** ключ.
 
-Без ключа приложение работает, но сортирует письма по простым правилам.
+**Gemini** — включает всё, в том числе **живого голосового ассистента** (Gemini Live: говоришь с почтой голосом, он отвечает голосом, читает письма, пишет черновики в Drafts и запоминает факты о тебе).
+1. Зайди на https://aistudio.google.com/apikey → **Create API key**.
+2. Вставь в `.env`: `GEMINI_API_KEY=...`
 
-Модели задаются в `.env`:
-- `AI_MODEL` — быстрая модель, ей классифицируется каждое письмо.
-- `AI_SMART_MODEL` — модель для чата и переписывания черновиков.
+**Claude** — если `GEMINI_API_KEY` пустой, используется `ANTHROPIC_API_KEY` (https://console.anthropic.com). Всё работает, кроме живого голоса: голос тогда идёт через распознавание речи браузера.
 
----
+Модели можно переопределить через `AI_MODEL` / `AI_SMART_MODEL`, голос — `GEMINI_LIVE_MODEL` и `GEMINI_VOICE`.
+
+**Память ассистента** хранится только на этом сервере в `data/memory.json`. Её видно и можно очистить в Settings → Memory.
+
+Clearday читает последние 50 писем в каждом ящике (`MAX_PER_ACCOUNT`).
 
 ## 3. Подключение Gmail (Google Cloud)
 
@@ -114,7 +117,9 @@ public/index.html        фронтенд (брифинг, доска, чат, �
 server/index.js          Express: OAuth, сессии, /api/sync, /api/draft, /api/chat, /api/rewrite
 server/providers/google.js     Gmail API: чтение, определение «отвечено», черновики
 server/providers/microsoft.js  Microsoft Graph: то же для Outlook
-server/ai.js             Claude: классификация, приоритеты, действия, саммари, черновики, чат
+server/ai.js             Gemini или Claude: классификация, приоритеты, действия, саммари, черновики, чат
+server/live.js           Gemini Live: инструменты голосового ассистента (брифинг, письма, черновики, память)
+server/memory.js         локальная память ассистента (data/memory.json)
 server/store.js          JSON-хранилище; OAuth-токены зашифрованы AES-256-GCM
 ```
 
