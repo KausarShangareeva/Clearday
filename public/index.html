@@ -1565,7 +1565,7 @@ const S = {
   theme: store.get('theme', null),
   mode: store.get('mode', 'demo'),
   cats: store.get('cats:' + store.get('mode', 'demo'), []),
-  catFlow: null, whoCats: null, catsBusy: false, dictating: false, askOpen: false, liveState: 'idle', mem: null, inboxCat: 'all', newsTopics: [], newsView: store.get('newsView', 'list'), cardIdx: 0, cardDir: '',
+  catFlow: null, imapForm: null, whoCats: null, catsBusy: false, dictating: false, askOpen: false, liveState: 'idle', mem: null, inboxCat: 'all', newsTopics: [], newsView: store.get('newsView', 'list'), cardIdx: 0, cardDir: '',
   savedDrafts: {},
 };
 if(S.view === 'analyzing' || S.view === 'connect') S.view = 'landing';
@@ -1669,15 +1669,33 @@ function liveAccRows(){
   const P = LIVE.providers;
   return Object.keys(SLOT_NAMES).map(slot => {
     const a = accById(slot);
-    const btn = (p, label) => `<button class="btn sm" data-act="liveConnect" data-slot="${slot}" data-p="${p}" ${P[p] ? '' : `disabled title="${label} sign-in isn't configured on the server yet"`}>${provIcon(label, 15)}${label}</button>`;
+    const btn = (p, label) => `<button class="btn sm" data-act="${p === 'yahoo' || p === 'mailru' ? 'imapConnect' : 'liveConnect'}" data-slot="${slot}" data-p="${p}" ${P[p] ? '' : `disabled title="${label} sign-in isn't set up on the server yet (see README)"`}>${provIcon(label, 15)}${label}</button>`;
     const right = a
       ? `${a.error === 'reauth' ? `<button class="btn sm primary" data-act="liveConnect" data-slot="${slot}" data-p="${a.providerKey}">Reconnect</button>` : `<span class="status-ok">✓ Connected</span>`}<button class="btn sm ghost" data-act="disconnect" data-id="${slot}">Disconnect</button>`
-      : `${btn('google','Gmail')}${btn('microsoft','Outlook')}${P.mock ? btn('mock','Mock') : ''}`;
+      : `${btn('google','Gmail')}${btn('microsoft','Outlook')}${btn('yahoo','Yahoo')}${btn('mailru','Mail.ru')}${P.mock ? btn('mock','Mock') : ''}`;
     const sub = a ? `${esc(a.email)} — ${a.provider}${a.error === 'reauth' ? ' — sign-in expired' : a.error ? ' — ' + esc(a.error) : ''}` : 'Not connected';
     return `<div class="acc-row"><span class="acc-ico">${a ? (provIcon(a.provider, 20) || a.provider[0]) : '+'}${accDot(slot)}</span>
       <div class="acc-meta"><b>${SLOT_NAMES[slot]}</b><span>${sub}</span></div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center">${right}</div></div>`;
   }).join('');
+}
+const IMAP_HELP = {
+  yahoo: {label:'Yahoo', steps:'Yahoo account → Account security → Generate app password. Copy the 16-character password it shows.', link:'https://help.yahoo.com/kb/SLN15241.html'},
+  mailru: {label:'Mail.ru', steps:'Mail.ru → Settings → Security → Passwords for external applications → Add. Copy the password it shows.', link:''},
+};
+function vImapForm(){
+  const f = S.imapForm, h = IMAP_HELP[f.p];
+  return `<div class="modal" role="dialog" aria-modal="true" aria-label="Connect ${h.label}"><div class="overlay" data-act="imapCancel"></div>
+    <div class="modal-card" style="width:min(480px,100%)"><div class="modal-in">
+      <div style="display:flex;align-items:center;gap:12px">${provIcon(h.label, 36)}<h2 class="cu-h" style="font-size:26px">Connect ${h.label}</h2></div>
+      <p class="cu-sub">${h.label} lets apps like Clearday in with an <b>app password</b> instead of your normal password. Clearday only reads mail and saves drafts.</p>
+      <div class="ai-note" style="margin-top:16px"><span>1</span><span>${esc(h.steps)}${h.link ? ` <a href="${h.link}" target="_blank" rel="noopener">How-to ↗</a>` : ''}</span></div>
+      <label class="field" style="display:block;margin-top:14px"><span style="display:block;font-size:13px;color:var(--ink2);margin-bottom:6px">${h.label} email address</span><input class="input" id="imapEmail" type="email" autocomplete="username" value="${esc(f.email || '')}" placeholder="you@${f.p === 'yahoo' ? 'yahoo.com' : 'mail.ru'}"></label>
+      <label class="field" style="display:block;margin-top:12px"><span style="display:block;font-size:13px;color:var(--ink2);margin-bottom:6px">App password</span><input class="input" id="imapPass" type="password" autocomplete="off" placeholder="xxxx xxxx xxxx xxxx"></label>
+      ${f.error ? `<p class="oauth-note" style="color:var(--crit)"><span>⚠</span><span>${esc(f.error)}</span></p>` : ''}
+    </div>
+    <div class="modal-foot"><button class="btn sm ghost" data-act="imapCancel">Cancel</button><button class="btn sm primary" data-act="imapSubmit" ${f.busy ? 'disabled' : ''}>${f.busy ? 'Checking…' : `Connect ${h.label}`}</button></div>
+    </div></div>`;
 }
 function vConnectLive(){
   const any = ACCOUNTS.length > 0;
@@ -1686,17 +1704,18 @@ function vConnectLive(){
     <div class="setup-top"><div class="logo"><span class="logo-mark"></span>Clearday</div><span class="muted" style="font-size:13px">Connect inboxes</span></div>
     <div class="setup-body"><div class="q">
       <h2>Connect the inboxes you check.</h2>
-      <p class="hint">Choose a slot and sign in with Google or Microsoft. Clearday reads your mail and can save reply drafts. It never sends anything.</p>
+      <p class="hint">Choose a slot and connect Gmail, Outlook, Yahoo or Mail.ru. Clearday reads your mail and can save reply drafts. It never sends anything.</p>
       <div class="acc-list">${liveAccRows()}</div>
       <p class="oauth-note"><span>🔒</span><span>You sign in on Google's or Microsoft's own page. Clearday never sees your password; access tokens are stored encrypted on this server, and you can disconnect at any time.</span></p>
-      ${noProv ? `<p class="oauth-note"><span>⚠</span><span>No provider is configured yet. Add GOOGLE_CLIENT_ID / MICROSOFT_CLIENT_ID to the server's .env (see README).</span></p>` : ''}
-      ${!LIVE.ai ? `<p class="oauth-note"><span>⚠</span><span>ANTHROPIC_API_KEY isn't set on the server, so emails will be sorted with basic rules instead of AI.</span></p>` : ''}
+      ${!LIVE.providers.google ? `<p class="oauth-note"><span>⚠</span><span>Gmail isn't set up: the server can't see GOOGLE_CLIENT_ID. Make sure your settings file is called <b>.env</b>, sits in the Clearday folder, then restart <code>npm start</code>.</span></p>` : ''}
+      ${!LIVE.providers.microsoft ? `<p class="oauth-note"><span>ℹ</span><span>Outlook needs a Microsoft app registration (MICROSOFT_CLIENT_ID in .env, see README). Yahoo and Mail.ru work right away with an app password.</span></p>` : ''}
+      ${!LIVE.ai ? `<p class="oauth-note"><span>⚠</span><span>No AI key found (GEMINI_API_KEY). Emails will be sorted with basic rules until you add it to .env and restart.</span></p>` : ''}
       <div class="q-actions">
         <button class="btn ghost" data-act="home">Back</button>
         <span class="spacer"></span>
         <button class="btn primary" data-act="analyze" ${any ? '' : 'disabled'}>Analyse my inbox</button>
       </div>
-    </div></div></div>`;
+    </div></div></div>${S.imapForm ? vImapForm() : ''}`;
 }
 
 
@@ -2460,7 +2479,7 @@ function letter(e, i, color){
     </div>
   </li>`;
 }
-const mailProv = e => (accById(e.acc)?.provider === 'Outlook' ? 'Outlook' : 'Gmail');
+const mailProv = e => { const p = accById(e.acc)?.provider; return ['Outlook', 'Yahoo', 'Mail.ru'].includes(p) ? p : 'Gmail'; };
 function mailHref(e){
   const prov = mailProv(e);
   return e.link || (prov === 'Outlook' ? `https://outlook.office.com/mail/search?q=${encodeURIComponent(e.subject)}` : `https://mail.google.com/mail/u/0/#search/${encodeURIComponent(`from:${e.fromEmail} subject:"${e.subject}"`)}`);
@@ -2799,7 +2818,8 @@ function vApp(){
   ${S.page === 'board' && !S.catFlow ? askDock() : ''}
   ${S.openId ? vSheet() : ''}
   ${S.catchup ? vCatchup() : ''}
-  ${S.catFlow ? vCatFlow() : ''}`;
+  ${S.catFlow ? vCatFlow() : ''}
+  ${S.imapForm ? vImapForm() : ''}`;
 }
 
 /* =========================================================================
@@ -3193,6 +3213,20 @@ const ACT = {
     }
     ACT.toConnect();
   },
+  imapConnect(el){ S.imapForm = {slot:el.dataset.slot, p:el.dataset.p, email:'', busy:false, error:''}; render({noFocus:true}); setTimeout(() => document.getElementById('imapEmail')?.focus(), 30); },
+  imapCancel(){ S.imapForm = null; render({noFocus:true}); },
+  async imapSubmit(){
+    const f = S.imapForm; if(!f || f.busy) return;
+    f.email = (document.getElementById('imapEmail')?.value || '').trim();
+    const pass = (document.getElementById('imapPass')?.value || '').replace(/\s+/g, '');
+    if(!f.email || !pass){ f.error = 'Enter your email address and the app password.'; render({noFocus:true}); return; }
+    f.busy = true; f.error = ''; render({noFocus:true});
+    try{
+      const r = await api('/api/imap/connect', {method:'POST', body:{slot:f.slot, provider:f.p, email:f.email, password:pass}});
+      setLiveAccounts(r.accounts); S.imapForm = null; render({noFocus:true}); toast(`${IMAP_HELP[f.p].label} connected`);
+      if(S.view === 'app'){ try{ await liveSync(); }catch(e){} render({noFocus:true}); }
+    }catch(e){ f.busy = false; f.error = e.message; render({noFocus:true}); }
+  },
   catNew(){ S.navOpen = false; catStart(); },
   catFilter(el){ S.inboxCat = el.dataset.v; render({noFocus:true}); },
   catCancel(){ S.catFlow = null; render({noFocus:true}); },
@@ -3272,7 +3306,7 @@ ${firstName()}`, tone:'Professional'}; render({noFocus:true}); document.getEleme
     const body = document.getElementById('draftText')?.value || '';
     if(!body.trim()){ toast('The draft is empty'); return; }
     const prov = mailProv(e), subj = /^re:/i.test(e.subject) ? e.subject : 'Re: ' + e.subject;
-    const compose = prov === 'Outlook'
+    const compose = (prov === 'Yahoo' || prov === 'Mail.ru') ? (e.link || (prov === 'Yahoo' ? 'https://mail.yahoo.com/' : 'https://e.mail.ru/inbox/')) : prov === 'Outlook'
       ? `https://outlook.office.com/mail/deeplink/compose?${new URLSearchParams({to:e.fromEmail, subject:subj, body})}`
       : `https://mail.google.com/mail/?${new URLSearchParams({view:'cm', fs:'1', to:e.fromEmail, su:subj, body})}`;
     const w = window.open('', '_blank');
@@ -3343,6 +3377,8 @@ document.addEventListener('keydown', ev => {
   }
   if(ev.key === '/' && S.view === 'app' && S.page === 'board' && !S.openId && !S.catFlow && !/INPUT|TEXTAREA/.test(t.tagName || '')){ ev.preventDefault(); document.getElementById('chatInput')?.focus(); return; }
   if(ev.key === 'Escape' && S.page === 'board' && S.askOpen && !S.openId && !S.catFlow){ S.askOpen = false; render({noFocus:true}); return; }
+  if(ev.key === 'Enter' && S.imapForm && (t.id === 'imapPass' || t.id === 'imapEmail')){ ev.preventDefault(); ACT.imapSubmit(); return; }
+  if(ev.key === 'Escape' && S.imapForm){ ACT.imapCancel(); return; }
   if(ev.key === 'Escape' && S.catFlow){ ACT.catCancel(); return; }
   if(ev.key === 'Escape'){ if(S.catchup){ ACT.closeCatch(); } else if(S.openId){ ACT.close(); } else if(S.navOpen){ ACT.navClose(); } }
 });

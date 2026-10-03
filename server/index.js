@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import './env.js';
 import express from 'express';
 import crypto from 'node:crypto';
 import path from 'node:path';
@@ -7,11 +7,12 @@ import { getUser, ensureUser, deleteUser, save, pruneCache, encrypt, decrypt, si
 import * as google from './providers/google.js';
 import * as microsoft from './providers/microsoft.js';
 import * as mock from './providers/mock.js';
+import { yahoo, mailru } from './providers/imap.js';
 import { hasAI, aiProvider, classify, heuristic, answer, rewrite, suggestCategories, matchCategory, summarize, suggestFromAbout } from './ai.js';
 import * as memory from './memory.js';
 import { LIVE_TOOLS, liveSystemPrompt } from './live.js';
 
-const PROVIDERS = { google, microsoft, ...(process.env.DEV_MOCK === '1' ? { mock } : {}) };
+const PROVIDERS = { google, microsoft, yahoo, mailru, ...(process.env.DEV_MOCK === '1' ? { mock } : {}) };
 const SLOTS = ['personal', 'university', 'startup', 'work'];
 const SLOT_NAMES = { personal: 'Personal', university: 'University', startup: 'Startup', work: 'Work' };
 const APP_URL = (process.env.APP_URL || `http://localhost:${process.env.PORT || 3000}`).replace(/\/$/, '');
@@ -65,6 +66,7 @@ const publicAccounts = u => SLOTS.filter(s => u?.accounts?.[s]).map(s => {
 async function freshToken(acc) {
   const P = PROVIDERS[acc.provider];
   const tokens = decrypt(acc.tokens);
+  if (P.imap) return tokens; // IMAP mailboxes sign in with an app password, no token refresh
   const updated = await P.refresh(tokens);
   if (updated) { acc.tokens = encrypt(updated); save(); return updated.access_token; }
   return tokens.access_token;
@@ -139,6 +141,23 @@ app.delete('/api/accounts/:slot', async (req, res) => {
   for (const k of Object.keys(u.cache)) if (k.startsWith(req.params.slot + '_')) delete u.cache[k];
   save();
   res.json({ accounts: publicAccounts(u) });
+});
+
+// ---------- Yahoo / Mail.ru: connect with an app password (IMAP) ----------
+app.post('/api/imap/connect', async (req, res) => {
+  const { slot, provider, email, password } = req.body || {};
+  const P = PROVIDERS[provider];
+  if (!P?.imap) return res.status(400).json({ error: 'Unknown mail provider' });
+  if (!SLOTS.includes(slot)) return res.status(400).json({ error: 'Unknown slot' });
+  if (!limit('imap:' + req.uid, 2000)) return res.status(429).json({ error: 'One moment…' });
+  try {
+    const { email: addr, tokens } = await P.verify(String(email || ''), String(password || ''));
+    const u = ensureUser(req.uid);
+    for (const s of SLOTS) if (u.accounts[s]?.email === addr && s !== slot) delete u.accounts[s];
+    u.accounts[slot] = { provider, email: addr, name: '', tokens: encrypt(tokens), connectedAt: Date.now(), error: null };
+    save();
+    res.json({ accounts: publicAccounts(u) });
+  } catch (e) { res.status(e.code === 'reauth' ? 401 : 502).json({ error: e.message }); }
 });
 
 // ---------- Sync: fetch → normalise → analyse → return ----------
