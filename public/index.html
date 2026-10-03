@@ -726,6 +726,62 @@ a.btn:not(.primary){color:var(--ink)}
 .ask-orb.live-speaking .orb-bars i{animation-duration:.6s}
 .live-pill{margin-left:8px;font-size:12px;font-weight:500;padding:2px 9px;border-radius:999px;background:color-mix(in srgb,var(--crit) 12%,transparent);color:var(--crit)}
 .demo-flag{display:inline-block;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;background:color-mix(in srgb,var(--imp) 16%,transparent);color:color-mix(in srgb,var(--imp) 80%,var(--ink));margin-bottom:12px}
+
+/* landing v2: centred, one action, Board preview */
+.land2{display:flex;flex-direction:column}
+.land2 .l-nav{width:100%}
+.l2-hero{text-align:center;max-width:860px;margin:0 auto;padding:72px 24px 0}
+.l2-hero h1{font-family:var(--sans);font-weight:500;font-size:clamp(44px,7vw,88px);line-height:.98;letter-spacing:-.055em}
+.l2-sub{margin:22px auto 0;max-width:46ch;font-size:18px;color:var(--ink2);line-height:1.5}
+.l2-cta{display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:34px}
+.l2-main{height:54px;padding:0 30px;font-size:16px}
+.l2-demo{font-size:14.5px;color:var(--ink3);text-decoration:underline;text-underline-offset:4px}
+.l2-demo:hover{color:var(--ink)}
+.l2-note{font-size:13.5px;color:var(--ink3)}
+.l2-preview{width:100%;max-width:1080px;margin:72px auto 0;padding:0 24px 80px}
+.l2-board{position:relative;border-radius:2rem;padding:56px 44px 120px;background-color:var(--board);background-image:radial-gradient(circle,var(--dot) 1px,transparent 1.3px);background-size:22px 22px;box-shadow:0 0 0 1px var(--line),0 40px 90px rgba(0,0,0,.08)}
+.l2-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:34px}
+.l2-ask{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);width:min(560px,calc(100% - 48px));display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line2);border-radius:999px;padding:7px 7px 7px 8px;box-shadow:0 14px 40px rgba(0,0,0,.12)}
+.l2-ask-text{flex:1;color:var(--ink3);font-size:15px}
+.l2-ask .send{width:40px;height:40px}
+@media (max-width:860px){
+  .l2-hero{padding-top:40px}
+  .l2-board{padding:40px 16px 104px}
+  .l2-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:40px 14px}
+}
+
+
+/* landing v2: whole page fits one desktop screen, at any window size */
+@media (min-width:861px){
+  .landing.land2{height:100%;overflow:hidden}
+  .land2 .l-nav{padding-top:2.4vh;padding-bottom:1vh}
+  .l2-hero{padding-top:3vh}
+  .l2-hero h1{font-size:min(88px,7vw,8.2vh)}
+  .l2-sub{margin-top:2vh;font-size:min(18px,2.2vh);max-width:64ch}
+  .l2-cta{margin-top:3vh;gap:1.2vh}
+  .l2-main{height:min(54px,6.4vh);font-size:min(16px,2vh)}
+  .l2-preview{flex:1;min-height:0;margin-top:4vh;padding-bottom:3vh;display:flex}
+  .l2-board{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;padding:3.5vh 44px 11vh}
+  .l2-grid{grid-template-columns:repeat(4,minmax(0,min(240px,26vh,22%)));justify-content:center;gap:min(34px,3vw)}
+  .l2-grid .f-name{margin-top:1.2vh;font-size:min(17px,2.1vh)}
+  .l2-ask{bottom:2.6vh;padding-top:min(7px,.8vh);padding-bottom:min(7px,.8vh)}
+  .l2-ask .ask-orb,.l2-ask .send{width:min(40px,5vh);height:min(40px,5vh)}
+}
+@media (min-width:861px) and (max-height:640px){ .l2-sub{display:none} }
+@media (max-width:860px){ .l2-br{display:none} }
+
+
+.l2-provs{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:22px}
+.l2-prov{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px 0 10px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:14.5px;font-weight:500;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.l2-prov .prov-ico{border-radius:4px}
+.l2-provs + .l2-sub{margin-top:14px}
+@media (min-width:861px){ .l2-provs{margin-top:2.4vh} .l2-prov{height:min(36px,4.4vh);font-size:min(14.5px,1.8vh)} .l2-provs + .l2-sub{margin-top:1.6vh} }
+
+
+/* landing: folders float on the page, no panel or ask bar */
+.l2-board{background:none !important;box-shadow:none !important;padding:0 24px !important;border-radius:0}
+@media (min-width:861px){ .l2-board{justify-content:center} .l2-preview{margin-top:5vh} .l2-grid{grid-template-columns:repeat(4,minmax(0,min(250px,30vh,22%)))} }
+
 /* modal stacking fix */
 .modal > .overlay{z-index:0}
 .modal > .modal-card{z-index:1}
@@ -1789,42 +1845,34 @@ const SUN_SVG = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" str
 const MOON_SVG = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>';
 const isDark = () => document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
 function themeBtn(){ const d = isDark(); return `<button class="icon-btn theme-btn" data-act="theme" aria-label="${d ? 'Switch to day mode' : 'Switch to night mode'}" title="${d ? 'Day mode' : 'Night mode'}">${d ? SUN_SVG : MOON_SVG}</button>`; }
+const hasServer = () => typeof LIVE !== 'undefined' && LIVE.available;
 function vLanding(){
-  const inboxes = [['Personal Gmail','personal',12],['University','university',18],['Startup','startup',9],['Work Outlook','work',14],['Side project','personal',6],['Newsletters','work',23],['Old Hotmail','personal',4]];
-  return `<div class="landing">
-  <nav class="l-nav"><div class="logo"><span class="logo-mark"></span>Clearday</div>
-    <div style="display:flex;gap:8px;align-items:center">${themeBtn()}<button class="btn ghost sm" data-act="privacyLanding">Privacy</button><button class="btn sm" data-act="demo">Try demo</button></div></nav>
-  <section class="hero">
-    <div>
-      <h1>One inbox for everything that matters.</h1>
-      <p class="sub">Connect your email accounts. Let AI understand what matters to you. Get only the information you actually need — and a draft when you need to reply.</p>
-      <div class="ctas">
-        <button class="btn primary" style="height:46px;padding:0 20px" data-act="connectReal">Connect your inbox</button>
-        <button class="btn" style="height:46px;padding:0 20px" data-act="demo">Try demo</button>
-      </div>
-      <p class="note">Clearday never sends email on its own. You stay in control of every reply.</p>
-      ${LIVE.available && (LIVE.providers.google || LIVE.providers.microsoft) ? `<p class="note back">Been here before? Continue with ${[LIVE.providers.google ? '<a href="/auth/google/start?slot=personal">Google</a>' : '', LIVE.providers.microsoft ? '<a href="/auth/microsoft/start?slot=personal">Microsoft</a>' : ''].filter(Boolean).join(' or ')} and your folders and mails will be waiting.</p>` : ''}
-    </div>
-    <div class="funnel" aria-label="How Clearday condenses seven inboxes">
-      <div class="funnel-in">${inboxes.map(([n,c,k]) => `<div class="f-inbox">${accDot(c)}${n}<b>${k}</b></div>`).join('')}</div>
-      <div class="f-arrow">86 new emails, read by Clearday</div>
-      <p class="f-out"><span class="n">6</span> things matter today. <span class="n">2</span> need a reply, and one deadline is tomorrow.</p>
-      <div class="f-items">
-        <div class="f-item"><span class="pdot p-critical"></span>Send residence permit to Admissions<span class="due hot" style="margin-left:auto">Tomorrow</span></div>
-        <div class="f-item"><span class="pdot p-important"></span>Reply to investor — draft ready</div>
-      </div>
+  // Static preview of the Board, built from the same folder component the app uses.
+  const P = (from, fromEmail, status, seen = true, org = '') => ({from, fromEmail, status, seen, org, _raw:{}});
+  const preview = [
+    [{name:'Friends & family', color:'var(--acc-personal)', icon:'user'}, [P('Mum', 'mum@gmail.com', 'replied'), P('Leo Nilsson', 'leo@gmail.com', 'awaiting', false), P('Nordbank', 'security@nordbank.se', 'fyi', false)]],
+    [{name:'Thesis', color:'var(--acc-university)', icon:'cap'}, [P('Dr. Sofia Holm', 'sofia@nordvik.edu', 'replied'), P('Prof. Lindqvist', 'karin@nordvik.edu', 'fyi'), P('Anna Berg', 'admissions@nordvik.edu', 'awaiting', false)]],
+    [{name:'Investors', color:'#8B5CF6', icon:'coin'}, [P('Erik Sandberg', 'erik@sandberg.vc', 'awaiting', false), P('Maria Okafor', 'maria@northwind.vc', 'awaiting', false)]],
+    [{name:'Clients', color:'var(--acc-work)', icon:'briefcase'}, [P('Omar Haddad', 'omar@haldengroup.se', 'replied'), P('Petra Lund', 'petra@haldengroup.se', 'awaiting'), P('Jonas Ek', 'jonas@haldengroup.se', 'awaiting', false)]],
+  ];
+  return `<div class="landing land2">
+  <nav class="l-nav"><div class="logo"><span class="logo-mark"></span>Clearday</div>${themeBtn()}</nav>
+  <section class="l2-hero">
+    <h1>One inbox for <br class="l2-br">everything that matters.</h1>
+    <div class="l2-provs">${['Gmail', 'Outlook', 'Yahoo', 'Mail.ru'].map(n => `<span class="l2-prov">${provIcon(n, 18)}${n}</span>`).join('')}</div>
+    <p class="l2-sub">All your inboxes, sorted into folders by what matters to you.</p>
+    <div class="l2-cta">
+      ${hasServer() ? `<button class="btn primary l2-main" data-act="connectReal">Connect your inbox</button>
+      <button class="l2-demo" data-act="demo">or try the demo with sample emails</button>`
+      : `<button class="btn primary l2-main" data-act="demo">Try the demo</button>`}
+      ${LIVE.available && (LIVE.providers.google || LIVE.providers.microsoft) ? `<p class="l2-note back">Been here before? Continue with ${[LIVE.providers.google ? '<a href="/auth/google/start?slot=personal">Google</a>' : '', LIVE.providers.microsoft ? '<a href="/auth/microsoft/start?slot=personal">Microsoft</a>' : ''].filter(Boolean).join(' or ')} and your folders and mails will be waiting.</p>` : ''}
     </div>
   </section>
-  <section class="how">
-    <div class="how-steps">
-      <div class="how-step"><h3>Connect your inboxes</h3><p>Gmail and Outlook via OAuth. No passwords stored.</p></div>
-      <div class="how-step"><h3>AI learns your context</h3><p>A two-minute profile: who you are and who matters.</p></div>
-      <div class="how-step"><h3>Important things surface</h3><p>Every email ranked, with the reason shown.</p></div>
-      <div class="how-step"><h3>Actions and summaries</h3><p>Deadlines found, newsletters condensed, drafts written.</p></div>
-      <div class="how-step"><h3>One simple briefing</h3><p>Read it in a minute, or just ask out loud.</p></div>
+  <section class="l2-preview" aria-hidden="true">
+    <div class="l2-board">
+      <div class="l2-grid">${preview.map(([c, list]) => `<div class="folder-wrap">${folder(c, list.slice().sort((x, y) => ['awaiting', 'fyi', 'replied'].indexOf(x.status) - ['awaiting', 'fyi', 'replied'].indexOf(y.status)), false)}<span class="f-name">${esc(c.name)}</span></div>`).join('')}</div>
     </div>
   </section>
-  <footer class="l-foot"><span>Hackathon prototype — {Tech: Europe} Agentic AI Hack</span><button data-act="privacyLanding">How we handle your data</button></footer>
   </div>`;
 }
 
@@ -1867,6 +1915,7 @@ function vWho(){
   S.whoCats = S.whoCats || S.cats.filter(c => c.ai).map(c => ({name:c.name, hint:c.desc, icon:c.icon, color:c.color, terms:c.terms, personal:c.personal}));
   let inner;
   if(st === 0) inner = `
+    ${S.mode !== 'live' ? '<div class="demo-flag">Demo with sample emails</div>' : ''}
     <h2>Who are you?</h2>
     <p class="hint">Tell Clearday about yourself and what you want to keep track of. It will suggest up to 6 folders for your Board. You can change them on the next screen.</p>
     <label class="field"><span>What should we call you?</span><input class="input" id="f-name" data-bind="name" value="${esc(p.name)}" autocomplete="given-name"></label>
