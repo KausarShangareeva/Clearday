@@ -770,6 +770,13 @@ a.btn:not(.primary){color:var(--ink)}
 @media (min-width:861px) and (max-height:640px){ .l2-sub{display:none} }
 @media (max-width:860px){ .l2-br{display:none} }
 
+
+.l2-provs{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:22px}
+.l2-prov{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px 0 10px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:14.5px;font-weight:500;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.l2-prov .prov-ico{border-radius:4px}
+.l2-provs + .l2-sub{margin-top:14px}
+@media (min-width:861px){ .l2-provs{margin-top:2.4vh} .l2-prov{height:min(36px,4.4vh);font-size:min(14.5px,1.8vh)} .l2-provs + .l2-sub{margin-top:1.6vh} }
+
 /* modal stacking fix */
 .modal > .overlay{z-index:0}
 .modal > .modal-card{z-index:1}
@@ -1822,7 +1829,8 @@ function vLanding(){
   <nav class="l-nav"><div class="logo"><span class="logo-mark"></span>Clearday</div>${themeBtn()}</nav>
   <section class="l2-hero">
     <h1>One inbox for <br class="l2-br">everything that matters.</h1>
-    <p class="l2-sub">Gmail, Outlook, Yahoo and Mail.ru, sorted into folders by what matters to you.</p>
+    <div class="l2-provs">${['Gmail', 'Outlook', 'Yahoo', 'Mail.ru'].map(n => `<span class="l2-prov">${provIcon(n, 18)}${n}</span>`).join('')}</div>
+    <p class="l2-sub">All your inboxes, sorted into folders by what matters to you.</p>
     <div class="l2-cta">
       ${hasServer() ? `<button class="btn primary l2-main" data-act="connectReal">Connect your inbox</button>
       <button class="l2-demo" data-act="demo">or try the demo with sample emails</button>`
