@@ -7,13 +7,17 @@ import { getUser, ensureUser, deleteUser, save, pruneCache, encrypt, decrypt, si
 import * as google from './providers/google.js';
 import * as microsoft from './providers/microsoft.js';
 import * as mock from './providers/mock.js';
-import { hasAI, classify, heuristic, answer, rewrite } from './ai.js';
+import { hasAI, classify, heuristic, answer, rewrite, summarize, suggestCategories, normCats } from './ai.js';
+import * as memory from './memory.js';
+import { LIVE_TOOLS, liveSystemPrompt } from './live.js';
 
 const PROVIDERS = { google, microsoft, ...(process.env.DEV_MOCK === '1' ? { mock } : {}) };
 const SLOTS = ['personal', 'university', 'startup', 'work'];
 const SLOT_NAMES = { personal: 'Personal', university: 'University', startup: 'Startup', work: 'Work' };
 const APP_URL = (process.env.APP_URL || `http://localhost:${process.env.PORT || 3000}`).replace(/\/$/, '');
 process.env.APP_URL = APP_URL;
+const MAX_MAILS = 50;
+const liveItems = new Map(); // uid -> items from the last sync (for voice tools; never persisted)
 const SECURE = APP_URL.startsWith('https');
 
 const app = express();
@@ -78,6 +82,12 @@ app.get('/api/me', (req, res) => {
   const u = getUser(req.uid);
   res.json({ accounts: publicAccounts(u), profile: u?.profile || null });
 });
+app.post('/api/categories/suggest', async (req, res) => {
+  if (!limit('cats:' + req.uid, 1500)) return res.status(429).json({ error: 'One moment…' });
+  const u = getUser(req.uid);
+  const cats = await suggestCategories({ about: String(req.body?.about || '').slice(0, 1500), name: String(req.body?.name || u?.profile?.name || '').slice(0, 60) });
+  res.json({ categories: cats, ai: hasAI() });
+});
 app.put('/api/profile', (req, res) => {
   const u = ensureUser(req.uid);
   u.profile = req.body?.profile || null;
@@ -88,6 +98,8 @@ app.delete('/api/me', async (req, res) => {
   const u = getUser(req.uid);
   if (u) for (const a of Object.values(u.accounts)) { try { await PROVIDERS[a.provider]?.revoke(decrypt(a.tokens)); } catch {} }
   deleteUser(req.uid);
+  memory.clearMemory();
+  liveItems.delete(req.uid);
   res.json({ ok: true });
 });
 
@@ -143,15 +155,15 @@ app.post('/api/sync', async (req, res) => {
   if (!limit('sync:' + req.uid, 5000)) return res.status(429).json({ error: 'Syncing already — give it a few seconds.' });
   const { profile, categories = [] } = req.body || {};
   if (profile) u.profile = profile;
-  const cats = categories.length ? categories : ['Personal', 'Work', 'Finance', 'Events', 'Travel', 'News', 'Notifications', 'Promotions', 'Other'];
-  const hours = +process.env.SYNC_HOURS || 72, max = Math.min(100, +process.env.MAX_PER_ACCOUNT || 25);
+  const cats = normCats(categories); // user-defined, at most 6; anything else becomes "Other"
+  const max = MAX_MAILS; // only the most recent mails per inbox, never the whole mailbox
   const ph = profileHash(u.profile, cats);
   const fetched = [], errors = [];
 
   await Promise.all(Object.entries(u.accounts).map(async ([slot, acc]) => {
     try {
       const token = await freshToken(acc);
-      const msgs = await PROVIDERS[acc.provider].fetchMessages(token, { hours, max, selfEmail: acc.email });
+      const msgs = await PROVIDERS[acc.provider].fetchMessages(token, { max, selfEmail: acc.email });
       msgs.forEach(m => fetched.push({ slot, acc, m, id: `${slot}_${m.providerId}`.replace(/[^\w-]/g, '').slice(0, 120) }));
       acc.lastSync = Date.now(); acc.error = null;
     } catch (e) {
@@ -191,31 +203,35 @@ app.post('/api/sync', async (req, res) => {
     };
   }).sort((x, y) => new Date(y.receivedAt) - new Date(x.receivedAt));
 
-  res.json({ items, accounts: publicAccounts(u), errors, ai: hasAI(), analysed: todo.length });
+  liveItems.set(req.uid, items);
+  res.json({ items, accounts: publicAccounts(u), errors, ai: hasAI(), analysed: todo.length, max: MAX_MAILS });
 });
 
 // ---------- Drafts (never sends) ----------
-app.post('/api/draft', async (req, res) => {
-  const u = getUser(req.uid);
-  const c = u?.cache?.[req.body?.id];
-  const body = String(req.body?.body || '').slice(0, 10000);
-  if (!c?.meta || !body.trim()) return res.status(400).json({ error: 'Email not found — sync again and retry.' });
+async function saveDraft(u, id, body) {
+  const c = u?.cache?.[id];
+  if (!c?.meta || !String(body || '').trim()) throw Object.assign(new Error('Email not found — sync again and retry.'), { status: 400 });
   const acc = u.accounts[c.meta.slot];
-  if (!acc) return res.status(400).json({ error: 'That inbox is no longer connected.' });
+  if (!acc) throw Object.assign(new Error('That inbox is no longer connected.'), { status: 400 });
   try {
     const token = await freshToken(acc);
     const d = await PROVIDERS[acc.provider].createDraft(token, {
-      to: c.meta.fromEmail, subject: c.meta.subject, body, threadId: c.meta.threadId,
+      to: c.meta.fromEmail, subject: c.meta.subject, body: String(body).slice(0, 10000), threadId: c.meta.threadId,
       inReplyTo: c.meta.messageIdHeader, providerId: c.meta.providerId, selfEmail: acc.email,
     });
-    res.json({ ok: true, link: d.link, provider: PROVIDERS[acc.provider].label });
+    return { link: d.link, provider: PROVIDERS[acc.provider].label };
   } catch (e) {
-    res.status(e.code === 'reauth' ? 401 : 500).json({ error: e.code === 'reauth' ? 'Reconnect this inbox to save drafts.' : e.message });
+    if (e.code === 'reauth') throw Object.assign(new Error('Reconnect this inbox to save drafts.'), { status: 401 });
+    throw e;
   }
+}
+app.post('/api/draft', async (req, res) => {
+  try { res.json({ ok: true, ...(await saveDraft(getUser(req.uid), req.body?.id, req.body?.body)) }); }
+  catch (e) { res.status(e.status || 500).json({ error: e.message }); }
 });
 
 app.post('/api/rewrite', async (req, res) => {
-  if (!hasAI()) return res.status(503).json({ error: 'AI is not configured (ANTHROPIC_API_KEY missing).' });
+  if (!hasAI()) return res.status(503).json({ error: 'AI is not configured (GEMINI_API_KEY missing).' });
   if (!limit('ai:' + req.uid, 800)) return res.status(429).json({ error: 'One moment…' });
   const { email, draft = '', instruction = 'Write a helpful reply.' } = req.body || {};
   if (!email?.body) return res.status(400).json({ error: 'Missing email' });
@@ -227,7 +243,7 @@ app.post('/api/rewrite', async (req, res) => {
 });
 
 app.post('/api/chat', async (req, res) => {
-  if (!hasAI()) return res.status(503).json({ error: 'AI is not configured (ANTHROPIC_API_KEY missing).' });
+  if (!hasAI()) return res.status(503).json({ error: 'AI is not configured (GEMINI_API_KEY missing).' });
   if (!limit('ai:' + req.uid, 800)) return res.status(429).json({ error: 'One moment…' });
   const { question, history, context } = req.body || {};
   if (!question) return res.status(400).json({ error: 'Ask something' });
@@ -235,6 +251,109 @@ app.post('/api/chat', async (req, res) => {
     const u = getUser(req.uid);
     res.json(await answer({ question: String(question).slice(0, 2000), history: Array.isArray(history) ? history : [], context: Array.isArray(context) ? context : [], profile: u?.profile, today: todayStr() }));
   } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ---------- Local memory ----------
+app.get('/api/memory', (req, res) => res.json(memory.listMemory()));
+app.post('/api/memory', (req, res) => {
+  const f = memory.addFact(req.body?.text, 'user');
+  if (!f) return res.status(400).json({ error: 'Nothing to remember' });
+  res.json(f);
+});
+app.post('/api/memory/sender', (req, res) => { memory.setSender(req.body?.email, req.body?.note, req.body?.priority); res.json({ ok: true }); });
+app.delete('/api/memory/:id', (req, res) => { memory.removeItem(req.params.id); res.json(memory.listMemory()); });
+app.delete('/api/memory', (req, res) => { memory.clearMemory(); res.json(memory.listMemory()); });
+
+// ---------- Gemini Live voice ----------
+// The browser talks to Gemini Live directly using a short-lived ephemeral token; the real key stays here.
+const LIVE_MODEL = () => process.env.GEMINI_LIVE_MODEL || 'gemini-3.8-live';
+function liveConfig(u) {
+  return {
+    responseModalities: ['AUDIO'],
+    systemInstruction: liveSystemPrompt({ profile: u?.profile, cats: u?.profile?.cats || [], today: todayStr(), mem: memory.promptBlock() }),
+    tools: [{ functionDeclarations: LIVE_TOOLS }],
+    speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: process.env.GEMINI_VOICE || 'Kore' } } },
+    inputAudioTranscription: {}, outputAudioTranscription: {},
+    sessionResumption: {},
+  };
+}
+app.post('/api/live/token', async (req, res) => {
+  if (!hasAI()) return res.status(503).json({ error: 'AI is not configured (GEMINI_API_KEY missing).' });
+  if (!limit('live:' + req.uid, 2000)) return res.status(429).json({ error: 'One moment…' });
+  try {
+    const { GoogleGenAI } = await import('@google/genai');
+    const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY, httpOptions: { apiVersion: 'v1alpha' } });
+    const config = liveConfig(getUser(req.uid));
+    const token = await client.authTokens.create({ config: {
+      uses: 3, // initial connect + a couple of resumptions
+      expireTime: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+      newSessionExpireTime: new Date(Date.now() + 2 * 60 * 1000).toISOString(),
+      liveConnectConstraints: { model: LIVE_MODEL(), config },
+    } });
+    res.json({ token: token.name, model: LIVE_MODEL(), config });
+  } catch (e) { console.error('live token:', e.message); res.status(500).json({ error: e.message }); }
+});
+
+const PRI = { critical: 0, important: 1, normal: 2, low: 3, noise: 4 };
+const brief = i => ({ id: i.id, from: i.from, subject: i.subject, received: i.receivedAt, priority: i.base, category: i.cat || 'Other', summary: i.summary, needsReply: i.needsReply, replied: i.replied, unread: !i.seen, deadline: i.action?.deadline || null, task: i.action?.desc || null });
+function findEmail(items, ref) {
+  const r = String(ref || '').toLowerCase();
+  return items.find(i => i.id === ref) || items.find(i => `${i.from} ${i.subject}`.toLowerCase().includes(r));
+}
+app.post('/api/live/tool', async (req, res) => {
+  const { name, args = {} } = req.body || {};
+  const u = getUser(req.uid), items = liveItems.get(req.uid) || [];
+  try {
+    switch (name) {
+      case 'get_briefing': {
+        const top = items.filter(i => PRI[i.base] <= 1 && !i.replied).sort((a, b) => PRI[a.base] - PRI[b.base]).slice(0, 6).map(brief);
+        const reply = items.filter(i => i.needsReply && !i.replied).slice(0, 6).map(brief);
+        const deadlines = items.filter(i => i.action?.deadline).sort((a, b) => a.action.deadline.localeCompare(b.action.deadline)).slice(0, 6).map(brief);
+        const names = (u?.profile?.cats || []).map(c => c.name);
+        const byCategory = {};
+        for (const i of items) {
+          const k = names.includes(i.cat) ? i.cat : 'Everything else';
+          const c = (byCategory[k] ||= { total: 0, waitingOnUser: 0, unread: 0, nextDeadline: null });
+          c.total++; if (!i.seen) c.unread++;
+          if (i.needsReply && !i.replied) c.waitingOnUser++;
+          const d = i.action?.deadline; if (d && (!c.nextDeadline || d < c.nextDeadline)) c.nextDeadline = d;
+        }
+        return res.json({ result: { total: items.length, unread: items.filter(i => !i.seen).length, byCategory, topPriority: top, needsReply: reply, deadlines } });
+      }
+      case 'list_emails': {
+        const f = String(args.filter || 'all');
+        let l = items.filter(i => f === 'unread' ? !i.seen : f === 'needs_reply' ? i.needsReply && !i.replied : f === 'important' ? PRI[i.base] <= 1 : true);
+        if (args.category) { const c = String(args.category).toLowerCase(); l = l.filter(i => String(i.cat || 'Other').toLowerCase() === c); }
+        if (args.query) { const q = String(args.query).toLowerCase(); l = l.filter(i => `${i.from} ${i.subject} ${i.summary}`.toLowerCase().includes(q)); }
+        return res.json({ result: l.slice(0, Math.min(15, +args.limit || 8)).map(brief) });
+      }
+      case 'read_email': {
+        const e = findEmail(items, args.id || args.query);
+        if (!e) return res.json({ result: { error: 'No such email. Call list_emails first.' } });
+        return res.json({ result: { ...brief(e), fromEmail: e.fromEmail, body: String(e.body || '').slice(0, 3000) } });
+      }
+      case 'draft_reply': {
+        const e = findEmail(items, args.id || args.query);
+        if (!e) return res.json({ result: { error: 'No such email. Call list_emails first.' } });
+        if (!hasAI()) return res.json({ result: { error: 'AI is not configured on the server.' } });
+        const text = await rewrite({ email: { fromName: e.from, fromEmail: e.fromEmail, subject: e.subject, body: e.body }, draft: '', instruction: String(args.instruction || 'Write a helpful, concise reply.').slice(0, 500), name: (u?.profile?.name || 'me').split(' ')[0] });
+        let saved = null;
+        try { saved = await saveDraft(u, e.id, text); } catch (err) { saved = { error: err.message }; }
+        return res.json({ result: { id: e.id, draft: text, savedToDrafts: !!saved?.link, provider: saved?.provider, note: 'Draft only. Nothing was sent.' }, ui: { draftFor: e.id, draft: text, link: saved?.link } });
+      }
+      case 'remember': {
+        const f = memory.addFact(args.fact, 'voice');
+        return res.json({ result: f ? { remembered: f.text } : { error: 'Nothing to remember' }, ui: { memory: true } });
+      }
+      case 'recall': return res.json({ result: memory.recall(args.query) });
+      default: return res.status(400).json({ result: { error: 'Unknown tool ' + name } });
+    }
+  } catch (e) { console.error('live tool', name, e.message); res.json({ result: { error: e.message } }); }
+});
+app.post('/api/live/summary', async (req, res) => {
+  const t = String(req.body?.transcript || '').slice(0, 6000);
+  if (t.length > 40 && hasAI()) { try { memory.addSummary(await summarize(t)); } catch (e) { console.error('summary:', e.message); } }
+  res.json({ ok: true });
 });
 
 // ---------- static frontend ----------
@@ -245,5 +364,5 @@ app.get('*', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'in
 const port = +process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`\n✦ Clearday running at ${APP_URL}`);
-  console.log(`  Gmail:   ${google.configured() ? 'ready' : 'not configured'}   Outlook: ${microsoft.configured() ? 'ready' : 'not configured'}   AI: ${hasAI() ? 'ready' : 'not configured'}${process.env.DEV_MOCK === '1' ? '   Mock provider: ON' : ''}\n`);
+  console.log(`  Gmail:   ${google.configured() ? 'ready' : 'not configured'}   Outlook: ${microsoft.configured() ? 'ready' : 'not configured'}   AI (Gemini): ${hasAI() ? 'ready' : 'not configured'}${process.env.DEV_MOCK === '1' ? '   Mock provider: ON' : ''}\n`);
 });

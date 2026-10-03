@@ -79,9 +79,9 @@ function extractBody(payload) {
   return plain || htmlToText(html);
 }
 
-export async function fetchMessages(token, { hours, max, selfEmail }) {
-  const days = Math.max(1, Math.ceil(hours / 24));
-  const list = await g(`/messages?${new URLSearchParams({ q: `in:inbox newer_than:${days}d`, maxResults: String(max) })}`, token);
+export async function fetchMessages(token, { max, selfEmail }) {
+  // Only the most recent `max` inbox messages (newest first), never the whole mailbox.
+  const list = await g(`/messages?${new URLSearchParams({ q: 'in:inbox', maxResults: String(max) })}`, token);
   const ids = (list.messages || []).map(m => m.id);
   const msgs = (await pMap(ids, id => g(`/messages/${id}?format=full`, token).catch(() => null), 8)).filter(Boolean);
 

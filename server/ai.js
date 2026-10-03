@@ -1,21 +1,30 @@
 // AI service layer: EmailClassifier + PriorityEngine + ActionDetector + SummarizationService
-// + ReplyDraftService in one structured Claude call per batch, plus InboxAssistant and rewrites.
+// + ReplyDraftService in one structured Gemini call per batch, plus InboxAssistant and rewrites.
 import { pMap, clip } from './util.js';
+import { promptBlock } from './memory.js';
 
-const API = 'https://api.anthropic.com/v1/messages';
-export const hasAI = () => !!process.env.ANTHROPIC_API_KEY;
-const FAST = () => process.env.AI_MODEL || 'claude-haiku-4-5-20251001';
-const SMART = () => process.env.AI_SMART_MODEL || 'claude-sonnet-5-5';
+const API = 'https://generativelanguage.googleapis.com/v1beta/models';
+export const hasAI = () => !!process.env.GEMINI_API_KEY;
+const FAST = () => process.env.AI_MODEL || 'gemini-3.5-flash-lite';
+const SMART = () => process.env.AI_SMART_MODEL || 'gemini-3.8-flash';
 
-async function claude({ system, prompt, model, maxTokens = 4000 }) {
-  const r = await fetch(API, {
-    method: 'POST',
-    headers: { 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-    body: JSON.stringify({ model, max_tokens: maxTokens, system, messages: [{ role: 'user', content: prompt }] }),
-  });
-  const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(`Claude API ${r.status}: ${j.error?.message || 'request failed'}`);
-  return (j.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+// One Gemini generateContent call. `json` asks for application/json output.
+// If the model rejects the thinking setting we retry once without it.
+async function gemini({ system, prompt, model, maxTokens = 4000, json = true, thinking = 'low' }) {
+  const call = async withThinking => {
+    const generationConfig = { maxOutputTokens: maxTokens, ...(json ? { responseMimeType: 'application/json' } : {}), ...(withThinking && thinking ? { thinkingConfig: { thinkingLevel: thinking } } : {}) };
+    const r = await fetch(`${API}/${model}:generateContent`, {
+      method: 'POST',
+      headers: { 'x-goog-api-key': process.env.GEMINI_API_KEY, 'content-type': 'application/json' },
+      body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig }),
+    });
+    const j = await r.json().catch(() => ({}));
+    return { r, j };
+  };
+  let { r, j } = await call(true);
+  if (!r.ok && r.status === 400 && thinking && /think/i.test(j.error?.message || '')) ({ r, j } = await call(false));
+  if (!r.ok) throw new Error(`Gemini API ${r.status}: ${j.error?.message || 'request failed'}`);
+  return (j.candidates?.[0]?.content?.parts || []).filter(p => p.text && !p.thought).map(p => p.text).join('');
 }
 
 function parseJSON(text) {
@@ -74,8 +83,23 @@ export function heuristic(e, reason) {
 const SYSTEM = `You are the analysis engine of Clearday, an AI chief of staff for email. You read emails and return strict JSON.
 Be accurate and conservative: never invent deadlines, meetings, amounts or facts that are not in the email. Write summaries in English unless the user's profile says otherwise; write reply drafts in the language of the email.`;
 
-export async function classify(emails, { profile, categories, today }) {
+// Normalise category input (strings or {name,hint,emoji}) to at most MAX_CATS user-defined categories.
+export const MAX_CATS = 6;
+export function normCats(list) {
+  const seen = new Set(), out = [];
+  for (const c of Array.isArray(list) ? list : []) {
+    const name = str(typeof c === 'string' ? c : c?.name, 30).trim();
+    if (!name || /^(other|everything else)$/i.test(name) || seen.has(name.toLowerCase())) continue;
+    seen.add(name.toLowerCase());
+    out.push({ name, hint: str(c?.hint, 160).trim(), emoji: str(c?.emoji, 8).trim() });
+    if (out.length >= MAX_CATS) break;
+  }
+  return out;
+}
+
+export async function classify(emails, { profile, categories: rawCats, today }) {
   if (!emails.length) return {};
+  const cats = normCats(rawCats), categories = cats.map(c => c.name);
   const name = (profile?.name || 'me').split(' ')[0];
   const batches = [];
   for (let i = 0; i < emails.length; i += 8) batches.push(emails.slice(i, i + 8));
@@ -87,12 +111,16 @@ export async function classify(emails, { profile, categories, today }) {
     }));
     const prompt = `Today is ${today}. The user is ${name}.
 User profile: ${JSON.stringify(profile || {})}
-Categories you may use (exact strings): ${JSON.stringify(categories)}
+Local memory about the user (honour it):
+${promptBlock() || '(none yet)'}
+The user defined these categories (use the exact name). Each has a hint describing what belongs in it:
+${cats.map(c => `- "${c.name}"${c.hint ? ': ' + c.hint : ''}`).join('\n') || '(none)'}
+If an email fits none of them, use "Other".
 
 For EACH email return an object:
 {"id": the same id,
  "priority": "critical" | "important" | "normal" | "low" | "noise",
- "category": one of the categories,
+ "category": one of the user's category names, or "Other",
  "kind": "personal" (a person writing to the user) | "newsletter" | "alert" (security/account/bank) | "event" | "receipt" | "promo" | "notice" (automated notification) | "social",
  "org": the sender's role or company if clear from the signature or domain, else "",
  "reasons": 2-4 short reasons (max 9 words each) for the priority, referring to the user's profile when relevant,
@@ -111,7 +139,7 @@ ${JSON.stringify(payload)}
 
 Return ONLY a JSON array with one object per email, no markdown.`;
     try {
-      const arr = parseJSON(await claude({ system: SYSTEM, prompt, model: FAST(), maxTokens: 8000 }));
+      const arr = parseJSON(await gemini({ system: SYSTEM, prompt, model: FAST(), maxTokens: 8000 }));
       const byId = new Map((Array.isArray(arr) ? arr : []).map(a => [a?.id, a]));
       batch.forEach(e => { results[e.id] = byId.has(e.id) ? sanitize(byId.get(e.id), e, categories) : heuristic(e, 'AI skipped this email'); });
     } catch (err) {
@@ -127,6 +155,8 @@ export async function answer({ question, history = [], context = [], profile, to
 
 Today is ${today}.
 User profile: ${JSON.stringify(profile || {})}
+Local memory about the user:
+${promptBlock() || '(none yet)'}
 
 Emails (JSON):
 ${JSON.stringify(context).slice(0, 120000)}
@@ -136,16 +166,41 @@ User: ${question}
 
 Respond with JSON only, no markdown:
 {"answer": string, "refs": [ids of emails you relied on], "draftFor": an email id or null, "draft": reply text signed "${(profile?.name || 'me').split(' ')[0]}" or null (only when the user asks for a reply or draft)}`;
-  const r = parseJSON(await claude({ system: 'You return strict JSON.', prompt, model: SMART(), maxTokens: 2500 }));
+  const r = parseJSON(await gemini({ system: 'You return strict JSON.', prompt, model: SMART(), maxTokens: 2500 }));
   return { text: str(r.answer, 4000), refs: Array.isArray(r.refs) ? r.refs.map(String) : [], draftFor: r.draftFor || null, draft: r.draft ? str(r.draft, 3000) : null };
 }
 
 export async function rewrite({ email, draft, instruction, name }) {
   const prompt = `${draft ? 'Rewrite this email reply.' : 'Write a reply to this email.'} Instruction: ${instruction}
-Keep facts consistent with the email, do not invent commitments, write in the email's language, sign it "${name}". Return ONLY the reply text, no preamble.
+Local memory about the user:\n${promptBlock() || '(none)'}\nKeep facts consistent with the email, do not invent commitments, write in the email's language, sign it "${name}". Return ONLY the reply text, no preamble.
 
 Email being replied to (from ${email.fromName} <${email.fromEmail}>, subject "${email.subject}"):
 ${clip(email.body, 5000)}
 ${draft ? `\nCurrent draft:\n${draft}` : ''}`;
-  return (await claude({ system: 'You write clear, natural email replies.', prompt, model: SMART(), maxTokens: 1500 })).trim();
+  return (await gemini({ system: 'You write clear, natural email replies.', prompt, model: SMART(), maxTokens: 1500, json: false })).trim();
+}
+
+export async function summarize(text) {
+  return (await gemini({ system: 'You write one-sentence memory notes.', prompt: `Summarise this voice conversation between a user and their email assistant in one sentence (max 40 words), keeping names, decisions and open follow-ups:\n${String(text).slice(0, 6000)}`, model: FAST(), maxTokens: 200, json: false, thinking: null })).trim();
+}
+
+const DEFAULT_CATS = [
+  { name: 'Work', emoji: '💼', hint: 'Colleagues, clients, projects and deadlines' },
+  { name: 'Personal', emoji: '👤', hint: 'Friends, family and personal plans' },
+  { name: 'Money', emoji: '💰', hint: 'Bills, invoices, bank and payments' },
+  { name: 'Events', emoji: '📅', hint: 'Meetings, invitations and things happening soon' },
+  { name: 'Learning', emoji: '🎓', hint: 'Courses, school, university and research' },
+];
+
+// Turn "who I am and what I want to track" into at most 6 category suggestions.
+export async function suggestCategories({ about, name }) {
+  if (!hasAI() || !String(about || '').trim()) return DEFAULT_CATS;
+  try {
+    const prompt = `The user${name ? ' (' + name + ')' : ''} describes themselves: """${String(about).slice(0, 1500)}"""
+Create between 3 and ${MAX_CATS} email categories that fit THEIR life and what they want to keep track of. Categories must be distinct, concrete (e.g. "Thesis", "Investors", "Clients", "Rent & bills", not generic like "Misc"), with a short name (max 2 words), one fitting emoji, and a one-line hint (max 14 words) saying what belongs in it. Do not include "Other", "Promotions" or "Newsletters"; those are handled automatically.
+Return ONLY JSON: [{"name": string, "emoji": string, "hint": string}]`;
+    const arr = parseJSON(await gemini({ system: 'You design email categories. You return strict JSON.', prompt, model: SMART(), maxTokens: 1200 }));
+    const out = normCats(arr);
+    return out.length ? out : DEFAULT_CATS;
+  } catch (e) { console.error('suggestCategories:', e.message); return DEFAULT_CATS; }
 }

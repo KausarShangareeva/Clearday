@@ -545,6 +545,86 @@ html.theming, html.theming *{transition:background-color .35s ease, color .35s e
 .orb-chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px}
 .orb-chips .chip{background:var(--surface)}
 
+
+/* ---- v2: category board ---- */
+:root{--cat-0:#8B5CD6;--cat-1:#1F8A66;--cat-2:#E0602A;--cat-3:#2C74D6;--cat-4:#D1477A;--cat-5:#B7791F}
+.board-in{max-width:1120px}
+.board-head h1{font-size:40px}
+.board-tools{display:flex;align-items:center;gap:12px}
+.board-grid{grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:64px 36px;margin-top:64px}
+.f-meta{margin-top:3px}
+.folder .f-front{background:linear-gradient(180deg,color-mix(in srgb,var(--c) 10%,var(--glass)),var(--glass))}
+.f-emoji{font-size:30px;left:18px;top:16px}
+.f-due{position:absolute;left:18px;top:60px;font-size:12px;font-weight:500;padding:3px 9px;border-radius:999px;background:var(--sunk);color:var(--ink2)}
+.f-due.hot{background:color-mix(in srgb,var(--crit) 14%,transparent);color:var(--crit)}
+.folder-wrap:hover .folder{transform:translateY(-4px)}
+.folder{transition:transform .25s cubic-bezier(.2,.8,.2,1)}
+.other-row{display:flex;align-items:center;gap:12px;width:100%;margin-top:44px;padding:14px 18px;border-radius:14px;border:1px dashed var(--line2);background:color-mix(in srgb,var(--surface) 70%,transparent);text-align:left;font-size:14.5px}
+.other-row:hover{background:var(--surface)}
+.other-row .chev{margin-left:auto;color:var(--ink3)}
+.letter{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:start;padding:14px 14px 14px 18px;cursor:default}
+.letter:hover{transform:none}
+.l-body{display:flex;flex-direction:column;gap:10px;min-width:0}
+.l-main{display:block;width:100%;text-align:left;color:inherit;text-decoration:none;min-width:0;border-radius:8px}
+.l-main:hover .l-subj{text-decoration:underline;text-underline-offset:3px}
+.l-main:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.l-go{display:block;margin-top:4px;font-size:12.5px;color:var(--ink3)}
+.l-time{display:inline-flex;align-items:center;gap:6px}
+.l-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.l-actions .due{margin-right:4px}
+.l-info{width:30px;height:30px;border-radius:50%;color:var(--ink3);font-size:16px;display:grid;place-items:center}
+.l-info:hover{background:var(--hover);color:var(--ink)}
+.letter .l-status{margin-top:4px}
+a.btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;color:var(--ink)}
+a.btn.primary{color:var(--bg)}
+/* voice orb states */
+.orb{width:104px;height:104px}
+.orb::before{background:conic-gradient(from 210deg,var(--cat-0),var(--cat-1),var(--cat-2),var(--cat-3),var(--cat-4),var(--cat-0))}
+.orb.listening::before,.orb.speaking::before,.orb.connecting::before{opacity:1;animation:spin 3s linear infinite}
+.orb.listening{box-shadow:0 0 0 10px color-mix(in srgb,var(--cat-3) 14%,transparent),0 14px 36px rgba(20,24,40,.12)}
+.orb.speaking{box-shadow:0 0 0 12px color-mix(in srgb,var(--cat-0) 16%,transparent),0 14px 36px rgba(20,24,40,.12)}
+.orb.speaking .orb-bars i{animation-duration:.7s}
+.orb.idle .orb-bars i{animation-duration:2.6s}
+@keyframes spin{to{transform:rotate(360deg)}}
+.board-ai{margin-top:72px}
+.orb-sub{max-width:44ch}
+.voice-log{width:100%;margin-top:18px;display:grid;gap:8px;text-align:left}
+.vl{padding:10px 14px;border-radius:14px;font-size:14.5px;line-height:1.5;max-width:92%}
+.vl.user{justify-self:end;background:var(--ink);color:var(--bg)}
+.vl.bot{justify-self:start;background:var(--surface);border:1px solid var(--line)}
+.vl .answer p{margin:0}
+/* category editor */
+.cat-edit{display:grid;gap:10px;margin-top:6px}
+.cat-card{display:grid;grid-template-columns:56px minmax(0,1fr) 34px;gap:10px;align-items:center;padding:10px 12px;border-radius:14px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--c)}
+.cat-card .emo{width:56px;height:56px;text-align:center;font-size:26px;border:1px solid var(--line2);border-radius:12px;background:var(--bg)}
+.cc-main{display:grid;gap:6px;min-width:0}
+.cc-main .input{height:38px}
+.cc-main .input:nth-child(2){font-size:13.5px;color:var(--ink2)}
+@media (max-width:860px){
+  .board-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:44px 14px}
+  .f-emoji{font-size:22px;left:12px;top:12px}
+  .f-due{left:12px;top:46px;font-size:10.5px}
+  .letter{grid-template-columns:minmax(0,1fr) auto;padding:12px}
+  .letter .l-status{display:none}
+  .orb{width:92px;height:92px}
+}
+
+/* voice card at the top of the board */
+.board-ai{display:grid;grid-template-columns:104px minmax(0,1fr);column-gap:26px;row-gap:2px;align-items:center;text-align:left;max-width:none;margin:26px 0 0;padding:22px 26px;border-radius:24px;background:var(--glass);border:1px solid var(--glass-line);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 10px 30px rgba(20,24,40,.07)}
+.board-ai .orb{grid-row:1 / span 5;grid-column:1;margin:0}
+.board-ai > *:not(.orb){grid-column:2}
+.board-ai .orb-title{margin-top:0;font-size:24px}
+.board-ai .orb-box{margin-top:12px}
+.board-ai .orb-chips{justify-content:flex-start;margin-top:10px}
+.board-grid{margin-top:56px}
+@media (max-width:860px){
+  .board-ai{grid-template-columns:1fr;padding:18px 16px;text-align:center;justify-items:center}
+  .board-ai .orb{grid-row:auto;grid-column:1;margin-bottom:6px}
+  .board-ai > *:not(.orb){grid-column:1}
+  .board-ai .orb-box,.board-ai .voice-log{width:100%}
+  .board-ai .orb-chips{justify-content:center}
+  .board-grid{margin-top:44px}
+}
 /* mobile */
 .bottom-nav{display:none}
 @media (max-width:860px){
@@ -1089,14 +1169,16 @@ function normalizeEmail(raw){
 
 const UserProfileService = {
   categoriesFor(p){
+    // User-defined categories (max 6). "Other" is never one of them: unmatched mail goes to "Everything else".
+    if(p.cats && p.cats.length) return p.cats.slice(0, 6).map(c => [c.name, c.emoji || '📁', c.hint || '']);
     const r = p.roles || [];
     const cats = [];
     if(r.includes('Student') || r.includes('Researcher')) cats.push(['University','🎓']);
     if(r.includes('Founder')) cats.push(['Startup','🚀']);
     if(r.includes('Employee') || r.includes('Manager') || r.includes('Founder') || r.length === 0) cats.push(['Work','💼']);
     if(r.includes('Freelancer')) cats.push(['Clients','🤝']);
-    cats.push(['Personal','👤'],['Finance','💰'],['Events','📅'],['Travel','✈️'],['News','📰'],['Notifications','🔔'],['Promotions','🏷️'],['Other','📁']);
-    const seen = new Set(); return cats.filter(([c]) => !seen.has(c) && seen.add(c));
+    cats.push(['Personal','👤'],['Finance','💰'],['Events','📅'],['Travel','✈️']);
+    const seen = new Set(); return cats.filter(([c]) => !seen.has(c) && seen.add(c)).slice(0, 6);
   },
   tiers(p){
     const high = [...(p.focus||[]), ...(p.people||[]).map(x => x)];
@@ -1213,7 +1295,7 @@ function defaultProfile(){
 }
 const S = {
   view: store.get('view', 'landing'),
-  page: 'briefing',
+  page: 'board',
   step: 0,
   profile: store.get('profile', null) || defaultProfile(),
   accounts: store.get('accounts', {}),
@@ -1232,7 +1314,7 @@ const S = {
   peopleInput:'',
   theme: store.get('theme', null),
   mode: store.get('mode', 'demo'),
-  savedDrafts: {},
+  savedDrafts: {}, draftBusy: {}, catsBusy:false, dictating:false, liveState:'idle',
 };
 if(S.view === 'analyzing' || S.view === 'connect') S.view = 'landing';
 if(S.theme) document.documentElement.dataset.theme = S.theme;
@@ -1276,6 +1358,7 @@ async function api(path, opts = {}){
 }
 const validDate = v => { if(!v) return null; const d = new Date(String(v).length === 10 ? v + 'T12:00:00' : v); return isNaN(d) ? null : d; };
 function setLiveAccounts(list){
+  LIVE.hasAccounts = list.length > 0;
   const prev = S.accounts || {};
   ACCOUNTS = list.map(a => ({id:a.slot, name:a.name, email:a.email, provider:a.provider, providerKey:a.providerKey, error:a.error, lastSync:a.lastSync}));
   S.accounts = {};
@@ -1291,17 +1374,17 @@ function liveToRaw(it){
 async function liveSync({quiet} = {}){
   LIVE.syncing = true; if(S.view === 'app') render({noFocus:true});
   try{
-    const r = await api('/api/sync', {method:'POST', body:{profile:S.profile, categories:UserProfileService.categoriesFor(S.profile).map(c => c[0])}});
+    const r = await api('/api/sync', {method:'POST', body:{profile:S.profile, categories:UserProfileService.categoriesFor(S.profile).map(c => ({name:c[0], emoji:c[1], hint:c[2] || ''}))}});
     setLiveAccounts(r.accounts);
     MAILBOX = r.items.map(liveToRaw);
-    LIVE.lastSync = new Date(); LIVE.errors = r.errors || []; LIVE.ai = r.ai;
+    LIVE.lastSync = new Date(); LIVE.errors = r.errors || []; LIVE.ai = r.ai; loadMemory();
     runPipeline();
     if(!quiet && LIVE.errors.length) toast(syncErrorText());
     return r;
   } finally { LIVE.syncing = false; }
 }
 const syncErrorText = () => LIVE.errors.map(e => `${SLOT_NAMES[e.slot]}: ${e.error === 'reauth' ? 'sign-in expired, reconnect it' : e.error}`).join(' — ');
-function blankProfile(){ return {...defaultProfile(), name:'', roles:[], focus:[], responsibilities:'', people:[], news:['AI & technology']}; }
+function blankProfile(){ return {...defaultProfile(), name:'', roles:[], focus:[], responsibilities:'', people:[], news:['AI & technology'], about:'', cats:[]}; }
 function startLive(){
   S.mode = 'live'; store.set('mode', 'live');
   S.profile = store.get('liveProfile', null) || blankProfile();
@@ -1355,7 +1438,7 @@ function vConnectLive(){
       <div class="acc-list">${liveAccRows()}</div>
       <p class="oauth-note"><span>🔒</span><span>You sign in on Google's or Microsoft's own page. Clearday never sees your password; access tokens are stored encrypted on this server, and you can disconnect at any time.</span></p>
       ${noProv ? `<p class="oauth-note"><span>⚠</span><span>No provider is configured yet. Add GOOGLE_CLIENT_ID / MICROSOFT_CLIENT_ID to the server's .env (see README).</span></p>` : ''}
-      ${!LIVE.ai ? `<p class="oauth-note"><span>⚠</span><span>ANTHROPIC_API_KEY isn't set on the server, so emails will be sorted with basic rules instead of AI.</span></p>` : ''}
+      ${!LIVE.ai ? `<p class="oauth-note"><span>⚠</span><span>GEMINI_API_KEY isn't set on the server, so emails will be sorted with basic rules instead of AI.</span></p>` : ''}
       <div class="q-actions">
         <button class="btn ghost" data-act="home">Back</button>
         <span class="spacer"></span>
@@ -1425,6 +1508,7 @@ function chips(list, selected, act){
 }
 
 function vOnboarding(){
+  if(S.mode === 'live') return vOnboardingLive();
   const p = S.profile, st = S.step, total = 6;
   let inner = '';
   if(st === 0) inner = `
@@ -1483,6 +1567,61 @@ function vOnboarding(){
         <span class="spacer"></span>
         ${st < 5 ? `<button class="btn ghost" data-act="obNext">Skip</button><button class="btn primary" data-act="obNext">Continue</button>` : `<button class="btn primary" data-act="toConnect">Connect inboxes</button>`}
       </div></div></div></div>`;
+}
+
+function vOnboardingLive(){
+  const p = S.profile, st = Math.min(S.step, 1);
+  p.cats = p.cats || [];
+  let inner = '';
+  if(st === 0) inner = `
+    <h2>Who are you?</h2>
+    <p class="hint">Tell Clearday about yourself and what you want to keep track of. It will suggest up to 6 folders for your email. You can change them on the next screen.</p>
+    <label class="field"><span>What should we call you?</span><input class="input" id="f-name" data-bind="name" value="${esc(p.name)}" autocomplete="given-name"></label>
+    <label class="field"><span>Who are you, and how do you want your mail sorted?</span>
+      <textarea class="input" rows="5" id="f-about" data-bind="about" placeholder="e.g. I'm a master's student at KTH and I'm building a startup with two friends. I want to keep track of thesis meetings, investors, rent and bills, and friends.">${esc(p.about || '')}</textarea></label>
+    <button class="btn sm" type="button" data-act="aboutMic">${S.dictating ? '■ Stop listening' : '🎤 Speak instead'}</button>`;
+  else inner = `
+    <h2>Your categories</h2>
+    <p class="hint">Up to 6. Rename them, say what belongs in each, remove some or add your own. Anything that doesn't fit goes to “Everything else”.</p>
+    <div class="cat-edit">${p.cats.map((c, i) => `<div class="cat-card" style="--c:var(--cat-${i % 6})">
+      <input class="emo" data-cat="${i}:emoji" value="${esc(c.emoji || '📁')}" maxlength="4" aria-label="Emoji">
+      <div class="cc-main"><input class="input" data-cat="${i}:name" value="${esc(c.name)}" placeholder="Category name" maxlength="30" aria-label="Category name"><input class="input" data-cat="${i}:hint" value="${esc(c.hint || '')}" placeholder="What belongs here?" maxlength="160" aria-label="What belongs in this category"></div>
+      <button class="icon-btn" data-act="catRm" data-i="${i}" aria-label="Remove ${esc(c.name)}">×</button></div>`).join('')}</div>
+    <div style="display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap"><button class="btn sm" data-act="catAdd" ${p.cats.length >= 6 ? 'disabled' : ''}>+ Add category</button><span class="muted" style="font-size:13px">${p.cats.length} of 6</span><button class="btn sm ghost" data-act="catSuggest" style="margin-left:auto" ${S.catsBusy ? 'disabled' : ''}>${S.catsBusy ? 'Thinking…' : '✦ Suggest again'}</button></div>`;
+  return `<div class="setup">
+    <div class="setup-top"><div class="logo"><span class="logo-mark"></span>Clearday</div>
+      <div style="display:flex;align-items:center;gap:14px"><span class="muted" style="font-size:13px">${st+1} of 3</span><div class="progress"><i style="width:${(st+1)/3*100}%"></i></div></div></div>
+    <div class="setup-body"><div class="q">${inner}
+      <div class="q-actions">
+        ${st > 0 ? `<button class="btn ghost" data-act="obBack">Back</button>` : `<button class="btn ghost" data-act="home">Cancel</button>`}
+        <span class="spacer"></span>
+        ${st === 0 ? `<button class="btn primary" data-act="obNext" ${S.catsBusy ? 'disabled' : ''}>${S.catsBusy ? 'Thinking…' : 'Suggest my categories'}</button>` : `<button class="btn primary" data-act="toConnect">${LIVE.hasAccounts ? 'Save and sort my mail' : 'Connect inboxes'}</button>`}
+      </div></div></div></div>`;
+}
+async function obNextLive(force){
+  const p = S.profile;
+  if(!(p.about || '').trim() && !(p.cats || []).length){ toast('Tell Clearday a little about yourself first'); return; }
+  if(!force && p.cats?.length && p.aboutAtSuggest === p.about){ S.step = 1; render({top:true, noFocus:true}); return; }
+  S.catsBusy = true; render({noFocus:true});
+  try{
+    const r = await api('/api/categories/suggest', {method:'POST', body:{about:p.about || '', name:p.name || ''}});
+    p.cats = (r.categories || []).slice(0, 6).map(c => ({name:c.name, emoji:c.emoji || '📁', hint:c.hint || ''}));
+    p.aboutAtSuggest = p.about;
+    if(!r.ai) toast('AI isn\'t configured on the server, so these are generic. Edit them freely.');
+  }catch(e){ S.catsBusy = false; render({noFocus:true}); toast(e.message); return; }
+  S.catsBusy = false; S.step = 1; persist(); render({top:true, noFocus:true});
+}
+let dict = null;
+function dictate(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ toast('Speech input isn\'t available in this browser. Try Chrome.'); return; }
+  if(S.dictating){ try{ dict.stop(); }catch(e){} return; }
+  dict = new SR(); dict.lang = 'en-GB'; dict.interimResults = false; dict.continuous = true;
+  const base = (S.profile.about || '').trim() ? S.profile.about.trim() + ' ' : '';
+  dict.onresult = ev => { let t = ''; for(let i = 0; i < ev.results.length; i++) t += ev.results[i][0].transcript; S.profile.about = base + t; const ta = document.getElementById('f-about'); if(ta) ta.value = S.profile.about; };
+  dict.onend = () => { S.dictating = false; render({noFocus:true}); };
+  dict.onerror = () => { S.dictating = false; render({noFocus:true}); toast('Couldn\'t use the microphone'); };
+  try{ dict.start(); S.dictating = true; render({noFocus:true}); }catch(e){ toast('Couldn\'t start the microphone'); }
 }
 
 function vConnect(){
@@ -1569,91 +1708,12 @@ function segLen(id, len){
   return `<div class="seg" role="group" aria-label="Summary length">${opts.map(([k,l]) => `<button class="${len===k?'on':''}" data-act="sumLen" data-id="${id}" data-v="${k}">${l}</button>`).join('')}</div>`;
 }
 
-function pBriefing(){
-  const all = visible(), m = matter(), act = openActions(), nl = newsletters(), f = filtered();
-  const deadlines = actions().filter(e => e.action.deadline && !e.done);
-  const tomorrowDl = deadlines.some(e => relDay(e.action.deadline) === 'tomorrow');
-  const nAcc = connectedAccs().filter(a => S.accounts[a.id].enabled !== false).length;
-  const sentence = all.length
-    ? `${greeting()}, ${esc(firstName())}. <span class="soft"><span class="n">${all.length}</span> emails came in across ${nAcc} ${nAcc === 1 ? 'inbox' : 'inboxes'}.</span> <span class="n">${m.length}</span> matter today${act.length ? `, <span class="n">${act.length}</span> need you` : ''}${tomorrowDl ? ', and one deadline is tomorrow' : ''}.`
-    : S.mode === 'live' && connectedAccs().length ? `${greeting()}, ${esc(firstName())}. Your inboxes are quiet — nothing new in the last few days.` : `${greeting()}, ${esc(firstName())}. Nothing to show yet — turn an inbox back on.`;
-  const ev = events().filter(e => (e.event.date - NOW) < 8*864e5 && (e.event.date - dayStart(NOW)) > -1);
-  const important = m.filter(e => !e.requiresAction);
-  return `<div class="page">
-    <div class="brief-date">${fmtDay(NOW)}${S.mode === 'live' && LIVE.lastSync ? `, synced at ${LIVE.lastSync.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'})}` : ''}</div>
-    ${S.mode === 'live' && LIVE.errors.length ? `<div class="ai-note" style="margin-bottom:22px"><span>⚠</span><span style="flex:1">${esc(syncErrorText())}</span><button class="btn sm" data-act="go" data-v="accounts">Fix</button></div>` : ''}
-    <h1 class="brief-sentence">${sentence}</h1>
-    <div class="brief-actions">
-      <button class="catch-btn" data-act="catchup"><span class="spark">✦</span>Catch me up</button>
-      <button class="btn board-btn" data-act="go" data-v="board"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5A1.5 1.5 0 0 1 4.5 6H9l2 2h8.5A1.5 1.5 0 0 1 21 9.5v8A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z"/></svg>Open board</button>
-      <button class="btn" data-act="go" data-v="assistant">Ask your inbox</button>
-      ${S.mode === 'live' ? `<button class="btn ghost" data-act="sync" ${LIVE.syncing ? 'disabled' : ''}>${LIVE.syncing ? 'Syncing…' : 'Sync now'}</button>` : ''}
-    </div>
-    <div class="stats">
-      <div class="stat"><b>${m.length}</b><span>Important</span></div>
-      <div class="stat"><b>${act.length}</b><span>Need action</span></div>
-      <div class="stat"><b>${deadlines.length}</b><span>Deadlines</span></div>
-      <div class="stat"><b>${nl.length}</b><span>Newsletters summarised</span></div>
-      <div class="stat"><b>${f.length}</b><span>Filtered out</span></div>
-    </div>
-    <section class="sec"><div class="sec-h"><h2>Needs your attention</h2><button class="link" data-act="go" data-v="action">All actions</button></div>
-      ${actions().length ? `<div class="todo">${actions().map(todoItem).join('')}</div>` : `<div class="empty"><b>No actions waiting</b>Nothing needs you right now.</div>`}
-    </section>
-    <section class="sec"><div class="sec-h"><h2>Important messages</h2><button class="link" data-act="go" data-v="important">See all</button></div>
-      ${list(important, 'Nothing else important', 'Everything urgent is in your actions above.')}
-    </section>
-    ${ev.length ? `<section class="sec"><div class="sec-h"><h2>Coming up</h2></div>
-      <div class="list">${ev.map(e => `<button class="row" data-act="open" data-id="${e.id}"><span class="pdot p-${e.priority}"></span><span style="min-width:0"><span class="row-top">${accDot(e.acc)}<span class="sender">${esc(e.event.title)}</span></span><span class="subject" style="color:var(--ink2)">${relDay(e.event.date).replace(/^./, c => c.toUpperCase())}, ${esc(e.event.time)} — ${esc(e.event.place)}</span></span><span class="row-right"><span class="time">${fmtShort(e.event.date)}</span></span></button>`).join('')}</div></section>` : ''}
-    <section class="sec"><div class="sec-h"><h2>What you should know</h2><button class="link" data-act="go" data-v="news">All news</button></div>
-      <div class="news">${nl.slice(0,3).map(e => newsItem(e, true)).join('') || '<div class="empty"><b>No newsletters</b>Nothing to summarise today.</div>'}</div>
-    </section>
-    <section class="sec"><div class="sec-h"><h2>Filtered for you</h2><button class="link" data-act="goInbox" data-v="noise">Review</button></div>
-      <p class="muted" style="font-size:14.5px;max-width:62ch">${f.length} low-priority emails — promotions, receipts, platform notifications and mass mailings. Nothing in them looked like it needed you.</p>
-    </section>
-  </div>`;
-}
-
-function pInbox(){
-  let items = visible();
-  if(S.inboxPrio !== 'all') items = items.filter(e => e.priority === S.inboxPrio);
-  if(S.inboxAcc !== 'all') items = items.filter(e => e.acc === S.inboxAcc);
-  if(S.query.trim()){ const q = S.query.toLowerCase(); items = items.filter(e => (e.from + e.subject + e.summary + e.body + (e.org||'')).toLowerCase().includes(q)); }
-  const pr = ['all', ...RANK];
-  return `<div class="page">
-    <div class="page-h"><div><h1>Inbox</h1><p>Every email from every account, ranked by what matters to you.</p></div></div>
-    <div class="filters">
-      <div class="search"><input class="input" id="f-search" type="search" placeholder="Search all inboxes" value="${esc(S.query)}" aria-label="Search all inboxes"></div>
-      <div class="seg" role="group" aria-label="Priority">${pr.map(p => `<button class="${S.inboxPrio===p?'on':''}" data-act="prio" data-v="${p}">${p==='all'?'All':PLABEL[p]}</button>`).join('')}</div>
-    </div>
-    <div class="filters">${['all', ...connectedAccs().map(a => a.id)].map(a => `<button class="chip sm ${S.inboxAcc===a?'on':''}" data-act="accFilter" data-v="${a}">${a==='all' ? 'All accounts' : accDot(a)+' '+accById(a).name}</button>`).join('')}</div>
-    ${list(items, 'No emails match', S.query ? 'Try a different search.' : 'Change the filters above.')}
-  </div>`;
-}
-function pImportant(){
-  return `<div class="page"><div class="page-h"><div><h1>Important</h1><p>Critical and important emails across all accounts, with the reason for each.</p></div></div>
-  ${list(matter(), 'Nothing important', 'Enjoy the quiet.')}</div>`;
-}
 function pAction(){
   const a = actions();
   const others = visible().filter(e => !e.requiresAction && e.draftReply);
   return `<div class="page"><div class="page-h"><div><h1>Needs action</h1><p>Things someone asked you to do. Tick them off as you go.</p></div></div>
   ${a.length ? `<div class="todo">${a.map(todoItem).join('')}</div>` : `<div class="empty"><b>All clear</b>No actions detected.</div>`}
   ${others.length ? `<section class="sec"><div class="sec-h"><h2>Replies you might want to send</h2></div>${list(others)}</section>` : ''}
-  </div>`;
-}
-function pNews(){
-  return `<div class="page"><div class="page-h"><div><h1>News</h1><p>Newsletters condensed to what you need, and why it matters to you.</p></div></div>
-  <div class="news">${newsletters().map(e => newsItem(e, false)).join('') || '<div class="empty"><b>No newsletters</b>Connect an account that receives newsletters.</div>'}</div></div>`;
-}
-function pCategories(){
-  const cats = UserProfileService.categoriesFor(S.profile);
-  const v = visible();
-  const sel = S.catFilter;
-  return `<div class="page"><div class="page-h"><div><h1>Categories</h1><p>Your life, sorted the way you described it.</p></div></div>
-  <div class="ai-note"><span class="spark">✦</span><span>These categories were created from your profile (${esc(S.profile.roles.join(' + ') || 'no role')}). Change your role in Settings and they adapt.</span></div>
-  <div class="cat-grid">${cats.map(([c,ic]) => { const n = v.filter(e => e.category === c); const imp = n.filter(e => RANK.indexOf(e.priority) < 2).length;
-    return `<button class="cat ${sel===c?'on':''}" data-act="cat" data-v="${c}"><span class="ce">${ic}</span><b>${c}</b><span>${n.length} emails${imp ? `, ${imp} important` : ''}</span></button>`; }).join('')}</div>
-  ${sel ? `<section class="sec"><div class="sec-h"><h2>${esc(sel)}</h2><button class="link" data-act="cat" data-v="${esc(sel)}">Clear</button></div>${list(v.filter(e => e.category === sel), 'Empty', 'No emails in this category.')}</section>` : ''}
   </div>`;
 }
 function pAccounts(){
@@ -1697,8 +1757,8 @@ function pPrivacy(){
       <li>Answer questions over your mail <code>InboxAssistant</code></li>
     </ol>
     <h2>What this prototype does</h2>
-    ${S.mode === 'live' ? `<p>You're connected to real inboxes. Mail is fetched over Google's and Microsoft's official APIs when you sync, analysed by Claude through the Anthropic API, and the results (not the email bodies) are cached on the Clearday server so unchanged emails aren't analysed twice. OAuth tokens are encrypted at rest with AES-256-GCM. Drafts are saved into your own Drafts folder; Clearday has no code path that sends email.</p>` : ''}
-    <p style="${S.mode === 'live' ? 'display:none' : ''}">This is a hackathon prototype running in your browser on realistic demo data. Classifications for the demo mailbox are precomputed; your corrections re-rank emails live. The assistant and draft rewrites use Claude when you allow it, and a local fallback otherwise. Your profile and corrections are kept only in this browser.</p>
+    ${S.mode === 'live' ? `<p>You're connected to real inboxes. Mail is fetched over Google's and Microsoft's official APIs when you sync, analysed by Google Gemini through the Gemini API, and the results (not the email bodies) are cached on the Clearday server so unchanged emails aren't analysed twice. OAuth tokens are encrypted at rest with AES-256-GCM. Drafts are saved into your own Drafts folder; Clearday has no code path that sends email.</p>` : ''}
+    <p style="${S.mode === 'live' ? 'display:none' : ''}">This is a hackathon prototype running in your browser on realistic demo data. Classifications for the demo mailbox are precomputed; your corrections re-rank emails live. The assistant and draft rewrites use Gemini when you allow it, and a local fallback otherwise. Your profile and corrections are kept only in this browser.</p>
     <div class="warn">This is not a production system and has not been security-audited. Don't connect real accounts to a prototype without proper review.</div>
   </div></div>`;
 }
@@ -1716,8 +1776,13 @@ function pSettings(){
     </div>
   </div>
   <div style="margin-top:22px">
-    <div class="set-row"><div><b>Edit priority profile</b><span>Rerun the setup questions.</span></div><button class="btn sm" data-act="editProfile">Edit</button></div>
+    ${S.mode === 'live' ? `<div class="set-row"><div><b>Your categories</b><span>${esc(UserProfileService.categoriesFor(S.profile).map(c => c[1] + ' ' + c[0]).join('  ·  ') || 'None yet')}</span></div><button class="btn sm" data-act="editCats">Edit</button></div>` : `<div class="set-row"><div><b>Edit priority profile</b><span>Rerun the setup questions.</span></div><button class="btn sm" data-act="editProfile">Edit</button></div>`}
     <div class="set-row"><div><b>Learned from your corrections</b><span>${c.vip.length} always-prioritised senders, ${c.ignore.length} ignored senders, ${Object.keys(c.override).length} manual priorities</span></div><button class="btn sm ghost" data-act="resetCorr" ${c.vip.length + c.ignore.length + Object.keys(c.override).length ? '' : 'disabled'}>Reset</button></div>
+    ${S.mode === 'live' ? `<div class="set-row" style="display:block"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><div><b>Memory</b><span>What Clearday remembers about you. Stored only on this machine (data/memory.json).</span></div><div style="display:flex;gap:8px"><button class="btn sm" data-act="memAdd">Add</button><button class="btn sm ghost" data-act="memClear" ${(S.mem?.facts?.length || 0) + Object.keys(S.mem?.senders || {}).length + (S.mem?.summaries?.length || 0) ? '' : 'disabled'}>Clear</button></div></div>
+      <ul class="mem-list" style="margin:10px 0 0;padding:0;list-style:none;display:grid;gap:6px">${[
+        ...(S.mem?.facts || []).map(f => [f.id, f.text]),
+        ...Object.entries(S.mem?.senders || {}).map(([k, v]) => [k, `${k}: ${v.priority ? 'treat as ' + v.priority + '. ' : ''}${v.note || ''}`]),
+        ...(S.mem?.summaries || []).map(x => [`${x.date}:${x.text.slice(0, 12)}`, `${x.date} — ${x.text}`])].map(([id, t]) => `<li style="display:flex;justify-content:space-between;gap:10px;font-size:13.5px"><span>${esc(t)}</span><button class="btn sm ghost" data-act="memDel" data-id="${esc(id)}" aria-label="Forget">✕</button></li>`).join('') || '<li class="muted" style="font-size:13.5px">Nothing yet. Say "remember that…" to the voice assistant.</li>'}</ul></div>` : ''}
     <div class="set-row"><div><b>Dark mode</b><span>Follows your system unless you choose.</span></div><button class="switch ${dark ? 'on':''}" data-act="theme" role="switch" aria-checked="${dark}" aria-label="Dark mode"></button></div>
     ${S.mode === 'live'
       ? `<div class="set-row"><div><b>Delete my data</b><span>Disconnect all inboxes and erase everything stored on the server.</span></div><button class="btn sm ghost" data-act="deleteData">Delete</button></div>`
@@ -1725,40 +1790,6 @@ function pSettings(){
   </div></div>`;
 }
 
-const SUGGEST_LIVE = ['What do I need to do today?','Summarise my important emails','What deadlines do I have?','Who is waiting for my reply?','Any meetings or events coming up?','What can I safely ignore?'];
-const SUGGEST = ['What do I need to do today?','What happened with my startup?','Did anyone from my university contact me?','What deadlines do I have?','Did any investor reply this week?','Who am I waiting to hear back from?'];
-function pAssistant(){
-  const msgs = S.chat.map(m => m.role === 'user'
-    ? `<div class="msg user"><div class="bubble">${esc(m.text)}</div></div>`
-    : `<div class="msg bot"><div class="bubble"><div class="who"><span class="spark">✦</span>Clearday${m.live ? '' : ''}</div>
-        <div class="answer">${formatAnswer(m.text)}</div>
-        ${m.draft ? `<div class="chat-draft"><div class="k" style="color:var(--ai-ink)">Draft reply to ${esc(byId(m.draftFor)?.from || '')} — not sent</div><pre>${esc(m.draft)}</pre>
-          <div class="draft-foot"><button class="btn sm" data-act="openDraft" data-id="${m.draftFor}" data-i="${S.chat.indexOf(m)}">Edit draft</button><button class="btn sm ghost" data-act="copyText" data-i="${S.chat.indexOf(m)}">Copy</button></div></div>` : ''}
-        ${m.refs?.length ? `<div class="refs">${m.refs.map(id => byId(id)).filter(Boolean).map(e => `<button class="ref" data-act="open" data-id="${e.id}">${accDot(e.acc)}<span>${esc(e.from)}: ${esc(e.subject)}</span></button>`).join('')}</div>` : ''}
-      </div></div>`).join('');
-  const busy = S.chatBusy ? `<div class="msg bot"><div class="bubble"><div class="who"><span class="spark">✦</span>Clearday</div><div class="busy-line" style="padding-left:0"><span class="dots"><i></i><i></i><i></i></span>Reading your inbox</div></div></div>` : '';
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  return `<div class="chat-page">
-    <div class="chat-scroll" id="chatScroll"><div class="chat-inner">
-      ${S.chat.length ? '' : `<div class="chat-hello"><h1>Ask your inbox anything.</h1><p>I've read ${visible().length} emails across your connected accounts. Ask by typing, or tap the microphone and talk.</p>
-        <div class="suggest">${(S.mode === 'live' ? SUGGEST_LIVE : SUGGEST).map(s => `<button class="chip" data-act="ask" data-v="${esc(s)}">${esc(s)}</button>`).join('')}</div></div>`}
-      ${msgs}${busy}
-      ${S.chat.length && !S.chatBusy ? `<div class="suggest" style="margin-top:20px">${(S.mode === 'live' ? ['Draft a reply to the most important email','What else needs a reply?'] : ['Draft a reply to the investor','What did the investor say?','Summarise yesterday\'s important emails']).map(s => `<button class="chip sm" data-act="ask" data-v="${esc(s)}">${esc(s)}</button>`).join('')}</div>` : ''}
-    </div></div>
-    <div class="composer-wrap"><div class="composer">
-      ${S.voiceMode ? `<div class="voice-banner"><span class="spark">✦</span>${S.listening ? 'Listening… speak naturally.' : 'Voice mode on — answers are read aloud.'}${SR ? '' : ' Your browser can\'t do speech recognition here, so try a phrase:'}
-        ${SR ? '' : ['Hey, what happened in my inbox today?','Draft a reply to the investor.'].map(s => `<button class="chip sm" data-act="ask" data-v="${esc(s)}">${esc(s)}</button>`).join('')}
-        <button class="btn sm ghost" data-act="voiceOff">Turn off</button></div>` : ''}
-      <div class="composer-box">
-        <textarea id="chatInput" rows="1" placeholder="Ask about your email…" aria-label="Ask about your email"></textarea>
-        <button class="mic ${S.listening ? 'live':''}" data-act="mic" aria-label="${S.listening ? 'Stop listening' : 'Talk to Clearday'}" title="Voice">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
-        <button class="send" data-act="send" aria-label="Send" ${S.chatBusy ? 'disabled' : ''}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
-      </div>
-      <div class="composer-meta"><span>Answers use only your connected email. Clearday drafts, but never sends.</span><span>${S.mode === 'live' ? (LIVE.ai ? 'Live AI' : 'AI not configured on server') : SAMPLE ? 'Live AI available' : 'Demo answers'}</span></div>
-    </div></div>
-  </div>`;
-}
 function formatAnswer(t){
   const lines = String(t).split('\n');
   let html = '', inList = false;
@@ -1772,11 +1803,20 @@ function formatAnswer(t){
 }
 
 /* ---------- board ---------- */
-const ACC_ICON = {personal:'👤', university:'🎓', startup:'🚀', work:'💼'};
 const STATUS_LABEL = {awaiting:'Awaiting reply', replied:'Replied', fyi:'No reply needed'};
-function boardEmails(acc){
-  return S.emails.filter(e => e.acc === acc && (S.boardScope === 'all' ? true : RANK.indexOf(e.priority) <= 2 && e.kind !== 'newsletter'));
+const OTHER = '__other';
+const SUGGEST_BOARD = ['What is waiting for my reply?','Draft a reply to the most urgent email','What deadlines do I have?'];
+const catDefs = () => UserProfileService.categoriesFor(S.profile);
+const catDef = key => key === OTHER ? ['Everything else', '🗂️', 'Mail that fits none of your categories'] : (catDefs().find(c => c[0] === key) || [key, '📁', '']);
+const catColor = key => { const i = key === OTHER ? -1 : catDefs().findIndex(c => c[0] === key); return i < 0 ? 'var(--ink3)' : `var(--cat-${i % 6})`; };
+const catKeys = () => catDefs().map(c => c[0]);
+function boardEmails(key){
+  const names = catKeys();
+  const l = visible().filter(e => key === OTHER ? !names.includes(e.category) : e.category === key && e.priority !== 'noise');
+  const w = e => e.status === 'awaiting' ? 0 : e.status === 'fyi' ? 1 : 2;
+  return l.slice().sort((a, b) => w(a) - w(b) || RANK.indexOf(a.priority) - RANK.indexOf(b.priority) || a.hoursAgo - b.hoursAgo);
 }
+const nextDue = list => list.filter(e => e.status === 'awaiting' && !e.done && e.action?.deadline).map(e => e.action.deadline).sort((a, b) => a - b)[0] || null;
 const initials = n => n.replace(/^(Prof\.|Dr\.)\s*/,'').split(/\s+/).map(w => w[0]).slice(0,2).join('').toUpperCase();
 function avatarHue(n){ let h = 0; for(const c of n) h = (h*31 + c.charCodeAt(0)) % 360; return h; }
 function avatars(list){
@@ -1784,95 +1824,126 @@ function avatars(list){
   const shown = names.slice(0,3);
   return `<span class="avatars">${shown.map(n => `<span class="av" style="--h:${avatarHue(n)}" title="${esc(n)}">${esc(initials(n))}</span>`).join('')}${names.length > 3 ? `<span class="av more">+${names.length-3}</span>` : ''}</span>`;
 }
-function folder(acc, list, open){
-  const a = accById(acc);
+function folder(key, list, open){
+  const def = catDef(key);
   const awaiting = list.filter(e => e.status === 'awaiting').length;
   const unseen = list.filter(e => !e.seen).length;
+  const due = nextDue(list);
+  const hot = due && dayStart(due) - dayStart(NOW) <= 864e5;
   const pos = [['2%',-8],['24%',-2],['44%',4],['60%',9]];
   const top = list.slice(0,4).reverse();
   const papers = top.map((e, i) => { const [l, r] = pos[i + (4 - top.length)];
     return `<span class="paper ${e.status} ${e.seen ? '' : 'unseen'}" style="--l:${l};--r:${r}deg"><span class="pa-top"><span class="pa-av">${esc(initials(e.from))}</span><span class="pa-from">${esc(e.from)}</span></span><span class="pa-line"></span><span class="pa-line short"></span></span>`; }).join('');
-  return `<div class="folder ${open ? 'is-open' : ''}" style="--c:var(--acc-${acc})">
+  return `<div class="folder ${open ? 'is-open' : ''}" style="--c:${catColor(key)}">
     <span class="f-back"></span>
     <span class="f-papers" aria-hidden="true">${open ? '' : papers}</span>
     <span class="f-front">
-      <span class="f-emoji" aria-hidden="true">${ACC_ICON[acc]}</span>
-      <span class="stamp ${awaiting ? '' : 'done'}"><b>${awaiting || '✓'}</b><small>${awaiting ? 'to reply' : 'all done'}</small></span>
+      <span class="f-emoji" aria-hidden="true">${esc(def[1])}</span>
+      ${key === OTHER ? '' : `<span class="stamp ${awaiting ? '' : 'done'}"><b>${awaiting || '✓'}</b><small>${awaiting ? 'waiting on you' : 'all clear'}</small></span>`}
+      ${due && !open ? `<span class="f-due ${hot ? 'hot' : ''}">Due ${esc(relDay(due))}</span>` : ''}
       ${avatars(list)}
       <span class="f-new">${unseen ? `<i></i>${unseen} unread` : 'All read'}</span>
     </span>
   </div>`;
 }
-function letter(e, i){
+function letter(e, i, key){
+  const waiting = e.status === 'awaiting';
+  const prov = accById(e.acc)?.provider === 'Outlook' ? 'Outlook' : 'Gmail';
+  const head = `<span class="l-top">${e.seen ? '' : '<span class="l-new" title="Unread"></span>'}<span class="l-from">${esc(e.from)}</span>${e.org ? `<span class="l-org">${esc(e.org)}</span>` : ''}<span class="l-time">${accDot(e.acc)}${timeLabel(e)}</span></span><span class="l-subj">${esc(e.subject)}</span>`;
+  const main = e.link
+    ? `<a class="l-main" href="${esc(e.link)}" target="_blank" rel="noopener" title="Open this email in ${prov}">${head}${waiting ? '' : `<span class="l-go">Open in ${prov} ↗</span>`}</a>`
+    : `<button class="l-main" data-act="open" data-id="${e.id}">${head}</button>`;
+  const dl = e.action?.deadline && !e.done ? `<span class="due ${dayStart(e.action.deadline) - dayStart(NOW) <= 864e5 ? 'hot' : ''}">Due ${esc(relDay(e.action.deadline))}</span>` : '';
+  const saved = S.savedDrafts[e.id], busy = S.draftBusy[e.id];
+  const strip = waiting ? `<span class="l-actions">${dl}
+      ${saved ? `<a class="btn sm primary" href="${esc(saved)}" target="_blank" rel="noopener">Open draft ↗</a>` : `<button class="btn sm primary" data-act="quickDraft" data-id="${e.id}" ${busy ? 'disabled' : ''}>${busy ? 'Drafting…' : '✦ Draft reply'}</button>`}
+      ${e.link ? `<a class="btn sm" href="${esc(e.link)}" target="_blank" rel="noopener">Open mail ↗</a>` : ''}
+    </span>` : '';
   return `<li class="${S.boardDeal ? 'deal' : ''}" style="--i:${i}">
-    <button class="letter ${e.status}" data-act="open" data-id="${e.id}" style="--c:var(--acc-${e.acc})">
-      <span class="l-num">${i+1}</span>
-      <span class="l-main">
-        <span class="l-top">${e.seen ? '' : '<span class="l-new" title="Unread"></span>'}<span class="l-from">${esc(e.from)}</span>${e.org ? `<span class="l-org">${esc(e.org)}</span>` : ''}<span class="l-time">${timeLabel(e)}</span></span>
-        <span class="l-subj">${esc(e.subject)}</span>
-        <span class="l-sum">${esc(e.summary)}</span>
-      </span>
-      <span class="l-status ${e.status}">${e.status === 'replied' ? '✓ ' : ''}${STATUS_LABEL[e.status]}</span>
-    </button>
+    <div class="letter ${e.status}" style="--c:${catColor(key)}">
+      <span class="l-body">${main}${strip}</span>
+      ${e.status === 'replied' ? '<span class="l-status replied">✓ Replied</span>' : ''}
+      <button class="l-info" data-act="open" data-id="${e.id}" aria-label="Details and corrections" title="Summary &amp; details">ⓘ</button>
+    </div>
   </li>`;
 }
-function pBoard(){
-  const sel = connectedAccs().filter(a => S.accounts[a.id].enabled !== false);
-  const all = sel.flatMap(a => boardEmails(a.id));
-  const seen = all.filter(e => e.seen).length;
-  const awaiting = all.filter(e => e.status === 'awaiting').length;
-  const replied = all.filter(e => e.status === 'replied').length;
-  const controls = `<div class="board-controls">
-      <div class="board-inboxes" role="group" aria-label="Inboxes on the board">${connectedAccs().map(a => { const on = S.accounts[a.id].enabled !== false;
-        return `<button class="chip sm ${on ? 'on-soft' : 'off'}" data-act="boardAcc" data-id="${a.id}" aria-pressed="${on}" style="--c:var(--acc-${a.id})">${accDot(a.id)}${a.name}</button>`; }).join('')}</div>
-      <div class="seg" role="group" aria-label="What to show"><button class="${S.boardScope==='priority'?'on':''}" data-act="boardScope" data-v="priority">Most important</button><button class="${S.boardScope==='all'?'on':''}" data-act="boardScope" data-v="all">Everything</button></div>
+function voiceLog(){
+  const msgs = S.chat.slice(-6);
+  if(!msgs.length && !S.chatBusy) return '';
+  const rows = msgs.map(m => m.role === 'user'
+    ? `<div class="vl user">${esc(m.text)}</div>`
+    : `<div class="vl bot"><div class="answer">${formatAnswer(m.text)}</div>${m.draft ? `<div class="chat-draft"><div class="k" style="color:var(--ai-ink)">Draft reply to ${esc(byId(m.draftFor)?.from || '')} — not sent</div><pre>${esc(m.draft)}</pre>
+        <div class="draft-foot"><button class="btn sm" data-act="openDraft" data-id="${m.draftFor}" data-i="${S.chat.indexOf(m)}">Edit draft</button><button class="btn sm ghost" data-act="copyText" data-i="${S.chat.indexOf(m)}">Copy</button>${S.savedDrafts[m.draftFor] ? `<a class="btn sm" href="${esc(S.savedDrafts[m.draftFor])}" target="_blank" rel="noopener">Open draft ↗</a>` : ''}</div></div>` : ''}</div>`).join('');
+  return `<div class="voice-log" aria-live="polite">${rows}${S.chatBusy ? '<div class="vl bot"><span class="dots"><i></i><i></i><i></i></span></div>' : ''}</div>`;
+}
+function voiceSection(){
+  const st = S.liveState || 'idle', liveOK = S.mode === 'live' && LIVE.ai;
+  const title = {idle:'Talk to Clearday', connecting:'Connecting…', listening:'Listening…', speaking:'Speaking…'}[st] || 'Talk to Clearday';
+  const sub = st === 'idle' ? (liveOK ? 'Tap the circle for your spoken briefing, then just talk. You can interrupt any time.' : 'Ask about your emails, or get a reply drafted for you.') : 'You\'re talking to an AI. Audio is streamed to Google Gemini while this is on. Tap again to stop.';
+  return `<section class="board-ai" aria-label="Voice assistant">
+    <button class="orb ${st}" data-act="orb" aria-label="${st === 'idle' ? 'Talk to Clearday' : 'Stop voice'}" aria-pressed="${st !== 'idle'}"><span class="orb-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span></button>
+    <h2 class="orb-title">${title}</h2>
+    <p class="orb-sub">${sub}</p>
+    ${voiceLog()}
+    <div class="orb-box">
+      <input id="boardQ" placeholder="Or type: what still needs my reply?" aria-label="Ask about your emails">
+      <button class="send" data-act="boardSend" aria-label="Ask"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
     </div>
-    <div class="legend"><span><i class="lg awaiting"></i>Awaiting your reply</span><span><i class="lg replied"></i>Replied</span><span><i class="lg fyi"></i>No reply needed</span><span><i class="lg unread"></i>Unread</span></div>`;
+    <div class="orb-chips">${SUGGEST_BOARD.map(q => `<button class="chip sm" data-act="ask" data-v="${esc(q)}">${esc(q)}</button>`).join('')}</div>
+  </section>`;
+}
+function pBoard(){
+  const keys = catKeys();
+  const all = visible();
+  const waiting = all.filter(e => e.status === 'awaiting').length;
+  const due = nextDue(all);
+  const nAcc = connectedAccs().filter(a => S.accounts[a.id].enabled !== false).length;
+  const head = `<div class="board-head"><div>
+      <h1>${greeting()}, ${esc(firstName())}.</h1>
+      <p class="board-sum">${waiting ? `<b>${waiting}</b> ${waiting === 1 ? 'email is' : 'emails are'} waiting on you` : 'Nothing is waiting on you'}${due ? ` · next deadline <b>${esc(relDay(due))}</b>` : ''} · ${all.length} recent emails across ${nAcc} ${nAcc === 1 ? 'inbox' : 'inboxes'}</p>
+    </div>
+    ${S.mode === 'live' ? `<div class="board-tools">${LIVE.lastSync ? `<span class="muted" style="font-size:12.5px">Synced ${LIVE.lastSync.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'})}</span>` : ''}<button class="btn sm ghost" data-act="sync" ${LIVE.syncing ? 'disabled' : ''}>${LIVE.syncing ? 'Syncing…' : 'Sync now'}</button></div>` : ''}
+  </div>
+  ${S.mode === 'live' && LIVE.errors.length ? `<div class="ai-note" style="margin-top:16px"><span>⚠</span><span style="flex:1">${esc(syncErrorText())}</span><button class="btn sm" data-act="go" data-v="accounts">Fix</button></div>` : ''}`;
 
-  if(S.boardOpen && sel.some(a => a.id === S.boardOpen)){
-    const acc = S.boardOpen, a = accById(acc), list = boardEmails(acc);
+  if(S.boardOpen && (keys.includes(S.boardOpen) || S.boardOpen === OTHER)){
+    const key = S.boardOpen, def = catDef(key), list = boardEmails(key);
     const ls = list.filter(e => e.seen).length, la = list.filter(e => e.status === 'awaiting').length;
     return `<div class="board"><div class="board-in">
-      <div class="board-head"><button class="btn sm ghost back" data-act="boardBack">← All inboxes</button></div>
+      <div class="board-head"><button class="btn sm ghost back" data-act="boardBack">← All categories</button></div>
       <div class="spread">
         <aside class="spread-side">
-          ${folder(acc, list, true)}
-          <h2 class="sp-name">${a.name}</h2>
-          <p class="sp-mail">${esc(a.email)}</p>
+          ${folder(key, list, true)}
+          <h2 class="sp-name">${esc(def[0])}</h2>
+          <p class="sp-mail">${esc(def[2])}</p>
           <div class="sp-stats">
+            <div><b>${list.length}</b><small>emails</small></div>
+            <div><b>${la}</b><small>waiting on you</small></div>
             <div><b>${ls}<span>/${list.length}</span></b><small>read</small></div>
-            <div><b>${la}</b><small>to reply</small></div>
-            <div><b>${list.filter(e => e.status === 'replied').length}</b><small>replied</small></div>
           </div>
           <div class="meter" aria-label="${ls} of ${list.length} read"><i style="width:${list.length ? ls/list.length*100 : 0}%"></i></div>
-          ${ls < list.length ? `<button class="btn sm" data-act="markAllSeen" data-v="${acc}" style="margin-top:14px">Mark all as read</button>` : ''}
+          ${ls < list.length ? `<button class="btn sm" data-act="markAllSeen" data-v="${esc(key)}" style="margin-top:14px">Mark all as read</button>` : ''}
         </aside>
         <div class="spread-main">
-          <p class="sp-hint">Ordered by what matters most. Open a letter to read it, reply, or mark it as replied.</p>
-          ${list.length ? `<ol class="letters">${list.map(letter).join('')}</ol>` : `<div class="empty"><b>Nothing here</b>No ${S.boardScope === 'all' ? '' : 'important '}emails in this inbox.</div>`}
+          <p class="sp-hint">Click an email to open it in ${list.some(e => accById(e.acc)?.provider === 'Outlook') ? 'your mail app' : 'Gmail'}. Emails that need a reply come first, with a draft one tap away.</p>
+          ${list.length ? `<ol class="letters">${list.map((e, i) => letter(e, i, key)).join('')}</ol>` : `<div class="empty"><b>Nothing here</b>No emails in this folder right now.</div>`}
         </div>
       </div>
     </div></div>`;
   }
 
+  const other = boardEmails(OTHER);
   return `<div class="board"><div class="board-in">
-    ${sel.length ? `<div class="board-grid">${sel.map(a => { const list = boardEmails(a.id); const s = list.filter(e => e.seen).length;
-      return `<button class="folder-wrap" data-act="boardOpen" data-v="${a.id}" aria-label="Open ${a.name}: ${list.length} emails, ${list.length - s} unread">
-        ${folder(a.id, list, false)}
-        <span class="f-name">${a.name}</span>
+    ${head}
+    ${voiceSection()}
+    ${keys.length ? `<div class="board-grid">${keys.map(k => { const list = boardEmails(k); const def = catDef(k);
+      return `<button class="folder-wrap" data-act="boardOpen" data-v="${esc(k)}" aria-label="Open ${esc(def[0])}: ${list.length} emails, ${list.filter(e => e.status === 'awaiting').length} waiting on you">
+        ${folder(k, list, false)}
+        <span class="f-name">${esc(def[0])}</span>
+        <span class="f-meta">${list.length} ${list.length === 1 ? 'email' : 'emails'}</span>
       </button>`; }).join('')}</div>
-      <section class="board-ai" aria-label="Ask Clearday">
-        <button class="orb" data-act="boardAsk" aria-label="Ask Clearday about your emails"><span class="orb-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span></button>
-        <h2 class="orb-title">Ask Clearday</h2>
-        <p class="orb-sub">Talk about your emails, or get a reply drafted for you.</p>
-        <div class="orb-box">
-          <input id="boardQ" placeholder="What still needs my reply?" aria-label="Ask about your emails">
-          <button class="mic" data-act="boardMic" aria-label="Talk to Clearday"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
-          <button class="send" data-act="boardSend" aria-label="Ask"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
-        </div>
-        <div class="orb-chips">${['What still needs my reply?','Draft a reply to the most urgent email','Summarise my unread emails'].map(q => `<button class="chip sm" data-act="ask" data-v="${esc(q)}">${esc(q)}</button>`).join('')}</div>
-      </section>`
-    : `<div class="empty"><b>No inboxes turned on</b>Turn an inbox back on in the sidebar.</div>`}
+      ${other.length ? `<button class="other-row" data-act="boardOpen" data-v="${OTHER}"><span>🗂️</span><b>Everything else</b><span class="muted">${other.length} ${other.length === 1 ? 'email' : 'emails'} that fit none of your categories</span><span class="chev">→</span></button>` : ''}`
+    : `<div class="empty" style="margin-top:40px"><b>No categories yet</b>Add some in Settings → Your categories.</div>`}
   </div></div>`;
 }
 
@@ -1952,16 +2023,16 @@ function vCatchup(){
 
 /* ---------- shell ---------- */
 const NAV = [
-  ['briefing','✦','Briefing'],['board','◫','Board'],['inbox','≡','Inbox'],['important','!','Important'],['action','✓','Needs action'],['news','◎','News'],['categories','▦','Categories'],
-  'sep',['assistant','✺','AI Assistant'],'sep',['accounts','⇄','Connected accounts'],['privacy','◈','Privacy & security'],['settings','⚙','Settings']
+  ['board','◫','Board'],['action','✓','Needs action'],
+  'sep',['accounts','⇄','Connected accounts'],['privacy','◈','Privacy & security'],['settings','⚙','Settings']
 ];
 function vApp(){
-  const counts = {inbox:visible().length, important:matter().length, action:openActions().length, news:newsletters().length};
-  const pages = {board:pBoard, briefing:pBriefing, inbox:pInbox, important:pImportant, action:pAction, news:pNews, categories:pCategories, assistant:pAssistant, accounts:pAccounts, privacy:pPrivacy, settings:pSettings};
+  const counts = {action:openActions().length};
+  const pages = {board:pBoard, action:pAction, accounts:pAccounts, privacy:pPrivacy, settings:pSettings};
   const nav = NAV.map(n => n === 'sep' ? '<div class="nav-sep"></div>' :
     `<button class="nav-i ${S.page===n[0]?'on':''}" data-act="go" data-v="${n[0]}"><span class="ni">${n[1]}</span>${n[2]}${counts[n[0]] != null ? `<span class="count">${counts[n[0]]}</span>` : ''}</button>`).join('');
   const accs = connectedAccs().map(a => `<button class="side-acc ${S.accounts[a.id].enabled === false ? 'off':''}" data-act="toggleAcc" data-id="${a.id}" title="Show or hide ${a.name}">${accDot(a.id)}${a.name}</button>`).join('');
-  const bn = [['briefing','✦','Briefing'],['board','◫','Board'],['assistant','✺','Assistant'],['inbox','≡','Inbox']];
+  const bn = [['board','◫','Board'],['action','✓','Actions'],['settings','⚙','Settings']];
   return `<div class="shell">
     <aside class="side ${S.navOpen ? 'open':''}" aria-label="Navigation">
       <div class="side-top"><div class="logo"><span class="logo-mark"></span>Clearday</div>${themeBtn()}</div>
@@ -1973,7 +2044,7 @@ function vApp(){
     </aside>
     ${S.navOpen ? `<div class="overlay" style="z-index:54" data-act="navClose"></div>` : ''}
     <main class="main ${S.page === 'board' ? 'main-board' : ''}" id="main">
-      <div class="topbar"><button class="icon-btn" data-act="navOpen" aria-label="Menu">☰</button><div class="logo"><span class="logo-mark"></span>Clearday</div><div style="display:flex">${themeBtn()}<button class="icon-btn" data-act="catchup" aria-label="Catch me up">✦</button></div></div>
+      <div class="topbar"><button class="icon-btn" data-act="navOpen" aria-label="Menu">☰</button><div class="logo"><span class="logo-mark"></span>Clearday</div><div style="display:flex">${themeBtn()}</div></div>
       ${pages[S.page]()}
     </main>
     <nav class="bottom-nav">${bn.map(b => `<button class="${S.page===b[0]?'on':''}" data-act="go" data-v="${b[0]}"><span class="ni">${b[1]}</span>${b[2]}</button>`).join('')}<button data-act="navOpen"><span class="ni">☰</span>More</button></nav>
@@ -2059,7 +2130,7 @@ async function analyze(){
   if(live && LIVE.errors.length) setTimeout(() => toast(syncErrorText()), 400);
   if(!live) runPipeline();
   await wait(300);
-  S.view = 'app'; S.page = 'briefing'; persist(); render({top:true});
+  S.view = 'app'; S.page = 'board'; S.boardOpen = null; persist(); render({top:true});
 }
 
 /* ---------- Inbox assistant ---------- */
@@ -2161,7 +2232,6 @@ Respond with JSON only, no markdown fences:
 
 async function ask(q){
   q = q.trim(); if(!q || S.chatBusy) return;
-  if(S.page !== 'assistant'){ S.page = 'assistant'; }
   S.chat.push({role:'user', text:q}); S.chatBusy = true;
   const ci = document.getElementById('chatInput'); if(ci) ci.value = '';
   render({noFocus:true});
@@ -2173,9 +2243,37 @@ async function ask(q){
   if(S.voiceMode) speak(r.text + (r.draft ? ' The draft is on screen for you to review.' : ''));
 }
 
+/* ---------- Gemini Live events ---------- */
+window.addEventListener('livevoice', e => { S.liveState = e.detail; if(S.view === 'app') render({noFocus:true}); });
+window.addEventListener('livevoice-turn', e => {
+  const {user, ai} = e.detail; if(!user && !ai) return;
+  if(user) S.chat.push({role:'user', text:user});
+  if(ai) S.chat.push({role:'ai', text:ai, refs:[], live:true});
+  render({noFocus:true});
+});
+window.addEventListener('livevoice-tool', e => {
+  const u = e.detail.ui; if(!u) return;
+  if(u.draftFor && u.draft){
+    S.drafts[u.draftFor] = {text:u.draft, tone:'Professional'};
+    S.chat.push({role:'ai', text:u.link ? 'I saved this draft to your Drafts folder. Nothing was sent.' : 'Here is the draft. Nothing was sent.', refs:[], draft:u.draft, draftFor:u.draftFor, live:true});
+    render({noFocus:true});
+  }
+  if(u.memory) loadMemory();
+});
+window.addEventListener('livevoice-error', e => { S.liveState = 'idle'; render({noFocus:true}); toast(e.detail || 'Voice stopped'); });
+
+/* ---------- local memory (stored on the server machine, in data/memory.json) ---------- */
+async function loadMemory(){
+  if(S.mode !== 'live') return;
+  try{ S.mem = await api('/api/memory'); if(S.view === 'app' && S.page === 'settings') render({noFocus:true}); }catch(e){}
+}
 /* ---------- voice ---------- */
 let recog = null;
 function toggleMic(){
+  if(S.mode === 'live' && LIVE.ai && window.LiveVoice){
+    if(window.LiveVoice.state === 'idle'){ S.voiceMode = false; window.LiveVoice.start(); } else window.LiveVoice.stop();
+    return;
+  }
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   S.voiceMode = true;
   if(!SR){ render(); toast('Speech recognition isn\'t available in this browser — try Chrome, or tap a phrase'); return; }
@@ -2189,7 +2287,7 @@ function toggleMic(){
         const t = ev.results[i][0].transcript;
         if(ev.results[i].isFinal) finalText += t; else interim += t;
       }
-      const ci = document.getElementById('chatInput'); if(ci) ci.value = finalText + interim;
+      const ci = document.getElementById('chatInput') || document.getElementById('boardQ'); if(ci) ci.value = finalText + interim;
     };
     recog.onerror = ev => { S.listening = false; render(); toast(ev.error === 'not-allowed' || ev.error === 'service-not-allowed' ? 'Microphone access is blocked here — tap a phrase or type instead' : 'Didn\'t catch that — try again'); };
     recog.onend = () => { S.listening = false; const t = finalText.trim(); render(); if(t) ask(t); };
@@ -2267,6 +2365,7 @@ const ACT = {
   speed(el){ S.profile.speed = el.dataset.v; render(); },
   rmPerson(el){ S.profile.people.splice(+el.dataset.i, 1); render(); },
   obNext(){
+    if(S.mode === 'live'){ obNextLive(); return; }
     if(S.step === 2){ const v = (document.getElementById('f-people')?.value || '').trim(); if(v){ S.profile.people.push(v); S.peopleInput = ''; } }
     if(S.step === 1 && S.profile.focus.length === 0){ S.profile.focus = [...new Set(S.profile.roles.flatMap(r => FOCUS_BY_ROLE[r] || []))]; }
     S.step = Math.min(5, S.step + 1); persist(); render({top:true, noFocus:true});
@@ -2274,15 +2373,18 @@ const ACT = {
   obBack(){ S.step = Math.max(0, S.step - 1); render({noFocus:true}); },
   toConnect(){ persist();
     if(S.mode === 'live'){
+      const seen = new Set(); S.profile.cats = (S.profile.cats || []).map(c => ({name:(c.name || '').trim().slice(0, 30), emoji:(c.emoji || '📁').trim().slice(0, 4), hint:(c.hint || '').trim().slice(0, 160)})).filter(c => c.name && !/^(other|everything else)$/i.test(c.name) && !seen.has(c.name.toLowerCase()) && seen.add(c.name.toLowerCase())).slice(0, 6);
+      if(!S.profile.cats.length){ toast('Add at least one category'); return; }
+      persist();
       api('/api/profile', {method:'PUT', body:{profile:S.profile}}).catch(() => {});
-      if(S.emails.length && ACCOUNTS.length){ analyze(); return; }
+      if(LIVE.hasAccounts){ analyze(); return; }
       api('/api/me').then(me => { setLiveAccounts(me.accounts); S.view = 'connect'; render({top:true}); }).catch(e => toast(e.message));
       return;
     } if(connectedAccs().length && S.emails.length){ runPipeline(); S.view = 'app'; S.page = 'settings'; render(); toast('Profile updated — emails re-ranked'); return; } S.view = 'connect'; render({top:true}); },
   connectAcc(el){ connectAcc(el.dataset.id); },
   async connectAll(){ await Promise.all(ACCOUNTS.map(a => connectAcc(a.id))); },
   analyze,
-  go(el){ if(el.dataset.v === 'board' && S.page === 'board') S.boardOpen = null; S.page = el.dataset.v; S.navOpen = false; S.openId = null; if(S.page !== 'categories') S.catFilter = null; render({top:true, noFocus:true}); if(S.page === 'assistant') setTimeout(() => document.getElementById('chatInput')?.focus(), 30); },
+  go(el){ if(el.dataset.v === 'board') S.boardOpen = null; S.page = el.dataset.v; S.navOpen = false; S.openId = null; render({top:true, noFocus:true}); },
   goInbox(el){ S.page = 'inbox'; S.inboxPrio = el.dataset.v || 'all'; render({top:true}); },
   navOpen(){ S.navOpen = true; render({noFocus:true}); },
   navClose(){ S.navOpen = false; render({noFocus:true}); },
@@ -2290,12 +2392,31 @@ const ACT = {
   openFromCatch(el){ S.catchup = false; S.openId = el.dataset.id; if(!S.corr.seen.includes(el.dataset.id)){ S.corr.seen.push(el.dataset.id); persist(); runPipeline(); } render({sheetTop:true, noFocus:true}); },
   close(){ S.openId = null; render({noFocus:true}); },
   boardOpen(el){ S.boardOpen = el.dataset.v; S.boardDeal = true; render({top:true, noFocus:true}); S.boardDeal = false; },
-  boardAsk(){ const i = document.getElementById('boardQ'); i?.focus(); i?.scrollIntoView({block:'center', behavior:'smooth'}); },
+  boardAsk(){ const i = document.getElementById('boardQ'); i?.focus(); },
   boardSend(){ const v = (document.getElementById('boardQ')?.value || '').trim(); if(v) ask(v); else ACT.boardAsk(); },
-  boardMic(){ S.page = 'assistant'; S.navOpen = false; render({top:true, noFocus:true}); toggleMic(); },
-  boardBack(){ S.boardOpen = null; render({noFocus:true}); },
-  boardScope(el){ S.boardScope = el.dataset.v; S.boardDeal = !!S.boardOpen; render({noFocus:true}); S.boardDeal = false; },
-  boardAcc(el){ const st = S.accounts[el.dataset.id]; st.enabled = st.enabled === false; if(S.boardOpen === el.dataset.id && !st.enabled) S.boardOpen = null; persist(); render({noFocus:true}); },
+  boardBack(){ S.boardOpen = null; render({top:true, noFocus:true}); },
+  orb(){
+    if(S.mode === 'live' && LIVE.ai && window.LiveVoice){ window.LiveVoice.state === 'idle' ? window.LiveVoice.start() : window.LiveVoice.stop(); }
+    else toggleMic();
+  },
+  async quickDraft(el){
+    const id = el.dataset.id, e = byId(id); if(!e) return;
+    if(S.mode !== 'live'){ S.openId = id; render({sheetTop:true, noFocus:true}); return; }
+    if(S.draftBusy[id]) return;
+    S.draftBusy[id] = true; render({noFocus:true});
+    try{
+      const text = S.drafts[id]?.text || e.draftReply || (await api('/api/rewrite', {method:'POST', body:{email:{fromName:e.from, fromEmail:e.fromEmail, subject:e.subject, body:e.body}, draft:'', instruction:'Write a helpful, concise reply.'}})).text;
+      const r = await api('/api/draft', {method:'POST', body:{id, body:text}});
+      S.drafts[id] = {text, tone:'Professional'}; S.savedDrafts[id] = r.link;
+      toast(`Draft saved to your ${r.provider} drafts. Nothing was sent.`);
+    }catch(err){ toast(err.message); }
+    S.draftBusy[id] = false; render({noFocus:true});
+  },
+  aboutMic: dictate,
+  async catSuggest(){ await obNextLive(true); },
+  catAdd(){ if((S.profile.cats || []).length >= 6) return; (S.profile.cats ||= []).push({name:'', emoji:'📁', hint:''}); render({noFocus:true}); setTimeout(() => document.querySelector('.cat-card:last-child input.input')?.focus(), 30); },
+  catRm(el){ S.profile.cats.splice(+el.dataset.i, 1); render({noFocus:true}); },
+  editCats(){ S.step = 1; S.view = 'onboarding'; render({top:true}); },
   toggleReplied(el){ const id = el.dataset.id; S.corr.replied = toggleIn(S.corr.replied, id); persist(); runPipeline(); render({noFocus:true}); toast(S.corr.replied.includes(id) ? 'Marked as replied' : 'Marked as awaiting reply'); },
   markAllSeen(el){ const ids = boardEmails(el.dataset.v).map(e => e.id); S.corr.seen = [...new Set([...S.corr.seen, ...ids])]; persist(); runPipeline(); render({noFocus:true}); },
   catchup(){ S.catchup = true; S.navOpen = false; render({noFocus:true}); },
@@ -2318,6 +2439,11 @@ const ACT = {
     if(v === 'low'){ S.corr.override[e.id] = 'low'; toast('Marked as low priority'); }
     if(v === 'vip'){ S.corr.vip = toggleIn(S.corr.vip, e.fromEmail); toast(S.corr.vip.includes(e.fromEmail) ? `${e.from} will always be prioritised` : `${e.from} is no longer always prioritised`); }
     if(v === 'ignore'){ S.corr.ignore = toggleIn(S.corr.ignore, dom); toast(S.corr.ignore.includes(dom) ? `Emails from ${dom} will be filtered as noise` : `Emails from ${dom} are no longer ignored`); }
+    if(S.mode === 'live'){
+      const note = {important:'User marked an email from this sender as important', low:'User marked an email from this sender as low priority', vip:'User wants this sender always prioritised', ignore:'User wants this domain treated as noise'}[v];
+      const pr = {important:'important', low:'low', vip:'important', ignore:'noise'}[v];
+      if(note) api('/api/memory/sender', {method:'POST', body:{email: v === 'ignore' ? dom : e.fromEmail, note, priority: pr}}).then(loadMemory).catch(() => {});
+    }
     persist(); runPipeline(); render({noFocus:true});
   },
   tone(el){ rewrite(el.dataset.id, null, el.dataset.v); },
@@ -2331,6 +2457,9 @@ const ACT = {
   ask(el){ ask(el.dataset.v); },
   send(){ ask(document.getElementById('chatInput')?.value || ''); },
   mic: toggleMic,
+  async memAdd(){ const t = prompt('What should Clearday remember?'); if(!t) return; try{ await api('/api/memory', {method:'POST', body:{text:t}}); loadMemory(); }catch(e){ toast(e.message); } },
+  async memDel(el){ try{ S.mem = await api('/api/memory/' + encodeURIComponent(el.dataset.id), {method:'DELETE'}); render({noFocus:true}); }catch(e){ toast(e.message); } },
+  async memClear(){ if(!confirm('Erase everything Clearday remembers?')) return; try{ S.mem = await api('/api/memory', {method:'DELETE'}); render({noFocus:true}); }catch(e){ toast(e.message); } },
   voiceOff(){ S.voiceMode = false; try{ speechSynthesis.cancel(); recog && recog.stop(); }catch(e){} S.listening = false; render({noFocus:true}); },
   editProfile(){ S.step = 0; S.view = 'onboarding'; render({top:true}); },
   resetCorr(){ S.corr = {vip:[], ignore:[], override:{}, done:S.corr.done, seen:S.corr.seen, replied:S.corr.replied}; persist(); runPipeline(); render({noFocus:true}); toast('Corrections cleared'); },
@@ -2354,6 +2483,7 @@ document.addEventListener('click', ev => {
 document.addEventListener('input', ev => {
   const t = ev.target;
   if(t.dataset.bind){ S.profile[t.dataset.bind] = t.value; }
+  if(t.dataset.cat){ const [i, f] = t.dataset.cat.split(':'); if(S.profile.cats?.[+i]) S.profile.cats[+i][f] = t.value; }
   if(t.id === 'f-search'){ S.query = t.value; render(); }
   if(t.id === 'draftText'){ const id = t.dataset.id; S.drafts[id] = {...(S.drafts[id] || {tone:'Professional'}), text:t.value}; }
   if(t.id === 'f-people'){ S.peopleInput = t.value; }
@@ -2389,11 +2519,116 @@ document.addEventListener('keydown', ev => {
   if(S.mode === 'live' && me?.accounts?.length){
     S.profile = me.profile || S.profile;
     setLiveAccounts(me.accounts);
+    if(!(S.profile.cats && S.profile.cats.length)){ S.profile = {...blankProfile(), ...S.profile, cats:[]}; S.step = 0; S.view = 'onboarding'; render({top:true}); toast('Choose your categories to get started'); return; }
     analyze();
     return;
   }
   render();
 })();
+</script>
+
+<script type="module">
+/* ---------- Gemini Live voice (browser <-> Gemini directly via ephemeral token) ---------- */
+const LV = { session:null, state:'idle', stream:null, inCtx:null, outCtx:null, node:null, playAt:0, sources:new Set(), handle:null, inTxt:'', outTxt:'', log:[], closing:false, retries:0 };
+const setState = s => { LV.state = s; window.dispatchEvent(new CustomEvent('livevoice', {detail:s})); };
+const b64 = buf => { let s = ''; const u = new Uint8Array(buf); for(let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); };
+const unb64 = str => { const s = atob(str), u = new Uint8Array(s.length); for(let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u.buffer; };
+
+function playChunk(data){
+  const pcm = new Int16Array(data), f = new Float32Array(pcm.length);
+  for(let i = 0; i < pcm.length; i++) f[i] = pcm[i] / 32768;
+  const buf = LV.outCtx.createBuffer(1, f.length, 24000); buf.copyToChannel(f, 0);
+  const src = LV.outCtx.createBufferSource(); src.buffer = buf; src.connect(LV.outCtx.destination);
+  LV.playAt = Math.max(LV.playAt, LV.outCtx.currentTime + 0.02); src.start(LV.playAt); LV.playAt += buf.duration;
+  LV.sources.add(src); src.onended = () => { LV.sources.delete(src); if(!LV.sources.size && LV.state === 'speaking') setState('listening'); };
+  setState('speaking');
+}
+function stopPlayback(){ LV.sources.forEach(s => { try{ s.stop(); }catch(e){} }); LV.sources.clear(); LV.playAt = 0; }
+
+async function startMic(){
+  LV.stream = await navigator.mediaDevices.getUserMedia({audio:{channelCount:1, echoCancellation:true, noiseSuppression:true, autoGainControl:true}});
+  LV.inCtx = new AudioContext({sampleRate:16000});
+  const code = `class P extends AudioWorkletProcessor{process(i){const c=i[0][0];if(c){const o=new Int16Array(c.length);for(let k=0;k<c.length;k++){const v=Math.max(-1,Math.min(1,c[k]));o[k]=v<0?v*32768:v*32767}this.port.postMessage(o.buffer,[o.buffer])}return true}}registerProcessor('pcm',P)`;
+  await LV.inCtx.audioWorklet.addModule(URL.createObjectURL(new Blob([code], {type:'application/javascript'})));
+  LV.node = new AudioWorkletNode(LV.inCtx, 'pcm');
+  LV.node.port.onmessage = e => { if(LV.session && !LV.muted) try{ LV.session.sendRealtimeInput({audio:{data:b64(e.data), mimeType:'audio/pcm;rate=16000'}}); }catch(err){} };
+  LV.inCtx.createMediaStreamSource(LV.stream).connect(LV.node);
+}
+
+function flushTurn(){
+  const u = LV.inTxt.trim(), a = LV.outTxt.trim(); LV.inTxt = ''; LV.outTxt = '';
+  window.dispatchEvent(new CustomEvent('livevoice-turn', {detail:{user:u, ai:a}}));
+  if(u) LV.log.push('User: ' + u); if(a) LV.log.push('Assistant: ' + a);
+}
+
+async function onMessage(m){
+  const sc = m.serverContent;
+  if(m.sessionResumptionUpdate?.newHandle) LV.handle = m.sessionResumptionUpdate.newHandle;
+  if(m.goAway && !LV.closing){ reconnect(); return; }
+  if(m.toolCall){
+    const out = [];
+    for(const fc of m.toolCall.functionCalls){
+      let result;
+      try{
+        const r = await fetch('/api/live/tool', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({name:fc.name, args:fc.args || {}})});
+        const j = await r.json(); result = j.result || {error:'no result'};
+        window.dispatchEvent(new CustomEvent('livevoice-tool', {detail:{name:fc.name, ui:j.ui || null}}));
+      }catch(e){ result = {error:'tool failed: ' + e.message}; }
+      out.push({id:fc.id, name:fc.name, response:{result}});
+    }
+    LV.session.sendToolResponse({functionResponses:out});
+  }
+  if(!sc) return;
+  if(sc.interrupted){ stopPlayback(); if(LV.outTxt) flushTurn(); setState('listening'); }
+  if(sc.inputTranscription?.text){ if(LV.outTxt) flushTurn(); LV.inTxt += sc.inputTranscription.text; }
+  if(sc.outputTranscription?.text) LV.outTxt += sc.outputTranscription.text;
+  for(const p of sc.modelTurn?.parts || []) if(p.inlineData?.data && /audio/.test(p.inlineData.mimeType || '')) playChunk(unb64(p.inlineData.data));
+  if(sc.turnComplete) flushTurn();
+}
+
+async function connect(){
+  const r = await fetch('/api/live/token', {method:'POST'});
+  const t = await r.json(); if(!r.ok) throw new Error(t.error || 'Could not start voice');
+  const {GoogleGenAI} = await import('https://esm.sh/@google/genai');
+  const ai = new GoogleGenAI({apiKey:t.token, httpOptions:{apiVersion:'v1alpha'}});
+  const config = {...t.config, ...(LV.handle ? {sessionResumption:{handle:LV.handle}} : {})};
+  LV.session = await ai.live.connect({model:t.model, config, callbacks:{
+    onopen(){},
+    onmessage(m){ onMessage(m).catch(console.error); },
+    onerror(e){ console.error('live error', e); },
+    onclose(e){ if(!LV.closing){ if(LV.retries++ < 2) reconnect(); else { stop(); window.dispatchEvent(new CustomEvent('livevoice-error', {detail:(e && e.reason) || 'Voice session ended'})); } } },
+  }});
+}
+async function reconnect(){
+  try{ const old = LV.session; LV.session = null; try{ old && old.close(); }catch(e){} await connect(); }
+  catch(e){ stop(); window.dispatchEvent(new CustomEvent('livevoice-error', {detail:e.message})); }
+}
+
+async function start(){
+  if(LV.session || LV.state === 'connecting') return;
+  LV.closing = false; LV.log = []; LV.inTxt = LV.outTxt = ''; LV.handle = null; LV.retries = 0; LV.muted = false;
+  setState('connecting');
+  try{
+    LV.outCtx = new AudioContext({sampleRate:24000}); await LV.outCtx.resume();
+    await startMic();
+    await connect();
+    setState('listening');
+    // Greet with a spoken briefing.
+    LV.session.sendClientContent({turns:[{role:'user', parts:[{text:'(The user just opened voice mode. Greet them briefly by calling get_briefing and telling them the 2-3 things that matter most. Then ask how you can help.)'}]}], turnComplete:true});
+  }catch(e){ stop(); window.dispatchEvent(new CustomEvent('livevoice-error', {detail:/Permission|NotAllowed/i.test(e.name + e.message) ? 'Microphone access is blocked. Allow it in your browser.' : e.message})); }
+}
+function stop(){
+  LV.closing = true;
+  try{ LV.session && LV.session.close(); }catch(e){}
+  LV.session = null; stopPlayback();
+  try{ LV.node && LV.node.disconnect(); LV.stream && LV.stream.getTracks().forEach(t => t.stop()); LV.inCtx && LV.inCtx.close(); LV.outCtx && LV.outCtx.close(); }catch(e){}
+  LV.node = LV.stream = LV.inCtx = LV.outCtx = null;
+  const transcript = LV.log.join('\n'); LV.log = [];
+  if(transcript.length > 80) fetch('/api/live/summary', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({transcript})}).catch(() => {});
+  setState('idle');
+}
+window.LiveVoice = { start, stop, get state(){ return LV.state; }, toggleMute(){ LV.muted = !LV.muted; return LV.muted; } };
+window.dispatchEvent(new Event('livevoice-ready'));
 </script>
 </body>
 </html>

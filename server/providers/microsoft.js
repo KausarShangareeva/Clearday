@@ -60,12 +60,13 @@ async function m(path, token, opts = {}) {
   return j;
 }
 
-export async function fetchMessages(token, { hours, max, selfEmail }) {
-  const since = new Date(Date.now() - hours * 3600e3).toISOString();
+export async function fetchMessages(token, { max, selfEmail }) {
   const inbox = await m(`/me/mailFolders/inbox/messages?${new URLSearchParams({
-    $top: String(max), $orderby: 'receivedDateTime desc', $filter: `receivedDateTime ge ${since}`,
+    $top: String(max), $orderby: 'receivedDateTime desc',
     $select: 'id,subject,from,receivedDateTime,isRead,body,bodyPreview,conversationId,webLink,internetMessageId,inferenceClassification',
   })}`, token);
+  // Only look at sent mail back to the oldest inbox message we fetched.
+  const since = (inbox.value || []).reduce((a, x) => (x.receivedDateTime < a ? x.receivedDateTime : a), new Date().toISOString());
   const sent = await m(`/me/mailFolders/sentitems/messages?${new URLSearchParams({
     $top: '100', $orderby: 'sentDateTime desc', $filter: `sentDateTime ge ${since}`, $select: 'conversationId,sentDateTime',
   })}`, token).catch(() => ({ value: [] }));

@@ -1,6 +1,28 @@
+# Clearday: voice-first AI chief of staff for email (Gemini edition)
+
+**What changed in this version**
+- **Gemini** does all the AI: `gemini-3.5-flash-lite` classifies mail, `gemini-3.8-flash` handles chat and replies.
+- **Gemini Live voice assistant** (`gemini-3.8-live`): click the mic in the Assistant tab and just talk. You can interrupt it, and it can read your briefing, open emails, save reply **drafts** and remember things. The browser connects to Gemini directly with a short-lived token, so your API key never leaves the server.
+- **Only the latest 50 inbox emails per account** are ever read.
+- **Local memory**: `data/memory.json` on your machine (Settings → Memory to view/delete). Say "remember that Anna is my thesis supervisor".
+- Clearday still **never sends email**; there is no send tool or code path.
+
+**v2 (categories + voice board)**
+- At signup you describe who you are; Gemini proposes up to **6 categories** you can edit (Settings → Your categories later). Mail that fits none goes to "Everything else".
+- The **Board** is the home page: one folder per category across all connected inboxes, with "waiting on you" and due-date badges. Click a mail to open it in Gmail/Outlook; mails that need a reply show **Draft reply** (saved to your Drafts, never sent).
+- The **voice orb** is on the Board: tap it for a spoken, category-by-category briefing, then talk (Gemini Live).
+
+## Quick start (English)
+1. Install Node 20+ and run `npm install`.
+2. `cp .env.example .env`, then set `SESSION_SECRET` (`node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`) and `GEMINI_API_KEY` (from https://aistudio.google.com/apikey). Never commit `.env`.
+3. Offline test without Gmail: set `DEV_MOCK=1`, run `npm start`, open http://localhost:3000 (use Chrome; the mic needs localhost or https), choose the Mock inbox.
+4. Real Gmail: follow section 3 below (Google Cloud OAuth client, redirect `http://localhost:3000/auth/google/callback`, add your Gmail as a Test user), set `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`, restart, click Connect Gmail.
+
+---
+
 # Clearday — AI chief of staff for your email
 
-Clearday подключается к настоящим ящикам Gmail и Outlook, читает новые письма через официальные API, анализирует их через Claude и показывает:
+Clearday подключается к настоящим ящикам Gmail и Outlook, читает новые письма через официальные API, анализирует их через Gemini и показывает:
 
 - брифинг дня;
 - доску с папками;
@@ -42,10 +64,10 @@ npm start
 
 ---
 
-## 2. Ключ Claude (AI-анализ)
+## 2. Ключ Gemini (AI-анализ)
 
-1. Зайди на https://console.anthropic.com → **API Keys** → **Create Key**.
-2. Вставь ключ в `.env`: `ANTHROPIC_API_KEY=...`
+1. Зайди на https://aistudio.google.com/apikey и создай ключ.
+2. Вставь ключ в `.env`: `GEMINI_API_KEY=...`
 
 Без ключа приложение работает, но сортирует письма по простым правилам.
 
@@ -114,15 +136,15 @@ public/index.html        фронтенд (брифинг, доска, чат, �
 server/index.js          Express: OAuth, сессии, /api/sync, /api/draft, /api/chat, /api/rewrite
 server/providers/google.js     Gmail API: чтение, определение «отвечено», черновики
 server/providers/microsoft.js  Microsoft Graph: то же для Outlook
-server/ai.js             Claude: классификация, приоритеты, действия, саммари, черновики, чат
+server/ai.js             Gemini: классификация, приоритеты, действия, саммари, черновики, чат
 server/store.js          JSON-хранилище; OAuth-токены зашифрованы AES-256-GCM
 ```
 
 **Как идёт синхронизация:**
-1. Сервер забирает письма за последние `SYNC_HOURS` (до `MAX_PER_ACCOUNT` на ящик).
+1. Сервер забирает письма (только последние 50 из входящих на каждый ящик).
 2. Нормализует Gmail и Outlook в одну модель.
 3. Определяет, ответила ли ты: в Gmail проверяет отправленные письма в треде, в Outlook — Sent Items в той же беседе.
-4. Отправляет в Claude только новые письма, по 8 за запрос. Промо и соцсети, которые Gmail уже отфильтровал, разбираются без AI.
+4. Отправляет в Gemini только новые письма, по 8 за запрос. Промо и соцсети, которые Gmail уже отфильтровал, разбираются без AI.
 5. Кэширует результаты анализа. Тела писем на сервере не хранятся.
 
 **Приватность:**
