@@ -102,7 +102,7 @@ export function heuristic(e, reason) {
 const SYSTEM = `You are the analysis engine of Clearday, an AI chief of staff for email. You read emails and return strict JSON.
 Be accurate and conservative: never invent deadlines, meetings, amounts or facts that are not in the email. Write summaries in English unless the user's profile says otherwise; write reply drafts in the language of the email.`;
 
-export async function classify(emails, { profile, categories, today }) {
+export async function classify(emails, { profile, categories, today, hints = [] }) {
   if (!emails.length) return {};
   const name = (profile?.name || 'me').split(' ')[0];
   const batches = [];
@@ -115,7 +115,7 @@ export async function classify(emails, { profile, categories, today }) {
     }));
     const prompt = `Today is ${today}. The user is ${name}.
 User profile: ${JSON.stringify(profile || {})}${memoryNote()}
-Categories you may use (exact strings): ${JSON.stringify(categories)}
+Categories you may use (exact strings): ${JSON.stringify(categories)}${hints.length ? '\nWhat belongs in the user\'s own folders (prefer these when an email clearly fits):\n' + hints.map(h => `- "${h.name}": ${h.desc}`).join('\n') : ''}
 
 For EACH email return an object:
 {"id": the same id,
@@ -220,4 +220,26 @@ ${indexLines(items).slice(0, 150000)}`;
 // One-sentence note of a voice conversation, kept in local memory.
 export async function summarize(text) {
   return (await llm({ system: 'You write one-sentence memory notes.', prompt: `Summarise this voice conversation between a user and their email assistant in one sentence (max 40 words), keeping names, decisions and open follow-ups:\n${String(text).slice(0, 6000)}`, model: FAST(), maxTokens: 200, json: false, thinking: null })).trim();
+}
+
+// Onboarding: turn "who I am and what I want to track" into up to 6 folders (adapted from Pranish's branch).
+const ABOUT_ICONS = ['star', 'coin', 'users', 'calendar', 'plane', 'heart', 'tag', 'book'];
+const DEFAULT_FOLDERS = [
+  { name: 'Work', icon: 'users', hint: 'Colleagues, clients, projects and deadlines' },
+  { name: 'Money', icon: 'coin', hint: 'Bills, invoices, bank and payments' },
+  { name: 'Events', icon: 'calendar', hint: 'Meetings, invitations and things happening soon' },
+  { name: 'Friends & family', icon: 'heart', hint: 'Personal messages and plans' },
+];
+export async function suggestFromAbout({ about, name }) {
+  if (!hasAI() || !String(about || '').trim()) return DEFAULT_FOLDERS;
+  try {
+    const prompt = `The user${name ? ' (' + name + ')' : ''} describes themselves: """${String(about).slice(0, 1500)}"""
+Create between 3 and 6 email folders that fit THEIR life and what they want to keep track of. Folders must be distinct and concrete (e.g. "Thesis", "Investors", "Clients", "Rent & bills", not "Misc"), with a short name (max 2 words), an icon from ${JSON.stringify(ABOUT_ICONS)}, and a one-line hint (max 14 words) saying what belongs in it. Do not include "Other", "Promotions" or "Newsletters".
+Return ONLY JSON: [{"name": string, "icon": string, "hint": string}]`;
+    const arr = parseJSON(await llm({ system: 'You design email folders. You return strict JSON.', prompt, model: SMART(), maxTokens: 1200 }));
+    const seen = new Set();
+    const out = (Array.isArray(arr) ? arr : []).map(c => ({ name: str(c?.name, 30).trim(), icon: ABOUT_ICONS.includes(c?.icon) ? c.icon : 'star', hint: str(c?.hint, 160).trim() }))
+      .filter(c => c.name && !/^(other|misc|promotions|newsletters)$/i.test(c.name) && !seen.has(c.name.toLowerCase()) && seen.add(c.name.toLowerCase())).slice(0, 6);
+    return out.length ? out : DEFAULT_FOLDERS;
+  } catch (e) { console.error('suggestFromAbout:', e.message); return DEFAULT_FOLDERS; }
 }

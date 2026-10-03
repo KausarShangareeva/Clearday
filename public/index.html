@@ -760,6 +760,22 @@ a.btn:not(.primary){color:var(--ink)}
 .toast button{margin-left:12px;font-weight:600;text-decoration:underline;color:inherit}
 @media (max-width:860px){ .l-right{grid-column:2;flex-direction:row;align-items:center;justify-self:start} .art{padding:34px 0 36px} }
 
+
+/* "Who are you?" onboarding */
+.who-mic{margin-top:12px;gap:8px}
+.who-mic.on{background:var(--crit);color:#fff;border-color:var(--crit)}
+.who-cats{display:grid;gap:10px;margin-top:24px}
+.who-cat{display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 14px;border-radius:1rem;background:var(--surface);border:1px solid var(--line);box-shadow:inset 4px 0 0 var(--c)}
+.who-ico{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 14%,var(--surface));color:var(--c)}
+.who-ico:hover{box-shadow:0 0 0 2px var(--c)}
+.who-fields{display:grid;gap:6px;min-width:0}
+.who-fields .input{height:38px}
+.who-fields .input:nth-child(1){font-weight:500}
+.who-fields .input:nth-child(2){font-size:13.5px;color:var(--ink2)}
+.who-side{display:flex;flex-direction:column;align-items:center;gap:6px}
+.who-color{width:22px;height:22px;border-radius:50%;background:var(--c);box-shadow:0 0 0 2px var(--surface),0 0 0 3px var(--line2)}
+.who-tools{display:flex;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap}
+
 /* mobile */
 .bottom-nav{display:none}
 @media (max-width:860px){
@@ -1502,6 +1518,7 @@ function runPipeline(){
   }
   out.sort((a,b) => RANK.indexOf(a.priority) - RANK.indexOf(b.priority) || a.hoursAgo - b.hoursAgo);
   S.emails = out;
+  if(materializeAiCats()) S.emails.forEach(e => { e.boardCat = assignCat(e); });
 }
 
 /* ---------- live Claude (sample capability), optional ---------- */
@@ -1513,6 +1530,7 @@ let SAMPLE = null;
 /* =========================================================================
    State
    ========================================================================= */
+const DEMO_ABOUT = "I'm a master's student at Nordvik University and the founder of Clinicflow, a healthcare startup. I also work part-time at Halden Group. I want to keep track of investors, pilot customers, exams and my thesis, bills, and plans with friends.";
 function defaultProfile(){
   return {
     name:'Alex', roles:['Student','Founder'],
@@ -1521,7 +1539,8 @@ function defaultProfile(){
     people:['Northwind Ventures','Brightside Clinics','Prof. Lindqvist'],
     ignore:['Promotions','Social notifications','Automated receipts'],
     speed:'Within a day',
-    news:['AI & technology','Startups & funding','EU regulation']
+    news:['AI & technology','Startups & funding','EU regulation'],
+    about: DEMO_ABOUT
   };
 }
 const S = {
@@ -1546,7 +1565,7 @@ const S = {
   theme: store.get('theme', null),
   mode: store.get('mode', 'demo'),
   cats: store.get('cats:' + store.get('mode', 'demo'), []),
-  catFlow: null, askOpen: false, liveState: 'idle', mem: null, inboxCat: 'all', newsTopics: [], newsView: store.get('newsView', 'list'), cardIdx: 0, cardDir: '',
+  catFlow: null, whoCats: null, catsBusy: false, dictating: false, askOpen: false, liveState: 'idle', mem: null, inboxCat: 'all', newsTopics: [], newsView: store.get('newsView', 'list'), cardIdx: 0, cardDir: '',
   savedDrafts: {},
 };
 if(S.view === 'analyzing' || S.view === 'connect') S.view = 'landing';
@@ -1607,7 +1626,7 @@ function liveToRaw(it){
 async function liveSync({quiet} = {}){
   LIVE.syncing = true; if(S.view === 'app') render({noFocus:true});
   try{
-    const r = await api('/api/sync', {method:'POST', body:{profile:S.profile, categories:UserProfileService.categoriesFor(S.profile).map(c => c[0]), boardCats:(S.cats || []).map(c => ({name:c.name, desc:c.desc, ids:c.ids, domains:c.domains, senders:c.senders, auto:c.auto}))}});
+    const r = await api('/api/sync', {method:'POST', body:{profile:S.profile, categories:[...UserProfileService.categoriesFor(S.profile).map(c => c[0]), ...(S.cats || []).filter(c => c.ai).map(c => c.name)], boardCats:(S.cats || []).map(c => ({name:c.name, desc:c.desc, ids:c.ids, domains:c.domains, senders:c.senders, auto:c.auto, ai:!!c.ai}))}});
     setLiveAccounts(r.accounts);
     MAILBOX = r.items.map(liveToRaw);
     LIVE.lastSync = new Date(); LIVE.errors = r.errors || []; LIVE.ai = r.ai; if(r.aiProvider) LIVE.aiProvider = r.aiProvider; loadMemory();
@@ -1617,7 +1636,7 @@ async function liveSync({quiet} = {}){
   } finally { LIVE.syncing = false; }
 }
 const syncErrorText = () => LIVE.errors.map(e => `${SLOT_NAMES[e.slot]}: ${e.error === 'reauth' ? 'sign-in expired, reconnect it' : e.error}`).join(' — ');
-function blankProfile(){ return {...defaultProfile(), name:'', roles:[], focus:[], responsibilities:'', people:[], news:['AI & technology']}; }
+function blankProfile(){ return {...defaultProfile(), name:'', roles:[], focus:[], responsibilities:'', people:[], news:['AI & technology'], about:''}; }
 function startLive(){
   S.mode = 'live'; store.set('mode', 'live'); S.cats = store.get('cats:live', []);
   S.profile = store.get('liveProfile', null) || blankProfile();
@@ -1781,7 +1800,100 @@ function chips(list, selected, act){
   return `<div class="chips">${list.map(x => `<button class="chip ${selected.includes(x)?'on':''}" data-act="${act}" data-v="${esc(x)}" aria-pressed="${selected.includes(x)}">${esc(x)}</button>`).join('')}</div>`;
 }
 
+
+/* ---------- "Who are you?" onboarding with AI category suggestions (idea from Pranish's branch) ---------- */
+const LOCAL_CAT_RULES = [
+  [/invest|fundrais|\bvc\b|founder|startup|pitch/i, {name:'Investors', icon:'coin', hint:'Investors, VCs and advisors about fundraising, decks and intro calls', terms:['investor','ventures','vc','fund','fundrais*','seed','deck','angel','advisor']}],
+  [/customer|client|pilot|users?\b/i, {name:'Customers', icon:'users', hint:'Pilot customers and clients sending feedback, bugs or requests', terms:['pilot','clinics','brightside']}],
+  [/exam|thesis|course|universit|study|student|lecture|school/i, {name:'Study', icon:'book', hint:'Exams, thesis and supervision meetings', terms:['exam','thesis','supervision']}],
+  [/bill|rent|invoice|payment|bank|money|receipt/i, {name:'Bills & money', icon:'tag', hint:'Bills, receipts, payouts, payslips and bank notices', terms:['receipt','invoice','payment','payout','payslip','billing','bank']}],
+  [/friend|family|personal|mum|mom/i, {name:'Friends & family', icon:'heart', hint:'Personal messages and plans with friends and family', terms:['mum','mom','dad','grandma','family','friend','dinner'], personal:true}],
+  [/event|meetup|conference|invite/i, {name:'Events', icon:'calendar', hint:'Meetups, invitations and things happening soon', terms:['event','meetup','invite','invitation','dinner','workshop','fair']}],
+  [/travel|trip|flight|train/i, {name:'Travel', icon:'plane', hint:'Bookings, trains, flights and trip confirmations', terms:['travel','trip','booking','train','flight','hotel','nordrail']}],
+];
+function localCatsFromAbout(about){
+  const out = LOCAL_CAT_RULES.filter(([re]) => re.test(about || '')).map(([, c]) => ({...c}));
+  const base = out.length ? out : LOCAL_CAT_RULES.filter(([, c]) => ['Bills & money', 'Events', 'Friends & family'].includes(c.name)).map(([, c]) => ({...c}));
+  return base.slice(0, 6).map((c, i) => ({...c, color:CAT_COLORS[i % CAT_COLORS.length]}));
+}
+function vWho(){
+  const p = S.profile, st = Math.min(S.step, 1);
+  S.whoCats = S.whoCats || S.cats.filter(c => c.ai).map(c => ({name:c.name, hint:c.desc, icon:c.icon, color:c.color, terms:c.terms, personal:c.personal}));
+  let inner;
+  if(st === 0) inner = `
+    <h2>Who are you?</h2>
+    <p class="hint">Tell Clearday about yourself and what you want to keep track of. It will suggest up to 6 folders for your Board. You can change them on the next screen.</p>
+    <label class="field"><span>What should we call you?</span><input class="input" id="f-name" data-bind="name" value="${esc(p.name)}" autocomplete="given-name"></label>
+    <label class="field"><span>Who are you, and what should your mail be sorted into?</span>
+      <textarea class="input" rows="5" id="f-about" data-bind="about" placeholder="e.g. I'm a master's student and I'm building a startup with two friends. I want to keep track of thesis meetings, investors, rent and bills, and friends.">${esc(p.about || '')}</textarea></label>
+    <button class="btn sm who-mic ${S.dictating ? 'on' : ''}" type="button" data-act="whoDictate"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>${S.dictating ? 'Stop listening' : 'Speak instead'}</button>`;
+  else inner = `
+    <h2>Your folders</h2>
+    <p class="hint">Up to 6. Rename them, say what belongs in each, remove some or add your own. Your inbox folders stay on the Board too.</p>
+    <div class="who-cats">${S.whoCats.map((c, i) => `<div class="who-cat" style="--c:${c.color}">
+      <button class="who-ico" data-act="whoIcon" data-i="${i}" aria-label="Change icon">${ICON(c.icon || 'star', 18)}</button>
+      <div class="who-fields"><input class="input" data-who="${i}:name" value="${esc(c.name)}" placeholder="Folder name" maxlength="30" aria-label="Folder name"><input class="input" data-who="${i}:hint" value="${esc(c.hint || '')}" placeholder="What belongs here?" maxlength="160" aria-label="What belongs in this folder"></div>
+      <div class="who-side"><button class="who-color" data-act="whoColor" data-i="${i}" aria-label="Change colour"></button><button class="icon-btn" data-act="whoRm" data-i="${i}" aria-label="Remove ${esc(c.name)}">×</button></div>
+    </div>`).join('') || '<div class="empty" style="padding:24px 0"><b>No folders yet</b>Add one, or go back and describe yourself.</div>'}</div>
+    <div class="who-tools"><button class="btn sm" data-act="whoAdd" ${S.whoCats.length >= 6 ? 'disabled' : ''}>${ICON('plus', 14)}Add folder</button><span class="muted" style="font-size:13px">${S.whoCats.length} of 6</span><button class="btn sm ghost" data-act="whoSuggest" style="margin-left:auto" ${S.catsBusy ? 'disabled' : ''}>${S.catsBusy ? 'Thinking…' : 'Suggest again'}</button></div>`;
+  const hasEmails = S.emails.length && connectedAccs().length;
+  return `<div class="setup">
+    <div class="setup-top"><div class="logo"><span class="logo-mark"></span>Clearday</div>
+      <div style="display:flex;align-items:center;gap:14px"><span class="muted" style="font-size:13px">${st + 1} of 3</span><div class="progress"><i style="width:${(st + 1) / 3 * 100}%"></i></div></div></div>
+    <div class="setup-body"><div class="q">${inner}
+      <div class="q-actions">
+        ${st > 0 ? `<button class="btn ghost" data-act="whoBack">Back</button>` : `<button class="btn ghost" data-act="${hasEmails ? 'whoCancel' : 'home'}">Cancel</button>`}
+        <span class="spacer"></span>
+        ${st === 0 ? `<button class="btn primary" data-act="whoNext" ${S.catsBusy ? 'disabled' : ''}>${S.catsBusy ? 'Thinking…' : 'Suggest my folders'}</button>` : `<button class="btn primary" data-act="whoDone">${hasEmails ? 'Save and sort my mail' : 'Connect inboxes'}</button>`}
+      </div></div></div></div>`;
+}
+async function whoSuggest(){
+  const p = S.profile;
+  if(!(p.about || '').trim()){ toast('Tell Clearday a little about yourself first'); document.getElementById('f-about')?.focus(); return; }
+  S.catsBusy = true; render({noFocus:true});
+  let cats = null;
+  if(S.mode === 'live'){
+    try{ const r = await api('/api/categories/from-about', {method:'POST', body:{about:p.about, name:p.name}}); cats = (r.categories || []).map((c, i) => ({name:c.name, hint:c.hint, icon:CAT_ICONS.includes(c.icon) ? c.icon : 'star', color:CAT_COLORS[i % CAT_COLORS.length]})); if(!r.ai) toast('AI isn\'t configured on the server, so these are generic. Edit them freely.'); }
+    catch(e){ toast(e.message); }
+  } else { await wait(700); }
+  S.whoCats = (cats && cats.length ? cats : localCatsFromAbout(p.about)).slice(0, 6);
+  S.whoAbout = p.about; S.catsBusy = false; S.step = 1; persist(); render({top:true, noFocus:true});
+}
+function whoCommit(){
+  const keep = S.cats.filter(c => !c.ai);
+  const ai = (S.whoCats || []).filter(c => (c.name || '').trim()).slice(0, 6).map((c, i) => {
+    const prev = S.cats.find(x => x.ai && x.name === c.name);
+    return {id: prev?.id || 'c_' + Date.now().toString(36) + i, name:c.name.trim(), desc:(c.hint || '').trim(), icon:c.icon || 'star', color:c.color || CAT_COLORS[i % CAT_COLORS.length], ai:true, terms:c.terms || null, personal:!!c.personal, ids:[], domains:[], senders:[], auto:false, pending:true, createdAt:Date.now()};
+  });
+  S.cats = [...ai, ...keep]; saveCats(); S.whoCats = null;
+}
+// Demo: fill AI folders with matching emails once the mailbox is loaded (live mode lets the AI classifier do this).
+function materializeAiCats(){
+  if(S.mode === 'live' || !S.emails.length) return false;
+  let changed = false;
+  for(const c of S.cats) if(c.ai && c.pending){
+    const m = localMatch(c.name, c.desc || '', c.terms, c.personal).filter(x => !S.cats.some(o => o !== c && o.ids?.includes(x.id)));
+    c.ids = m.map(x => x.id); c.domains = []; c.senders = [...new Set(m.map(x => x.fromEmail))]; c.auto = true; c.pending = false; changed = true;
+  }
+  if(changed) saveCats();
+  return changed;
+}
+let dict = null;
+function whoDictate(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ toast('Speech input isn\'t available in this browser. Try Chrome.'); return; }
+  if(S.dictating){ try{ dict.stop(); }catch(e){} return; }
+  dict = new SR(); dict.lang = 'en-GB'; dict.interimResults = false; dict.continuous = true;
+  const base = (S.profile.about || '').trim() ? S.profile.about.trim() + ' ' : '';
+  dict.onresult = ev => { let t = ''; for(let i = 0; i < ev.results.length; i++) t += ev.results[i][0].transcript; S.profile.about = base + t; const ta = document.getElementById('f-about'); if(ta) ta.value = S.profile.about; };
+  dict.onend = () => { S.dictating = false; render({noFocus:true}); };
+  dict.onerror = () => { S.dictating = false; render({noFocus:true}); toast('Couldn\'t use the microphone'); };
+  try{ dict.start(); S.dictating = true; render({noFocus:true}); }catch(e){ toast('Couldn\'t start the microphone'); }
+}
 function vOnboarding(){
+  return vWho();
+}
+function vOnboardingOld(){
   const p = S.profile, st = S.step, total = 6;
   let inner = '';
   if(st === 0) inner = `
@@ -2149,7 +2261,7 @@ function pSettings(){
     </div>
   </div>
   <div style="margin-top:22px">
-    <div class="set-row"><div><b>Edit priority profile</b><span>Rerun the setup questions.</span></div><button class="btn sm" data-act="editProfile">Edit</button></div>
+    <div class="set-row"><div><b>Profile and folders</b><span>Describe yourself again and let Clearday suggest folders.</span></div><button class="btn sm" data-act="editProfile">Edit</button></div>
     <div class="set-row"><div><b>Learned from your corrections</b><span>${c.vip.length} always-prioritised senders, ${c.ignore.length} ignored senders, ${Object.keys(c.override).length} manual priorities</span></div><button class="btn sm ghost" data-act="resetCorr" ${c.vip.length + c.ignore.length + Object.keys(c.override).length ? '' : 'disabled'}>Reset</button></div>
     <div class="set-row"><div><b>Dark mode</b><span>Follows your system unless you choose.</span></div><button class="switch ${dark ? 'on':''}" data-act="theme" role="switch" aria-checked="${dark}" aria-label="Dark mode"></button></div>
     ${S.mode === 'live'
@@ -2266,6 +2378,7 @@ function boardCats(){
 function assignCat(e){
   for(const c of (S.cats || [])){
     if(c.ids?.includes(e.id)) return c.id;
+    if(c.ai && S.mode === 'live' && e.category === c.name) return c.id;
     if(c.auto){ const d = orgDomain(e.fromEmail); if((d && c.domains?.includes(d)) || c.senders?.includes(e.fromEmail)) return c.id; }
   }
   return 'acc:' + e.acc;
@@ -3062,6 +3175,24 @@ const ACT = {
   async memAdd(){ const t = prompt('What should Clearday remember?'); if(!t) return; try{ await api('/api/memory', {method:'POST', body:{text:t}}); loadMemory(); }catch(e){ toast(e.message); } },
   async memDel(el){ try{ S.mem = await api('/api/memory/' + encodeURIComponent(el.dataset.id), {method:'DELETE'}); render({noFocus:true}); }catch(e){ toast(e.message); } },
   async memClear(){ if(!confirm('Erase everything Clearday remembers?')) return; try{ S.mem = await api('/api/memory', {method:'DELETE'}); render({noFocus:true}); }catch(e){ toast(e.message); } },
+  whoNext(){ const a = document.getElementById('f-about'); if(a) S.profile.about = a.value; whoSuggest(); },
+  whoSuggest(){ whoSuggest(); },
+  whoBack(){ S.step = 0; render({noFocus:true}); },
+  whoCancel(){ S.whoCats = null; S.view = 'app'; render({top:true}); },
+  whoDictate(){ whoDictate(); },
+  whoAdd(){ (S.whoCats ||= []).push({name:'', hint:'', icon:CAT_ICONS[S.whoCats.length % CAT_ICONS.length], color:CAT_COLORS[S.whoCats.length % CAT_COLORS.length]}); render({noFocus:true}); setTimeout(() => document.querySelector('.who-cat:last-child input')?.focus(), 30); },
+  whoRm(el){ S.whoCats.splice(+el.dataset.i, 1); render({noFocus:true}); },
+  whoIcon(el){ const c = S.whoCats[+el.dataset.i]; c.icon = CAT_ICONS[(CAT_ICONS.indexOf(c.icon) + 1) % CAT_ICONS.length]; render({noFocus:true}); },
+  whoColor(el){ const c = S.whoCats[+el.dataset.i]; c.color = CAT_COLORS[(CAT_COLORS.indexOf(c.color) + 1) % CAT_COLORS.length]; render({noFocus:true}); },
+  whoDone(){
+    if(!(S.whoCats || []).some(c => (c.name || '').trim())){ toast('Add at least one folder'); return; }
+    whoCommit(); persist();
+    if(connectedAccs().length && S.emails.length){
+      if(S.mode === 'live'){ analyze(); return; }
+      runPipeline(); S.view = 'app'; S.page = 'board'; S.boardOpen = null; render({top:true}); toast('Folders updated — your mail is sorted'); return;
+    }
+    ACT.toConnect();
+  },
   catNew(){ S.navOpen = false; catStart(); },
   catFilter(el){ S.inboxCat = el.dataset.v; render({noFocus:true}); },
   catCancel(){ S.catFlow = null; render({noFocus:true}); },
@@ -3160,7 +3291,7 @@ ${firstName()}`, tone:'Professional'}; render({noFocus:true}); document.getEleme
   send(){ ask(document.getElementById('chatInput')?.value || ''); },
   mic: toggleMic,
   voiceOff(){ S.voiceMode = false; try{ speechSynthesis.cancel(); recog && recog.stop(); }catch(e){} S.listening = false; render({noFocus:true}); },
-  editProfile(){ S.step = 0; S.view = 'onboarding'; render({top:true}); },
+  editProfile(){ S.step = 0; S.whoCats = null; S.view = 'onboarding'; render({top:true}); },
   resetCorr(){ S.corr = {vip:[], ignore:[], override:{}, done:S.corr.done, seen:S.corr.seen, replied:S.corr.replied}; persist(); runPipeline(); render({noFocus:true}); toast('Corrections cleared'); },
   theme(){
     const isDark = document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
@@ -3185,6 +3316,7 @@ document.addEventListener('input', ev => {
   if(t.id === 'f-search'){ S.query = t.value; render(); }
   if(t.id === 'draftText'){ const id = t.dataset.id; S.drafts[id] = {...(S.drafts[id] || {tone:'Professional'}), text:t.value}; }
   if(t.id === 'f-people'){ S.peopleInput = t.value; }
+  if(t.dataset && t.dataset.who && S.whoCats){ const [i, k] = t.dataset.who.split(':'); if(S.whoCats[+i]) S.whoCats[+i][k] = t.value; }
   if(t.id === 'cfName' && S.catFlow){ S.catFlow.name = t.value; S.catFlow.pick = -1; S.catFlow.terms = null; S.catFlow.personal = false; }
   if(t.id === 'cfDesc' && S.catFlow){ S.catFlow.desc = t.value; S.catFlow.terms = null; S.catFlow.personal = false; }
   if(t.id === 'chatInput'){ t.style.height = 'auto'; t.style.height = Math.min(140, t.scrollHeight) + 'px'; }

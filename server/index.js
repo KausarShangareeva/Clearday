@@ -7,7 +7,7 @@ import { getUser, ensureUser, deleteUser, save, pruneCache, encrypt, decrypt, si
 import * as google from './providers/google.js';
 import * as microsoft from './providers/microsoft.js';
 import * as mock from './providers/mock.js';
-import { hasAI, aiProvider, classify, heuristic, answer, rewrite, suggestCategories, matchCategory, summarize } from './ai.js';
+import { hasAI, aiProvider, classify, heuristic, answer, rewrite, suggestCategories, matchCategory, summarize, suggestFromAbout } from './ai.js';
 import * as memory from './memory.js';
 import { LIVE_TOOLS, liveSystemPrompt } from './live.js';
 
@@ -148,10 +148,11 @@ app.post('/api/sync', async (req, res) => {
   if (!limit('sync:' + req.uid, 5000)) return res.status(429).json({ error: 'Syncing already — give it a few seconds.' });
   const { profile, categories = [], boardCats = [] } = req.body || {};
   if (profile) u.profile = profile;
-  u.boardCats = (Array.isArray(boardCats) ? boardCats : []).slice(0, 20).map(c => ({ name: String(c.name || '').slice(0, 40), desc: String(c.desc || '').slice(0, 200), ids: (c.ids || []).slice(0, 500).map(String), domains: (c.domains || []).slice(0, 50).map(String), senders: (c.senders || []).slice(0, 100).map(String), auto: !!c.auto })).filter(c => c.name);
+  u.boardCats = (Array.isArray(boardCats) ? boardCats : []).slice(0, 20).map(c => ({ name: String(c.name || '').slice(0, 40), desc: String(c.desc || '').slice(0, 200), ids: (c.ids || []).slice(0, 500).map(String), domains: (c.domains || []).slice(0, 50).map(String), senders: (c.senders || []).slice(0, 100).map(String), auto: !!c.auto, ai: !!c.ai })).filter(c => c.name);
   const cats = categories.length ? categories : ['Personal', 'Work', 'Finance', 'Events', 'Travel', 'News', 'Notifications', 'Promotions', 'Other'];
   const max = Math.min(100, +process.env.MAX_PER_ACCOUNT || 50); // latest mails per inbox, never the whole mailbox
-  const ph = profileHash(u.profile, cats);
+  const hints = (u.boardCats || []).filter(c => c.ai && c.desc).map(c => ({ name: c.name, desc: c.desc }));
+  const ph = profileHash(u.profile, [cats, hints]);
   const fetched = [], errors = [];
 
   await Promise.all(Object.entries(u.accounts).map(async ([slot, acc]) => {
@@ -176,7 +177,7 @@ app.post('/api/sync', async (req, res) => {
     if (!hasAI()) { u.cache[f.id] = { a: heuristic(f.m, 'Basic rules (AI key not configured)'), ph, t: Date.now() }; continue; }
     todo.push(f);
   }
-  const analyses = await classify(todo.map(f => ({ id: f.id, inbox: SLOT_NAMES[f.slot], ...f.m })), { profile: u.profile, categories: cats, today: todayStr() });
+  const analyses = await classify(todo.map(f => ({ id: f.id, inbox: SLOT_NAMES[f.slot], ...f.m })), { profile: u.profile, categories: cats, today: todayStr(), hints });
   for (const f of todo) u.cache[f.id] = { a: analyses[f.id] || heuristic(f.m), ph, t: Date.now() };
   for (const f of fetched) {
     // keep what the draft endpoint needs (no body stored)
@@ -200,7 +201,7 @@ app.post('/api/sync', async (req, res) => {
   // Folder each mail sits in on the Board (custom categories first, else its inbox), for the voice tools.
   const dom = e => (e.split('@')[1] || '').toLowerCase().split('.').slice(-2).join('.');
   liveItems.set(req.uid, items.map(i => {
-    const c = (u.boardCats || []).find(c => c.ids.includes(i.id) || (c.auto && (c.domains.includes(dom(i.fromEmail)) || c.senders.includes(i.fromEmail))));
+    const c = (u.boardCats || []).find(c => c.ids.includes(i.id) || (c.ai && i.cat === c.name) || (c.auto && (c.domains.includes(dom(i.fromEmail)) || c.senders.includes(i.fromEmail))));
     return { ...i, folder: c ? c.name : SLOT_NAMES[i.acc] };
   }));
   res.json({ items, accounts: publicAccounts(u), errors, ai: hasAI(), aiProvider: aiProvider(), analysed: todo.length });
@@ -393,6 +394,12 @@ function keywordMatch(items, name, description) {
   const terms = `${name} ${description}`.toLowerCase().match(/[\p{L}\d]{4,}/gu) || [];
   return items.filter(i => terms.some(t => `${i.from} ${i.fromEmail} ${i.subject} ${i.snippet}`.toLowerCase().includes(t))).map(i => ({ id: i.id, reason: 'Matches your keywords' }));
 }
+// Folders from "who are you and what do you want to track" (onboarding).
+app.post('/api/categories/from-about', async (req, res) => {
+  if (!limit('about:' + req.uid, 1500)) return res.status(429).json({ error: 'One moment…' });
+  const cats = await suggestFromAbout({ about: String(req.body?.about || '').slice(0, 1500), name: String(req.body?.name || '').slice(0, 60) });
+  res.json({ categories: cats, ai: hasAI() });
+});
 app.post('/api/categories/suggest', async (req, res) => {
   const u = getUser(req.uid);
   if (!u || !Object.keys(u.accounts).length) return res.status(400).json({ error: 'Connect an inbox first.' });
