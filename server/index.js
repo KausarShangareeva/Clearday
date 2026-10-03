@@ -10,6 +10,7 @@ import * as mock from './providers/mock.js';
 import { yahoo, mailru } from './providers/imap.js';
 import { hasAI, aiProvider, classify, heuristic, answer, rewrite, suggestCategories, matchCategory, summarize, suggestFromAbout } from './ai.js';
 import * as memory from './memory.js';
+import * as condense from './condense.js';
 import { LIVE_TOOLS, liveSystemPrompt } from './live.js';
 
 const PROVIDERS = { google, microsoft, yahoo, mailru, ...(process.env.DEV_MOCK === '1' ? { mock } : {}) };
@@ -77,6 +78,7 @@ const profileHash = (p, c) => crypto.createHash('sha1').update(JSON.stringify([p
 // ---------- health / me ----------
 app.get('/api/health', (req, res) => res.json({
   ok: true, app: 'clearday', ai: hasAI(), aiProvider: aiProvider(), voice: aiProvider() === 'gemini',
+  condense: condense.health().status,
   providers: Object.fromEntries(Object.entries(PROVIDERS).map(([k, P]) => [k, P.configured()])),
 }));
 app.get('/api/me', (req, res) => {
@@ -196,7 +198,7 @@ app.post('/api/sync', async (req, res) => {
     if (!hasAI()) { u.cache[f.id] = { a: heuristic(f.m, 'Basic rules (AI key not configured)'), ph, t: Date.now() }; continue; }
     todo.push(f);
   }
-  const analyses = await classify(todo.map(f => ({ id: f.id, inbox: SLOT_NAMES[f.slot], ...f.m })), { profile: u.profile, categories: cats, today: todayStr(), hints });
+  const analyses = await classify(todo.map(f => ({ id: f.id, inbox: SLOT_NAMES[f.slot], ...f.m })), { profile: u.profile, categories: cats, today: todayStr(), hints, ctx: u });
   for (const f of todo) u.cache[f.id] = { a: analyses[f.id] || heuristic(f.m), ph, t: Date.now() };
   for (const f of fetched) {
     // keep what the draft endpoint needs (no body stored)
@@ -256,7 +258,7 @@ app.post('/api/rewrite', async (req, res) => {
   if (!email?.body) return res.status(400).json({ error: 'Missing email' });
   try {
     const u = getUser(req.uid);
-    const text = await rewrite({ email, draft: String(draft).slice(0, 5000), instruction: String(instruction).slice(0, 500), name: (u?.profile?.name || 'me').split(' ')[0] });
+    const text = await rewrite({ email, draft: String(draft).slice(0, 5000), instruction: String(instruction).slice(0, 500), name: (u?.profile?.name || 'me').split(' ')[0], ctx: u });
     res.json({ text });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -268,7 +270,7 @@ app.post('/api/chat', async (req, res) => {
   if (!question) return res.status(400).json({ error: 'Ask something' });
   try {
     const u = getUser(req.uid);
-    res.json(await answer({ question: String(question).slice(0, 2000), history: Array.isArray(history) ? history : [], context: Array.isArray(context) ? context : [], profile: u?.profile, today: todayStr() }));
+    res.json(await answer({ question: String(question).slice(0, 2000), history: Array.isArray(history) ? history : [], context: Array.isArray(context) ? context : [], profile: u?.profile, today: todayStr(), ctx: u }));
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -348,13 +350,13 @@ app.post('/api/live/tool', async (req, res) => {
       case 'read_email': {
         const e = findEmail(items, args.id || args.query);
         if (!e) return res.json({ result: { error: 'No such email. Call list_emails first.' } });
-        return res.json({ result: { ...brief(e), fromEmail: e.fromEmail, body: String(e.body || '').slice(0, 3000) } });
+        return res.json({ result: { ...brief(e), fromEmail: e.fromEmail, body: await condense.one(String(e.body || '').slice(0, 3000), e.kind, u) } });
       }
       case 'draft_reply': {
         const e = findEmail(items, args.id || args.query);
         if (!e) return res.json({ result: { error: 'No such email. Call list_emails first.' } });
         if (!hasAI()) return res.json({ result: { error: 'AI is not configured on the server.' } });
-        const text = await rewrite({ email: { fromName: e.from, fromEmail: e.fromEmail, subject: e.subject, body: e.body }, draft: '', instruction: String(args.instruction || 'Write a helpful, concise reply.').slice(0, 500), name: (u?.profile?.name || 'me').split(' ')[0] });
+        const text = await rewrite({ email: { fromName: e.from, fromEmail: e.fromEmail, subject: e.subject, body: e.body }, draft: '', instruction: String(args.instruction || 'Write a helpful, concise reply.').slice(0, 500), name: (u?.profile?.name || 'me').split(' ')[0], ctx: u });
         let saved = null;
         try { saved = await saveDraft(u, e.id, text); } catch (err) { saved = { error: err.message }; }
         return res.json({ result: { id: e.id, draft: text, savedToDrafts: !!saved?.link, provider: saved?.provider, note: 'Draft only. Nothing was sent.' }, ui: { draftFor: e.id, draft: text, link: saved?.link } });
@@ -471,6 +473,27 @@ app.get('/api/logo', async (req, res) => {
 // ---------- static frontend ----------
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 app.use(express.static(path.join(__dirname, '..', 'public'), { extensions: ['html'] }));
+// ---------- Condense (token compression before the LLM) ----------
+app.put('/api/settings', (req, res) => {
+  const u = ensureUser(req.uid);
+  u.settings ||= {};
+  if (typeof req.body?.condense === 'boolean') u.settings.condense = req.body.condense;
+  save();
+  res.json({ ok: true, settings: u.settings });
+});
+app.get('/api/condense', (req, res) => {
+  const u = getUser(req.uid), h = condense.health();
+  res.json({ status: condense.statusFor(u), enabled: condense.isEnabled(u), model: h.model, health: h, policy: condense.policy(), ...condense.summary(u) });
+});
+app.post('/api/condense/preview', async (req, res) => {
+  if (!limit('cpv:' + req.uid, 600)) return res.status(429).json({ error: 'One moment…' });
+  const e = (liveItems.get(req.uid) || []).find(i => i.id === req.body?.id);
+  if (!e) return res.status(404).json({ error: 'Email not found — sync first.' });
+  const kinds = { conservative: 'personal', balanced: 'receipt', aggressive: 'newsletter' };
+  const kind = kinds[req.body?.level] || condense.kindOf(e);
+  res.json({ id: e.id, subject: e.subject, from: e.from, ...(await condense.preview(e.body, kind, getUser(req.uid))) });
+});
+
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
 
 const port = +process.env.PORT || 3000;

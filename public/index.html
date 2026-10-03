@@ -944,6 +944,63 @@ body{font-family:var(--sans);letter-spacing:-.006em}
   .main{margin:0;border-radius:0;height:100%;box-shadow:none}
   .sheet{border-radius:0}
 }
+/* ---- Condense (token compression) ---- */
+.cd-badge{display:inline-flex;align-items:center;gap:7px;height:30px;padding:0 12px 0 10px;border-radius:999px;border:1px solid var(--line2);background:var(--surface);font-size:13px;color:var(--ink2);margin:0 0 14px;transition:border-color .15s}
+.cd-badge:hover{border-color:var(--ink3)}
+.cd-badge b{font-weight:600;color:var(--ink)}
+.cd-badge .ico{color:var(--accent)}
+.cd-badge.warn .ico{color:var(--imp)}
+.cd-card{margin-top:22px;border:1px solid var(--line);border-radius:16px;background:var(--surface);padding:20px 22px}
+.cd-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.cd-head h3{font-size:17px;font-weight:600;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
+.cd-head p{font-size:13.5px;color:var(--ink3);margin-top:4px;max-width:56ch}
+.cd-pill{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;padding:3px 10px;border-radius:999px;background:var(--sunk);color:var(--ink2)}
+.cd-pill i{width:7px;height:7px;border-radius:50%;background:var(--low)}
+.cd-pill.active i{background:var(--ok)} .cd-pill.warn i{background:var(--imp)} .cd-pill.bad i{background:var(--crit)}
+.cd-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
+.cd-num{padding:14px 16px;border-radius:12px;background:var(--sunk)}
+.cd-num b{display:block;font-size:30px;font-weight:600;letter-spacing:-.03em;line-height:1.1;font-variant-numeric:tabular-nums}
+.cd-num small{display:block;font-size:12.5px;color:var(--ink3);margin-top:4px}
+.cd-sub{font-size:13px;color:var(--ink3);margin-top:10px}
+.cd-chart{margin-top:20px}
+.cd-chart h4{font-size:13px;font-weight:500;color:var(--ink2);display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.cd-key{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink3);font-weight:400}
+.cd-key i{width:10px;height:10px;border-radius:3px;background:var(--line2)} .cd-key i.c{background:var(--accent)}
+.cd-row{display:grid;grid-template-columns:92px 1fr 118px;gap:10px;align-items:center;padding:5px 0;font-size:13px}
+.cd-row .l{color:var(--ink2);text-transform:capitalize}
+.cd-row .v{text-align:right;color:var(--ink3);font-variant-numeric:tabular-nums;white-space:nowrap}
+.cd-row .v b{color:var(--ink);font-weight:600}
+.cd-row svg{width:100%;height:22px;display:block}
+.cd-guard{display:flex;gap:12px;align-items:flex-start;margin-top:18px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);font-size:13.5px;color:var(--ink2)}
+.cd-guard .ico{color:var(--ok);flex:none;margin-top:1px} .cd-guard b{color:var(--ink);font-weight:600}
+.cd-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:18px}
+.cd-foot a{color:var(--ink3);font-size:13px;text-decoration:underline;text-underline-offset:3px}
+.cd-empty{margin-top:16px;padding:16px;border:1px dashed var(--line2);border-radius:12px;color:var(--ink3);font-size:13.5px}
+.cd-modal .modal-card{width:min(980px,100%)}
+.cd-modal .modal-in{padding:24px 26px 20px}
+.cd-modal h2{display:flex;align-items:center;gap:8px;font-size:22px;font-weight:600;letter-spacing:-.02em}
+.cd-ctrl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:16px}
+.cd-ctrl select{height:34px;border-radius:10px;border:1px solid var(--line2);background:var(--surface);color:var(--ink);padding:0 10px;font:inherit;font-size:13.5px;max-width:100%;min-width:0;flex:1 1 260px}
+.cd-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}
+.cd-stats div{padding:10px 12px;border-radius:10px;background:var(--sunk)}
+.cd-stats b{display:block;font-size:20px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.cd-stats small{font-size:12px;color:var(--ink3)}
+.cd-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.cd-col{border:1px solid var(--line);border-radius:12px;overflow:hidden;min-width:0}
+.cd-col>h5{margin:0;padding:8px 12px;font-size:12.5px;font-weight:500;color:var(--ink3);background:var(--sunk);display:flex;justify-content:space-between}
+.cd-text{padding:12px;font-size:13.5px;line-height:1.55;max-height:300px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
+mark.cd-f{background:color-mix(in srgb,var(--ok) 20%,transparent);color:inherit;border-radius:4px;padding:0 2px;box-shadow:inset 0 -1.5px 0 var(--ok)}
+.cd-facts{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.cd-fc{font-size:12.5px;padding:3px 9px;border-radius:999px;border:1px solid var(--line2);color:var(--ink2);display:inline-flex;gap:5px;align-items:center}
+.cd-fc.ok{border-color:color-mix(in srgb,var(--ok) 50%,var(--line2))} .cd-fc.ok::before{content:"✓";color:var(--ok);font-weight:700}
+.cd-fc.no{border-color:var(--crit);color:var(--crit)} .cd-fc.no::before{content:"✕";font-weight:700}
+.cd-note{margin-top:12px;padding:10px 14px;border-radius:10px;background:var(--ai);border:1px solid var(--ai-line);color:var(--ai-ink);font-size:13.5px}
+@media (max-width:700px){
+  .cd-nums{grid-template-columns:1fr} .cd-nums .cd-num b{font-size:26px}
+  .cd-row{grid-template-columns:70px 1fr;} .cd-row .v{grid-column:1 / -1;text-align:left;margin-top:-2px}
+  .cd-cols{grid-template-columns:1fr} .cd-stats{grid-template-columns:repeat(2,1fr)}
+  .cd-modal .modal-in{padding:20px 16px 16px}
+}
 </style>
 </head>
 <body>
@@ -1686,7 +1743,7 @@ async function liveSync({quiet} = {}){
     const r = await api('/api/sync', {method:'POST', body:{profile:S.profile, categories:[...UserProfileService.categoriesFor(S.profile).map(c => c[0]), ...(S.cats || []).filter(c => c.ai).map(c => c.name)], boardCats:(S.cats || []).map(c => ({name:c.name, desc:c.desc, ids:c.ids, domains:c.domains, senders:c.senders, auto:c.auto, ai:!!c.ai}))}});
     setLiveAccounts(r.accounts);
     MAILBOX = r.items.map(liveToRaw);
-    LIVE.lastSync = new Date(); LIVE.errors = r.errors || []; LIVE.ai = r.ai; if(r.aiProvider) LIVE.aiProvider = r.aiProvider; loadMemory();
+    LIVE.lastSync = new Date(); LIVE.errors = r.errors || []; LIVE.ai = r.ai; if(r.aiProvider) LIVE.aiProvider = r.aiProvider; loadMemory(); loadCondense();
     runPipeline();
     if(!quiet && LIVE.errors.length) toast(syncErrorText());
     return r;
@@ -2298,6 +2355,7 @@ function pPrivacy(){
       <div class="fact"><span class="fi">✓</span><span><b>Least privilege.</b> We request read and draft permissions only — no send, no delete.</span></div>
       <div class="fact"><span class="fi">✓</span><span><b>You can disconnect any time.</b> Disconnecting revokes access and deletes that account's analysis.</span></div>
       <div class="fact"><span class="fi">✓</span><span><b>Minimal storage.</b> The design stores metadata and AI results, not full email bodies, and keeps each user's data isolated.</span></div>
+      ${S.mode === 'live' ? cdPrivacyFact() : ''}
     </div>
     <h2>Processing pipeline</h2>
     <p>Each new email passes through the same steps, regardless of provider:</p>
@@ -2330,6 +2388,7 @@ function pSettings(){
       <div><h4><span class="pdot p-low"></span>Low</h4><ul>${t.low.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
     </div>
   </div>
+  ${vCondenseCard()}
   <div style="margin-top:22px">
     <div class="set-row"><div><b>Profile and folders</b><span>Describe yourself again and let Clearday suggest folders.</span></div><button class="btn sm" data-act="editProfile">Edit</button></div>
     <div class="set-row"><div><b>Learned from your corrections</b><span>${c.vip.length} always-prioritised senders, ${c.ignore.length} ignored senders, ${Object.keys(c.override).length} manual priorities</span></div><button class="btn sm ghost" data-act="resetCorr" ${c.vip.length + c.ignore.length + Object.keys(c.override).length ? '' : 'disabled'}>Reset</button></div>
@@ -2582,6 +2641,7 @@ function pBoard(){
     </div></div>`;
   }
   return `<div class="board"><div class="board-in">
+    ${condenseBadge()}
     <div class="board-grid">${cats.map(c => { const list = boardEmails(c.id); const s = list.filter(e => e.seen).length;
       return `<button class="folder-wrap" data-act="boardOpen" data-v="${c.id}" aria-label="Open ${esc(c.name)}: ${list.length} emails, ${list.length - s} unread">
         ${folder(c, list, false)}
@@ -2870,7 +2930,8 @@ function vApp(){
   ${S.openId ? vSheet() : ''}
   ${S.catchup ? vCatchup() : ''}
   ${S.catFlow ? vCatFlow() : ''}
-  ${S.imapForm ? vImapForm() : ''}`;
+  ${S.imapForm ? vImapForm() : ''}
+  ${CD.open ? vCondensePreview() : ''}`;
 }
 
 /* =========================================================================
@@ -3388,6 +3449,108 @@ ${firstName()}`, tone:'Professional'}; render({noFocus:true}); document.getEleme
   reset(){ store.clear(); location.reload(); },
   logout(){ S.view = 'landing'; S.openId = null; persist(); render({top:true}); },
 };
+
+/* =========================================================================
+   Condense — token compression before the LLM (https://condense.chat)
+   ========================================================================= */
+const CD = {data:null, pv:null, open:false, busy:false, id:'', level:'auto', err:''};
+async function loadCondense(){
+  if(S.mode !== 'live') return;
+  try{ CD.data = await api('/api/condense'); }catch(e){ CD.data = null; }
+  if(S.view === 'app' && !CD.open && (S.page === 'settings' || (S.page === 'board' && !S.boardOpen))) render({noFocus:true});
+}
+const cdN = n => n >= 10000 ? (n / 1000).toFixed(0) + 'k' : n >= 1000 ? (n / 1000).toFixed(1) + 'k' : String(Math.round(n));
+const cdUsd = v => v >= 0.01 ? '$' + v.toFixed(2) : v > 0 ? '<$0.01' : '$0';
+const CD_STATUS = {active:['Active', 'active'], off:['Off for you', ''], no_key:['Not configured: no API key', 'warn'], no_access:['Paused: Condense rejected the key', 'bad'], paused:['Paused: recovering', 'warn'], disabled:['Disabled by the server', '']};
+function condenseBadge(){
+  const d = CD.data; if(S.mode !== 'live' || !d || d.status === 'disabled' || d.status === 'no_key') return '';
+  const L = d.ledger, ok = d.status === 'active';
+  const txt = !ok ? (CD_STATUS[d.status]?.[0] || d.status) : L && L.inTokens ? `<b>${L.pctSaved}% fewer tokens</b>` : 'ready';
+  const tip = L && L.inTokens ? `Condense compressed your mail before it reached the AI: ${cdN(L.saved)} tokens saved (about ${cdUsd(L.estUsdSaved)}, an estimate). ${L.guardRejects} compressions were rejected to protect facts.` : 'Condense compresses mail text before it reaches the AI.';
+  return `<button class="cd-badge ${ok ? '' : 'warn'}" data-act="cdSettings" title="${esc(tip)}" aria-label="${esc(tip)}">${ICON('bolt', 14)}<span>Condense · ${txt}</span></button>`;
+}
+function cdChart(L){
+  const kinds = Object.entries(L.byKind || {}).filter(([, v]) => v.in).sort((a, b) => b[1].in - a[1].in);
+  if(!kinds.length) return '';
+  const max = Math.max(...kinds.map(([, v]) => v.in));
+  return `<div class="cd-chart"><h4>Tokens by kind of mail <span class="cd-key"><i></i>original</span><span class="cd-key"><i class="c"></i>sent to the AI</span></h4>
+    ${kinds.map(([k, v]) => { const w1 = Math.max(2, v.in / max * 100), w2 = Math.max(v.out ? 2 : 0, v.out / max * 100), pct = v.in ? Math.round((v.in - v.out) / v.in * 100) : 0;
+      return `<div class="cd-row"><span class="l">${esc(k)}</span>
+        <svg viewBox="0 0 100 22" preserveAspectRatio="none" role="img" aria-label="${esc(k)}: ${v.in} tokens before, ${v.out} after"><rect x="0" y="2" width="${w1}" height="7" rx="2" fill="var(--line2)"/><rect x="0" y="12" width="${w2}" height="7" rx="2" fill="var(--accent)"/></svg>
+        <span class="v">${cdN(v.in)} → <b>${cdN(v.out)}</b>${pct ? ` (−${pct}%)` : ''}</span></div>`; }).join('')}
+  </div>`;
+}
+function vCondenseCard(){
+  if(S.mode !== 'live') return '';
+  const d = CD.data;
+  if(!d) return `<div class="cd-card"><div class="cd-head"><div><h3>${ICON('bolt', 18)}Condense</h3><p>Loading…</p></div></div></div>`;
+  const L = d.ledger, st = CD_STATUS[d.status] || [d.status, ''], has = L && L.inTokens > 0;
+  return `<div class="cd-card" id="condenseCard">
+    <div class="cd-head"><div><h3>${ICON('bolt', 18)}Condense <span class="cd-pill ${st[1]}"><i></i>${esc(st[0])}</span></h3>
+      <p>Compresses mail text before it goes to the AI, so you send less of your mail and pay for fewer tokens. A fidelity guard checks that every date, time, amount, name and "not" survives, or the original is used.</p></div>
+      <button class="switch ${d.enabled ? 'on' : ''}" data-act="cdToggle" role="switch" aria-checked="${d.enabled}" aria-label="Compress mail with Condense"></button></div>
+    ${has ? `<div class="cd-nums">
+        <div class="cd-num"><b>${cdN(L.saved)}</b><small>tokens saved</small></div>
+        <div class="cd-num"><b>${L.pctSaved}%</b><small>fewer tokens sent to the AI</small></div>
+        <div class="cd-num"><b>${L.estUsdSaved >= 0.01 ? "≈" : ""}${cdUsd(L.estUsdSaved)}</b><small>saved (estimate at $${d.usdPerMTokIn}/M input tokens)</small></div></div>
+      <div class="cd-sub">${L.calls + L.cacheHits} mail texts compressed${L.cacheHits ? ` (${L.cacheHits} served from cache)` : ''}. ${L.llmPromptTokens ? `The AI actually received ${cdN(L.llmPromptTokens)} prompt tokens in ${L.llmCalls} calls (measured by Gemini).` : ''}</div>
+      ${cdChart(L)}
+      <div class="cd-guard">${ICON('shield', 18)}<span><b>${L.guardRejects} ${L.guardRejects === 1 ? 'compression was' : 'compressions were'} rejected to protect facts.</b> Condense prunes words, and sometimes that drops a date or a "no longer". Those texts are retried gentler, compressed around the facts, or sent as the original.${L.fallbacks ? ` ${L.fallbacks} stayed original.` : ''}</span></div>`
+    : `<div class="cd-empty">${d.status === 'active' ? 'Nothing compressed yet. Sync your mail, or try it on one of your emails below. Short mails are left alone because there is nothing to gain.' : 'Condense is not compressing right now.'}</div>`}
+    <div class="cd-foot"><button class="btn sm" data-act="cdOpen">${ICON('spark', 15)}See it work on your mail</button><a href="https://condense.chat" target="_blank" rel="noopener">Powered by Condense ↗</a></div>
+  </div>`;
+}
+const cdReEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+function cdMark(text, facts){
+  const vals = [...new Set(facts.filter(f => f.value !== 'not').map(f => esc(f.value)))].sort((a, b) => b.length - a.length);
+  const html = esc(text);
+  if(!vals.length) return html;
+  return html.replace(new RegExp(vals.map(cdReEsc).join('|'), 'gi'), m => `<mark class="cd-f">${m}</mark>`);
+}
+function vCondensePreview(){
+  const mails = (MAILBOX || []).filter(m => (m.body || '').length > 0).sort((a, b) => b.body.length - a.body.length);
+  if(!CD.id && mails[0]) CD.id = mails[0].id;
+  const p = CD.pv, lv = [['auto', 'Auto'], ['conservative', 'Conservative'], ['balanced', 'Balanced'], ['aggressive', 'Aggressive']];
+  let result = '';
+  if(CD.busy) result = `<div class="cd-empty">Compressing with Condense…</div>`;
+  else if(CD.err) result = `<div class="cd-note">${esc(CD.err)}</div>`;
+  else if(p){
+    const g = p.guard, lostRaw = g.rawLost || [];
+    const how = {compressed:'accepted as returned', cached:'accepted (cached)', retried:'retried at half the rate', salvaged:'compressed around the facts', fallback:'kept the original'}[p.action] || p.action;
+    result = p.status !== 'active' ? `<div class="cd-note">Condense is ${esc(CD_STATUS[p.status]?.[0] || p.status)}. Nothing was compressed.</div>` : `
+      <div class="cd-stats"><div><b>${cdN(p.inTokens)}</b><small>tokens before</small></div><div><b>${cdN(p.outTokens)}</b><small>tokens after (${esc(p.model)}, ${Math.round(p.rate * 100)}% pruned)</small></div>
+        <div><b>${p.pctSaved}%</b><small>fewer tokens</small></div><div><b>${g.kept}/${g.total}</b><small>protected facts preserved</small></div></div>
+      ${lostRaw.length ? `<div class="cd-note">${ICON('shield', 14)} Raw compression dropped ${lostRaw.length} protected ${lostRaw.length === 1 ? 'fact' : 'facts'}: ${lostRaw.map(f => `<b>${esc(f.value)}</b>`).join(', ')}. The guard ${esc(how)}.</div>` : ''}
+      <div class="cd-cols"><div class="cd-col"><h5><span>Original</span><span>${cdN(p.inTokens)} tokens</span></h5><div class="cd-text">${cdMark(p.original, g.checked)}</div></div>
+        <div class="cd-col"><h5><span>Sent to the AI</span><span>${cdN(p.outTokens)} tokens</span></h5><div class="cd-text">${cdMark(p.condensed, g.checked.filter(f => f.kept))}</div></div></div>
+      ${g.checked.length ? `<div class="cd-facts" aria-label="Protected facts checked">${g.checked.map(f => `<span class="cd-fc ${f.kept ? 'ok' : 'no'}" title="${esc(f.type)}">${esc(f.value)}</span>`).join('')}</div>` : '<div class="cd-sub">No dates, amounts or other protected facts in this email.</div>'}`;
+  }
+  return `<div class="modal cd-modal" role="dialog" aria-modal="true" aria-label="Condense live preview"><div class="overlay" data-act="cdClose"></div>
+    <div class="modal-card"><div class="modal-in">
+      <h2>${ICON('bolt', 20)} See Condense work</h2>
+      <p class="muted" style="margin-top:6px;font-size:14px">Pick one of your emails. Condense removes filler before the AI reads it; the fidelity guard checks every protected fact (highlighted) made it through.</p>
+      <div class="cd-ctrl"><select id="cdMail" aria-label="Email" onchange="CD.id=this.value">${mails.map(m => `<option value="${esc(m.id)}" ${m.id === CD.id ? 'selected' : ''}>${esc(m.from)}: ${esc((m.subject || '').slice(0, 50))} (${cdN(Math.ceil(m.body.length / 4))} tokens)</option>`).join('')}</select>
+        ${lv.map(([k, n]) => `<button class="chip sm ${CD.level === k ? 'on' : ''}" data-act="cdLevel" data-v="${k}">${n}</button>`).join('')}
+        <button class="btn sm primary" data-act="cdRun" ${CD.busy ? 'disabled' : ''}>Compress</button></div>
+      ${result}
+      <div class="cd-foot"><a href="https://condense.chat" target="_blank" rel="noopener">Powered by Condense ↗</a><button class="btn sm ghost" data-act="cdClose">Close</button></div>
+    </div></div></div>`;
+}
+const cdPrivacyFact = () => `<div class="fact"><span class="fi">✓</span><span><b>Less of your mail leaves for the AI.</b> Mail text is compressed by Condense before it goes to the model, and every date, amount and name is verified to survive. That also means less of your mail text is sent to the model.</span></div>`;
+Object.assign(ACT, {
+  async cdToggle(){ const d = CD.data; if(!d) return; const on = !d.enabled; d.enabled = on; d.status = on ? (d.health?.status || 'active') : 'off'; render({noFocus:true}); try{ await api('/api/settings', {method:'PUT', body:{condense:on}}); }catch(e){ toast(e.message); } loadCondense(); },
+  cdOpen(){ CD.open = true; CD.pv = null; CD.err = ''; render({noFocus:true}); },
+  cdClose(){ CD.open = false; render({noFocus:true}); loadCondense(); },
+  cdSettings(){ S.page = 'settings'; S.boardOpen = null; render({top:true, noFocus:true}); },
+  cdLevel(el){ CD.level = el.dataset.v; render({noFocus:true}); },
+  async cdRun(){
+    CD.id = document.getElementById('cdMail')?.value || CD.id; CD.busy = true; CD.err = ''; render({noFocus:true});
+    try{ CD.pv = await api('/api/condense/preview', {method:'POST', body:{id:CD.id, level:CD.level === 'auto' ? undefined : CD.level}}); }
+    catch(e){ CD.pv = null; CD.err = e.message; }
+    CD.busy = false; render({noFocus:true});
+  },
+});
+{ const _go = ACT.go; ACT.go = function(el){ _go(el); if(el.dataset.v === 'settings' || el.dataset.v === 'board') loadCondense(); }; }
 
 document.addEventListener('click', ev => {
   const el = ev.target.closest('[data-act]');
