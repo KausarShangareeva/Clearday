@@ -726,6 +726,29 @@ a.btn:not(.primary){color:var(--ink)}
 .ask-orb.live-speaking .orb-bars i{animation-duration:.6s}
 .live-pill{margin-left:8px;font-size:12px;font-weight:500;padding:2px 9px;border-radius:999px;background:color-mix(in srgb,var(--crit) 12%,transparent);color:var(--crit)}
 .demo-flag{display:inline-block;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;background:color-mix(in srgb,var(--imp) 16%,transparent);color:color-mix(in srgb,var(--imp) 80%,var(--ink));margin-bottom:12px}
+
+/* landing v2: centred, one action, Board preview */
+.land2{display:flex;flex-direction:column}
+.land2 .l-nav{width:100%}
+.l2-hero{text-align:center;max-width:860px;margin:0 auto;padding:72px 24px 0}
+.l2-hero h1{font-family:var(--sans);font-weight:500;font-size:clamp(44px,7vw,88px);line-height:.98;letter-spacing:-.055em}
+.l2-sub{margin:22px auto 0;max-width:46ch;font-size:18px;color:var(--ink2);line-height:1.5}
+.l2-cta{display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:34px}
+.l2-main{height:54px;padding:0 30px;font-size:16px}
+.l2-demo{font-size:14.5px;color:var(--ink3);text-decoration:underline;text-underline-offset:4px}
+.l2-demo:hover{color:var(--ink)}
+.l2-preview{width:100%;max-width:1080px;margin:72px auto 0;padding:0 24px 80px}
+.l2-board{position:relative;border-radius:2rem;padding:56px 44px 120px;background-color:var(--board);background-image:radial-gradient(circle,var(--dot) 1px,transparent 1.3px);background-size:22px 22px;box-shadow:0 0 0 1px var(--line),0 40px 90px rgba(0,0,0,.08)}
+.l2-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:34px}
+.l2-ask{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);width:min(560px,calc(100% - 48px));display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line2);border-radius:999px;padding:7px 7px 7px 8px;box-shadow:0 14px 40px rgba(0,0,0,.12)}
+.l2-ask-text{flex:1;color:var(--ink3);font-size:15px}
+.l2-ask .send{width:40px;height:40px}
+@media (max-width:860px){
+  .l2-hero{padding-top:40px}
+  .l2-board{padding:40px 16px 104px}
+  .l2-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:40px 14px}
+}
+
 /* modal stacking fix */
 .modal > .overlay{z-index:0}
 .modal > .modal-card{z-index:1}
@@ -1765,40 +1788,30 @@ const MOON_SVG = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" st
 const isDark = () => document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
 function themeBtn(){ const d = isDark(); return `<button class="icon-btn theme-btn" data-act="theme" aria-label="${d ? 'Switch to day mode' : 'Switch to night mode'}" title="${d ? 'Day mode' : 'Night mode'}">${d ? SUN_SVG : MOON_SVG}</button>`; }
 function vLanding(){
-  const inboxes = [['Personal Gmail','personal',12],['University','university',18],['Startup','startup',9],['Work Outlook','work',14],['Side project','personal',6],['Newsletters','work',23],['Old Hotmail','personal',4]];
-  return `<div class="landing">
-  <nav class="l-nav"><div class="logo"><span class="logo-mark"></span>Clearday</div>
-    <div style="display:flex;gap:8px;align-items:center">${themeBtn()}<button class="btn ghost sm" data-act="privacyLanding">Privacy</button><button class="btn sm" data-act="demo">Try demo</button></div></nav>
-  <section class="hero">
-    <div>
-      <h1>One inbox for everything that matters.</h1>
-      <p class="sub">Connect your email accounts. Let AI understand what matters to you. Get only the information you actually need — and a draft when you need to reply.</p>
-      <div class="ctas">
-        <button class="btn primary" style="height:46px;padding:0 20px" data-act="connectReal">Connect your inbox</button>
-        <button class="btn" style="height:46px;padding:0 20px" data-act="demo">Try demo</button>
-      </div>
-      <p class="note">Clearday never sends email on its own. You stay in control of every reply.</p>
-    </div>
-    <div class="funnel" aria-label="How Clearday condenses seven inboxes">
-      <div class="funnel-in">${inboxes.map(([n,c,k]) => `<div class="f-inbox">${accDot(c)}${n}<b>${k}</b></div>`).join('')}</div>
-      <div class="f-arrow">86 new emails, read by Clearday</div>
-      <p class="f-out"><span class="n">6</span> things matter today. <span class="n">2</span> need a reply, and one deadline is tomorrow.</p>
-      <div class="f-items">
-        <div class="f-item"><span class="pdot p-critical"></span>Send residence permit to Admissions<span class="due hot" style="margin-left:auto">Tomorrow</span></div>
-        <div class="f-item"><span class="pdot p-important"></span>Reply to investor — draft ready</div>
-      </div>
+  // Static preview of the Board, built from the same folder component the app uses.
+  const P = (from, fromEmail, status, seen = true, org = '') => ({from, fromEmail, status, seen, org, _raw:{}});
+  const preview = [
+    [{name:'Personal', color:'var(--acc-personal)', icon:'user'}, [P('Mum', 'mum@gmail.com', 'replied'), P('Leo Nilsson', 'leo@gmail.com', 'awaiting', false), P('Nordbank', 'security@nordbank.se', 'fyi', false)]],
+    [{name:'University', color:'var(--acc-university)', icon:'cap'}, [P('Dr. Sofia Holm', 'sofia@nordvik.edu', 'replied'), P('Prof. Lindqvist', 'karin@nordvik.edu', 'fyi'), P('Anna Berg', 'admissions@nordvik.edu', 'awaiting', false)]],
+    [{name:'Investors', color:'#8B5CF6', icon:'coin'}, [P('Erik Sandberg', 'erik@sandberg.vc', 'awaiting', false), P('Maria Okafor', 'maria@northwind.vc', 'awaiting', false)]],
+    [{name:'Work', color:'var(--acc-work)', icon:'briefcase'}, [P('Omar Haddad', 'omar@haldengroup.se', 'replied'), P('Petra Lund', 'petra@haldengroup.se', 'awaiting'), P('Jonas Ek', 'jonas@haldengroup.se', 'awaiting', false)]],
+  ];
+  return `<div class="landing land2">
+  <nav class="l-nav"><div class="logo"><span class="logo-mark"></span>Clearday</div>${themeBtn()}</nav>
+  <section class="l2-hero">
+    <h1>One inbox for everything that matters.</h1>
+    <p class="l2-sub">Gmail, Outlook, Yahoo and Mail.ru, sorted into folders by what matters to you.</p>
+    <div class="l2-cta">
+      <button class="btn primary l2-main" data-act="connectReal">Connect your inbox</button>
+      <button class="l2-demo" data-act="demo">or try the demo</button>
     </div>
   </section>
-  <section class="how">
-    <div class="how-steps">
-      <div class="how-step"><h3>Connect your inboxes</h3><p>Gmail and Outlook via OAuth. No passwords stored.</p></div>
-      <div class="how-step"><h3>AI learns your context</h3><p>A two-minute profile: who you are and who matters.</p></div>
-      <div class="how-step"><h3>Important things surface</h3><p>Every email ranked, with the reason shown.</p></div>
-      <div class="how-step"><h3>Actions and summaries</h3><p>Deadlines found, newsletters condensed, drafts written.</p></div>
-      <div class="how-step"><h3>One simple briefing</h3><p>Read it in a minute, or just ask out loud.</p></div>
+  <section class="l2-preview" aria-hidden="true">
+    <div class="l2-board">
+      <div class="l2-grid">${preview.map(([c, list]) => `<div class="folder-wrap">${folder(c, list.slice().sort((x, y) => ['awaiting', 'fyi', 'replied'].indexOf(x.status) - ['awaiting', 'fyi', 'replied'].indexOf(y.status)), false)}<span class="f-name">${esc(c.name)}</span></div>`).join('')}</div>
+      <div class="l2-ask"><span class="ask-orb"><span class="orb-bars"><i></i><i></i><i></i><i></i><i></i></span></span><span class="l2-ask-text">What still needs my reply?</span><span class="send"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></span></div>
     </div>
   </section>
-  <footer class="l-foot"><span>Hackathon prototype — {Tech: Europe} Agentic AI Hack</span><button data-act="privacyLanding">How we handle your data</button></footer>
   </div>`;
 }
 
