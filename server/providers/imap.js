@@ -34,19 +34,31 @@ export function makeImapProvider({ key, label, host, port = 993, webmail, drafts
     refresh: async () => null,
     revoke: async () => {},
 
-    async fetchMessages(creds, { max, selfEmail }) {
+    // `known`: Map(uid -> cached message record). Envelope + flags are fetched for the latest `max` messages;
+    // the full source (body) is downloaded only for uids that are not known yet.
+    async fetchMessages(creds, { max, selfEmail, known = new Map() }) {
+      max = Math.min(200, max || 200);
       return withClient(creds, async c => {
         const box = await c.mailboxOpen('INBOX', { readOnly: true });
         if (!box.exists) return [];
         const from = Math.max(1, box.exists - max + 1);
-        const out = [];
-        for await (const m of c.fetch(`${from}:*`, { uid: true, flags: true, envelope: true, internalDate: true, source: true })) {
-          let parsed = null;
-          try { parsed = await simpleParser(m.source); } catch { /* keep going */ }
+        const heads = [];
+        for await (const m of c.fetch(`${from}:*`, { uid: true, flags: true, envelope: true, internalDate: true })) heads.push(m);
+        const fresh = heads.filter(m => !known.has(String(m.uid)));
+        const parsedBy = new Map();
+        if (fresh.length) {
+          for await (const m of c.fetch(fresh.map(m => m.uid).join(','), { uid: true, source: true }, { uid: true })) {
+            try { parsedBy.set(String(m.uid), await simpleParser(m.source)); } catch { /* keep going */ }
+          }
+        }
+        const out = heads.map(m => {
+          const flags = m.flags || new Set();
+          const k = known.get(String(m.uid));
+          if (k) return { ...k, providerId: String(m.uid), unread: !flags.has('\\Seen'), replied: flags.has('\\Answered') };
+          const parsed = parsedBy.get(String(m.uid)) || null;
           const f = m.envelope?.from?.[0] || {};
           const text = parsed ? (parsed.text || htmlToText(parsed.html || '')) : '';
-          const flags = m.flags || new Set();
-          out.push({
+          return {
             providerId: String(m.uid), threadId: m.envelope?.messageId || String(m.uid),
             fromName: f.name || f.address || 'Unknown', fromEmail: String(f.address || '').toLowerCase(),
             subject: m.envelope?.subject || '(no subject)',
@@ -56,8 +68,8 @@ export function makeImapProvider({ key, label, host, port = 993, webmail, drafts
             listUnsubscribe: !!headerLine(parsed, 'list-unsubscribe'),
             unsub: headerLine(parsed, 'list-unsubscribe'), unsubPost: headerLine(parsed, 'list-unsubscribe-post'),
             providerCategory: null, messageIdHeader: m.envelope?.messageId || '', link: webmail,
-          });
-        }
+          };
+        });
         return out.reverse().filter(x => x.fromEmail && x.fromEmail !== selfEmail);
       });
     },

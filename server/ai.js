@@ -56,6 +56,21 @@ function parseJSON(text) {
 
 const PRIORITIES = ['critical', 'important', 'normal', 'low', 'noise'];
 const KINDS = ['personal', 'newsletter', 'alert', 'event', 'receipt', 'promo', 'notice', 'social'];
+export const OTHER_TAGS = ['Security codes', 'Receipts', 'Notifications', 'Promotions', 'Social', 'Misc'];
+const CODE_RE = /(verification|security|confirmation|login|log-?in|sign-?in|one[- ]time|auth(entication)?|access)\s+(code|pin|password)|\botp\b|one[- ]time (pass(word|code)|code|pin)|(your|use|enter|the)\s+(\w+\s+)?code\s+(is|:)|\bcode:?\s*\d{4,8}\b|\b\d{6}\b.{0,40}(code|verify|verification)|(code|verify|verification).{0,40}\b\d{6}\b|two-?factor|2fa|\bmfa\b|new sign-?in|sign-?in (attempt|from)|suspicious (login|activity)|password reset|reset your password|security alert|unusual activity/i;
+const RECEIPT_RE = /\b(receipt|invoice|order (confirmation|#?\d+)|payment (received|confirmation|successful)|your order|billing|subscription renewal|has shipped|shipping (confirmation|update)|out for delivery|delivered|tracking number|refund)\b/i;
+const PROMO_RE = /\b(\d{1,2}% off|sale|discount|deal|offer ends|limited time|coupon|free shipping|exclusive|don'?t miss|black friday|save up to|promo(tion)?)\b/i;
+const SOCIAL_RE = /linkedin|facebook|instagram|twitter|x\.com|tiktok|pinterest|reddit|youtube|snapchat|meetup\.com|discord/i;
+// Strong rule-based tag for mail that is not for the user's own folders. Used as fallback and as a safety net over the model.
+export function guessTag(e) {
+  const text = `${e.subject || ''}\n${String(e.body || e.snippet || '').slice(0, 1200)}`;
+  if (CODE_RE.test(text)) return 'Security codes';
+  if (e.providerCategory === 'social' || SOCIAL_RE.test(e.fromEmail || '')) return 'Social';
+  if (RECEIPT_RE.test(text)) return 'Receipts';
+  if (e.providerCategory === 'promotions' || PROMO_RE.test(e.subject || '')) return 'Promotions';
+  if (/no-?reply|notifications?@|alerts?@|mailer|donotreply|do-not-reply|automated|support@/i.test(e.fromEmail || '')) return 'Notifications';
+  return 'Misc';
+}
 const isoDate = v => (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v) && !isNaN(new Date(v)) ? v.slice(0, 10) : null);
 const str = (v, n = 600) => (typeof v === 'string' ? v.slice(0, n) : '');
 
@@ -64,6 +79,7 @@ function sanitize(a, e, categories) {
   const out = {
     priority: PRIORITIES.includes(a?.priority) ? a.priority : 'normal',
     category: categories.includes(a?.category) ? a.category : 'Other',
+    otherTag: OTHER_TAGS.includes(a?.otherTag) ? a.otherTag : guessTag(e),
     kind,
     org: str(a?.org, 80),
     reasons: (Array.isArray(a?.reasons) ? a.reasons : []).map(r => str(r, 90)).filter(Boolean).slice(0, 4),
@@ -81,18 +97,29 @@ function sanitize(a, e, categories) {
     out.newsletter = { topics: (Array.isArray(a.newsletter.topics) ? a.newsletter.topics : []).filter(t => TOPICS.includes(t)).slice(0, 2), readMin: Math.max(1, Math.min(60, parseInt(a.newsletter.readMin) || 3)), why: str(a.newsletter.why, 400), sums: { one: str(s.one, 300) || out.summary, s30: str(s.s30, 800) || out.summary, m2: str(s.m2, 1500) || out.summary, detailed: str(s.detailed, 2500) || out.summary } };
   }
   if (!out.reasons.length) out.reasons = ['Analysed by Clearday'];
+  // Login codes / OTPs / security alerts never belong in a user folder.
+  if (CODE_RE.test(`${e.subject || ''}\n${String(e.body || '').slice(0, 800)}`)) { out.category = 'Other'; out.otherTag = 'Security codes'; }
+  if (out.category !== 'Other') out.otherTag = null;
   return out;
 }
 
 // Cheap rules used for obvious promotions/social mail and when no API key is set.
-export function heuristic(e, reason) {
+export function heuristic(e, reason, hints = []) {
   const auto = /no-?reply|notifications?@|mailer|newsletter|news@|info@|updates?@|marketing|hello@/i.test(e.fromEmail);
   const promo = e.providerCategory === 'promotions', social = e.providerCategory === 'social';
-  const kind = promo ? 'promo' : social ? 'social' : e.listUnsubscribe ? 'newsletter' : auto ? 'notice' : 'personal';
+  const tag = guessTag(e);
+  const kind = tag === 'Security codes' ? 'alert' : promo ? 'promo' : social ? 'social' : e.listUnsubscribe ? 'newsletter' : tag === 'Receipts' ? 'receipt' : auto ? 'notice' : 'personal';
   const asks = /\?|please|could you|can you|kan du|skulle du/i.test(`${e.subject} ${e.body.slice(0, 1500)}`);
-  const priority = promo || social ? 'noise' : kind === 'personal' ? (asks ? 'important' : 'normal') : 'low';
+  const priority = tag === 'Security codes' ? 'low' : promo || social ? 'noise' : kind === 'personal' ? (asks ? 'important' : 'normal') : 'low';
+  // Without AI: a user folder is chosen only for a person's mail whose text clearly contains the folder's own name.
+  let category = 'Other';
+  if (kind === 'personal' || kind === 'event') {
+    const hay = `${e.subject} ${e.fromName} ${e.fromEmail} ${String(e.body || '').slice(0, 600)}`.toLowerCase();
+    const hit = hints.find(h => h.name && hay.includes(String(h.name).toLowerCase()));
+    if (hit) category = hit.name;
+  }
   return {
-    priority, category: promo ? 'Promotions' : social || kind === 'notice' ? 'Notifications' : kind === 'newsletter' ? 'News' : 'Other',
+    priority, category, otherTag: category === 'Other' ? tag : null,
     kind, org: '', reasons: [reason || (kind === 'personal' ? 'Written by a person' : 'Automated sender')],
     summary: e.snippet || e.subject, catchLine: e.snippet || e.subject, needsReply: kind === 'personal' && asks,
     action: null, event: null, newsletter: null, draft: null,
@@ -102,25 +129,31 @@ export function heuristic(e, reason) {
 const SYSTEM = `You are the analysis engine of Clearday, an AI chief of staff for email. You read emails and return strict JSON.
 Be accurate and conservative: never invent deadlines, meetings, amounts or facts that are not in the email. Write summaries in English unless the user's profile says otherwise; write reply drafts in the language of the email.`;
 
+const BATCH = () => Math.max(4, +process.env.CLASSIFY_BATCH || 10);
+const CONCURRENCY = () => Math.max(1, +process.env.CLASSIFY_CONCURRENCY || 6);
+// `hints` = ALL of the user's categories [{name, desc}] (authoritative); `categories` = their names.
 export async function classify(emails, { profile, categories, today, hints = [] }) {
   if (!emails.length) return {};
   const name = (profile?.name || 'me').split(' ')[0];
   const batches = [];
-  for (let i = 0; i < emails.length; i += 8) batches.push(emails.slice(i, i + 8));
+  for (let i = 0; i < emails.length; i += BATCH()) batches.push(emails.slice(i, i + BATCH()));
   const results = {};
-  await pMap(batches, async batch => {
+  const runBatch = async (batch, depth = 0) => {
     const payload = batch.map(e => ({
       id: e.id, inbox: e.inbox, from: e.fromName, fromEmail: e.fromEmail, subject: e.subject,
-      date: e.date, unread: e.unread, alreadyReplied: e.replied, bulk: e.listUnsubscribe, body: clip(e.body, 3500),
+      date: e.date, unread: e.unread, alreadyReplied: e.replied, bulk: e.listUnsubscribe, body: clip(e.body, 2500),
     }));
     const prompt = `Today is ${today}. The user is ${name}.
 User profile: ${JSON.stringify(profile || {})}${memoryNote()}
-Categories you may use (exact strings): ${JSON.stringify(categories)}${hints.length ? '\nWhat belongs in the user\'s own folders (prefer these when an email clearly fits):\n' + hints.map(h => `- "${h.name}": ${h.desc}`).join('\n') : ''}
+The user's own folders (authoritative list, exact names). Every email goes into EXACTLY ONE of these folders, or "Other" if none clearly fits:
+${hints.length ? hints.map(h => `- "${h.name}"${h.desc ? ': ' + h.desc : ''}`).join('\n') : '(the user has no folders yet: use "Other" for everything)'}
+Never invent a folder. Login or verification codes, one-time passwords, security/sign-in alerts, receipts, shipping notices, automated notifications and promotions must go to "Other" unless one of the user's folders clearly covers that kind of mail (for example a "Bills" folder may take receipts and invoices).
 
 For EACH email return an object:
 {"id": the same id,
  "priority": "critical" | "important" | "normal" | "low" | "noise",
- "category": one of the categories,
+ "category": exactly one of the user's folder names above, or "Other",
+ "otherTag": when category is "Other": one of "Security codes" (verification codes, OTP, login/security alerts) | "Receipts" (receipts, invoices, orders, shipping) | "Notifications" (automated notifications) | "Promotions" (marketing, offers) | "Social" (social network updates) | "Misc"; otherwise null,
  "kind": "personal" (a person writing to the user) | "newsletter" | "alert" (security/account/bank) | "event" | "receipt" | "promo" | "notice" (automated notification) | "social",
  "org": the sender's role or company if clear from the signature or domain, else "",
  "reasons": 2-4 short reasons (max 9 words each) for the priority, referring to the user's profile when relevant,
@@ -141,12 +174,18 @@ Return ONLY a JSON array with one object per email, no markdown.`;
     try {
       const arr = parseJSON(await llm({ system: SYSTEM, prompt, model: FAST(), maxTokens: 8000 }));
       const byId = new Map((Array.isArray(arr) ? arr : []).map(a => [a?.id, a]));
-      batch.forEach(e => { results[e.id] = byId.has(e.id) ? sanitize(byId.get(e.id), e, categories) : heuristic(e, 'AI skipped this email'); });
+      batch.forEach(e => { results[e.id] = byId.has(e.id) ? sanitize(byId.get(e.id), e, categories) : heuristic(e, 'AI skipped this email', hints); });
     } catch (err) {
+      if (batch.length > 1 && depth < 3) { // malformed/oversized reply: retry in two smaller halves
+        const mid = Math.ceil(batch.length / 2);
+        await Promise.all([runBatch(batch.slice(0, mid), depth + 1), runBatch(batch.slice(mid), depth + 1)]);
+        return;
+      }
       console.error('classify batch failed:', err.message);
-      batch.forEach(e => { results[e.id] = heuristic(e, 'AI unavailable, basic rules used'); });
+      batch.forEach(e => { results[e.id] = heuristic(e, 'AI unavailable, basic rules used', hints); });
     }
-  }, 4);
+  };
+  await pMap(batches, b => runBatch(b), CONCURRENCY());
   return results;
 }
 
