@@ -95,6 +95,17 @@ export async function fetchMessages(token, { hours, max, selfEmail }) {
   }).filter(x => x.fromEmail !== selfEmail);
 }
 
+// Lightweight index of the whole mailbox for category analysis.
+export async function fetchIndex(token, { max, selfEmail }) {
+  const out = []; let url = `/me/messages?${new URLSearchParams({ $top: String(Math.min(max, 200)), $orderby: 'receivedDateTime desc', $select: 'id,subject,from,bodyPreview,receivedDateTime' })}`;
+  while (url && out.length < max) {
+    const j = await m(url, token);
+    (j.value || []).forEach(x => out.push({ providerId: x.id, fromName: x.from?.emailAddress?.name || '', fromEmail: (x.from?.emailAddress?.address || '').toLowerCase(), subject: x.subject || '(no subject)', snippet: x.bodyPreview || '', date: x.receivedDateTime }));
+    url = j['@odata.nextLink'] ? j['@odata.nextLink'].replace('https://graph.microsoft.com/v1.0', '') : null;
+  }
+  return out.slice(0, max).filter(x => x.fromEmail && x.fromEmail !== selfEmail);
+}
+
 // Creates a reply DRAFT in Outlook. Never sends.
 export async function createDraft(token, { providerId, body }) {
   const d = await m(`/me/messages/${encodeURIComponent(providerId)}/createReply`, token, {

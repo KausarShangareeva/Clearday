@@ -50,7 +50,8 @@ function sanitize(a, e, categories) {
   };
   if (kind === 'newsletter' && a?.newsletter?.sums) {
     const s = a.newsletter.sums;
-    out.newsletter = { readMin: Math.max(1, Math.min(60, parseInt(a.newsletter.readMin) || 3)), why: str(a.newsletter.why, 400), sums: { one: str(s.one, 300) || out.summary, s30: str(s.s30, 800) || out.summary, m2: str(s.m2, 1500) || out.summary, detailed: str(s.detailed, 2500) || out.summary } };
+    const TOPICS = ['IT','AI','Web dev','Career','Marketing','Events','Design','Business','Science'];
+    out.newsletter = { topics: (Array.isArray(a.newsletter.topics) ? a.newsletter.topics : []).filter(t => TOPICS.includes(t)).slice(0, 2), readMin: Math.max(1, Math.min(60, parseInt(a.newsletter.readMin) || 3)), why: str(a.newsletter.why, 400), sums: { one: str(s.one, 300) || out.summary, s30: str(s.s30, 800) || out.summary, m2: str(s.m2, 1500) || out.summary, detailed: str(s.detailed, 2500) || out.summary } };
   }
   if (!out.reasons.length) out.reasons = ['Analysed by Clearday'];
   return out;
@@ -101,7 +102,7 @@ For EACH email return an object:
  "needsReply": true only if a person expects a reply from the user,
  "action": {"task": short imperative task, "deadline": "YYYY-MM-DD" or null, "how": short hint} or null — only if the user is asked to do something,
  "event": {"title": string, "date": "YYYY-MM-DD", "time": "HH:MM" or "", "place": string} or null — only for a specific dated event or meeting,
- "newsletter": when kind is "newsletter": {"readMin": estimated minutes to read the original, "sums": {"one": one sentence, "s30": about 60 words, "m2": about 150 words, "detailed": about 250 words covering the key points}, "why": 1-2 sentences on why this matters to this specific user, or ""}; otherwise null,
+ "newsletter": when kind is "newsletter": {"topics": 1-2 of ["IT","AI","Web dev","Career","Marketing","Events","Design","Business","Science"], "readMin": estimated minutes to read the original, "sums": {"one": one sentence, "s30": about 60 words, "m2": about 150 words, "detailed": about 250 words covering the key points}, "why": 1-2 sentences on why this matters to this specific user, or ""}; otherwise null,
  "draft": when needsReply is true: a ready-to-edit reply signed "${name}", concise, never committing to things the user hasn't said — use placeholders like [time] where needed; otherwise null}
 
 Priority guide: critical = action needed within about 24 hours or serious consequences (deadline tomorrow, confirmed security problem, legal). important = should be read today (sender the profile marks important, direct request, money, meeting request). normal = useful, no urgency. low = automated or routine. noise = marketing, social notifications, or what the profile says to ignore. Do not rely on words like "urgent" alone. Already-replied emails are rarely critical.
@@ -148,4 +149,44 @@ Email being replied to (from ${email.fromName} <${email.fromEmail}>, subject "${
 ${clip(email.body, 5000)}
 ${draft ? `\nCurrent draft:\n${draft}` : ''}`;
   return (await claude({ system: 'You write clear, natural email replies.', prompt, model: SMART(), maxTokens: 1500 })).trim();
+}
+
+const CAT_ICONS = ['star', 'coin', 'users', 'calendar', 'plane', 'heart', 'tag', 'book'];
+const indexLines = items => items.map(i => `${i.id} | ${i.from} <${i.fromEmail}> | ${String(i.subject).slice(0, 110)} | ${String(i.snippet || '').slice(0, 110).replace(/\s+/g, ' ')}`).join('\n');
+
+// Reads the whole mailbox index and proposes folders the user doesn't have yet.
+export async function suggestCategories(items, existing = [], profile) {
+  const valid = new Set(items.map(i => i.id));
+  const prompt = `You organise someone's email into folders. Below is an index of their mailbox (one email per line: id | sender | subject | preview).
+User profile: ${JSON.stringify(profile || {})}
+Folders they already have (do not repeat these): ${JSON.stringify(existing)}
+
+Propose 4 to 6 NEW folders that would genuinely help this person, each grounded in emails that are really in the list (at least 2 per folder). Prefer concrete groupings (e.g. a specific client, investors, bills, a course, travel) over vague ones.
+Return JSON only: {"suggestions":[{"name": short folder name, "description": one sentence saying which emails belong, "icon": one of ${JSON.stringify(CAT_ICONS)}, "ids": [ids of matching emails]}]}
+
+Mailbox:
+${indexLines(items).slice(0, 150000)}`;
+  const r = parseJSON(await claude({ system: 'You return strict JSON.', prompt, model: SMART(), maxTokens: 4000 }));
+  return (r.suggestions || []).map(sg => {
+    const ids = (sg.ids || []).filter(id => valid.has(id));
+    const senders = [...new Set(ids.map(id => items.find(i => i.id === id)?.from).filter(Boolean))].slice(0, 3);
+    return { name: str(sg.name, 40), description: str(sg.description, 200), desc: str(sg.description, 200), icon: CAT_ICONS.includes(sg.icon) ? sg.icon : 'tag', count: ids.length, examples: senders };
+  }).filter(sg => sg.name && sg.count > 0).slice(0, 6);
+}
+
+// Finds every email in the mailbox index that belongs to a user-described folder.
+export async function matchCategory(items, name, description) {
+  const valid = new Set(items.map(i => i.id));
+  const prompt = `A user is creating an email folder.
+Folder name: ${name}
+What belongs in it, in the user's words: ${description}
+
+From the mailbox index below (id | sender | subject | preview), select EVERY email that belongs in this folder and nothing that doesn't. Give a short reason (max 9 words) for each.
+Return JSON only: {"matches":[{"id": id, "reason": string}]}
+
+Mailbox:
+${indexLines(items).slice(0, 150000)}`;
+  const r = parseJSON(await claude({ system: 'You return strict JSON.', prompt, model: SMART(), maxTokens: 6000 }));
+  const seen = new Set();
+  return (r.matches || []).filter(x => valid.has(x?.id) && !seen.has(x.id) && seen.add(x.id)).map(x => ({ id: x.id, reason: str(x.reason, 90) }));
 }

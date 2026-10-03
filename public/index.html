@@ -576,6 +576,184 @@ a.btn{text-decoration:none}
 .fresh{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;color:var(--ok)}
 .fresh::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--ok)}
 
+
+/* new category tile + flow */
+.modal > .overlay{z-index:0}
+.modal-card{z-index:1}
+.folder.add{display:block}
+.folder.add::before{content:"";position:absolute;inset:13% 0 0 0;border:1.5px dashed var(--line2);border-radius:1.4rem;background:color-mix(in srgb,var(--surface) 55%,transparent);transition:border-color .2s,background .2s}
+.add-cat:hover .folder.add::before{border-color:var(--ink);background:var(--surface)}
+.f-add{position:absolute;left:50%;top:56%;transform:translate(-50%,-50%);width:50px;height:50px;border-radius:50%;background:var(--ink);color:var(--surface);display:grid;place-items:center;transition:transform .2s}
+.add-cat:hover .f-add{transform:translate(-50%,-50%) scale(1.08)}
+.add-cat .f-name{color:var(--ink3)}
+.sp-rule{margin-top:8px;font-size:13px;color:var(--ink2);background:var(--sunk);border-radius:.75rem;padding:8px 10px}
+.modal-card.cf{width:min(620px,100%)}
+.cf-scan{display:flex;flex-direction:column;align-items:center;text-align:center;padding:16px 0 8px}
+.cf-scan .meter{width:100%;max-width:360px;margin-top:18px}
+.cf-orb{width:76px;height:76px;border-radius:50%;display:grid;place-items:center;margin-bottom:18px;background:var(--surface);box-shadow:0 0 0 1px var(--line),var(--shadow);position:relative}
+.cf-orb::before{content:"";position:absolute;inset:-5px;border-radius:50%;padding:2px;background:conic-gradient(from 0deg,var(--acc-personal),var(--acc-university),var(--acc-startup),var(--acc-work),var(--acc-personal));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:spin 2.4s linear infinite}
+.cf-orb .orb-bars i{animation-duration:.9s}
+.cf-sugs{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px;margin-top:18px}
+.cf-sug{display:flex;gap:10px;align-items:center;text-align:left;padding:10px 12px;border:1px solid var(--line);border-radius:1rem;background:var(--surface);transition:border-color .15s}
+.cf-sug:hover{border-color:var(--ink3)}
+.cf-sug.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.cf-ico{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--sunk);flex:none}
+.cf-st{min-width:0}
+.cf-st b{display:block;font-weight:500;font-size:14px}
+.cf-st small{display:block;font-size:12.5px;color:var(--ink3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.modal-card.cf .field{display:block;margin-top:16px}
+.modal-card.cf .field span{display:block;font-size:13px;color:var(--ink2);margin-bottom:6px}
+.cf-pick{display:flex;gap:28px;flex-wrap:wrap;margin-top:16px}
+.cf-colors,.cf-icons{display:flex;gap:6px;flex-wrap:wrap}
+.cf-color{width:26px;height:26px;border-radius:50%;background:var(--c);box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.cf-color.on{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--c)}
+.cf-icon{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line);color:var(--ink2)}
+.cf-icon.on{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.cf-list{list-style:none;margin:18px 0 0;padding:0;display:grid;gap:6px;max-height:min(46vh,420px);overflow:auto}
+.cf-list label{display:flex;gap:12px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:.9rem;cursor:pointer}
+.cf-list label:hover{background:var(--hover)}
+.cf-list input,.cf-auto input{width:18px;height:18px;accent-color:var(--ink);margin-top:2px;flex:none}
+.cf-m{min-width:0}
+.cf-m b{display:block;font-weight:500;font-size:14px}
+.cf-m span{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cf-m small{display:block;font-size:12.5px;color:var(--ai-ink);margin-top:2px}
+.cf-auto{display:flex;gap:10px;align-items:flex-start;margin-top:14px;font-size:14px;color:var(--ink2);cursor:pointer}
+.cat-tag{font-size:11.5px;font-weight:500;padding:2px 8px;border-radius:999px;background:color-mix(in srgb,var(--c) 16%,transparent);color:color-mix(in srgb,var(--c) 70%,var(--ink));white-space:nowrap}
+
+
+/* platform pill (site icon loads on the deployed app) */
+.platform{position:relative;width:30px;height:30px;border-radius:8px;display:grid;place-items:center;background:var(--ink);color:var(--surface);flex:none;cursor:default}
+.platform::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translate(-50%,4px);background:var(--ink);color:var(--surface);font-size:12px;font-weight:500;padding:5px 9px;border-radius:7px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s,transform .15s}
+.platform:hover::after,.platform:focus-visible::after{opacity:1;transform:translate(-50%,0)}
+/* News card view */
+.news-page .page-h{align-items:center}
+.news-page .seg button{display:inline-flex;align-items:center;gap:6px}
+.read-tag{font-size:12px;font-weight:500;padding:3px 10px;border-radius:999px;background:color-mix(in srgb,var(--ok) 14%,transparent);color:var(--ok)}
+.deck{max-width:720px;margin:28px auto 0}
+.deck-bar{display:flex;gap:6px}
+.seg-dot{flex:1;height:4px;border-radius:4px;background:var(--line);transition:background .2s}
+.seg-dot.done{background:var(--ok)}
+.seg-dot.cur{background:var(--ink)}
+.deck-meta{display:flex;justify-content:space-between;font-size:13px;color:var(--ink3);margin:14px 2px 12px}
+.card-art{background:var(--surface);border:1px solid var(--line);border-radius:1.75rem;box-shadow:var(--shadow);padding:6px 34px;min-height:420px;transition:opacity .2s}
+.card-art .art{border:0;padding:30px 0 32px;max-width:none}
+.card-art .art-title{font-size:clamp(23px,2.8vw,30px)}
+.card-art .art-sum{font-size:16.5px}
+.card-art.is-read{opacity:.72}
+.card-art.from-right{animation:cardR .32s cubic-bezier(.2,.8,.2,1)}
+.card-art.from-left{animation:cardL .32s cubic-bezier(.2,.8,.2,1)}
+@keyframes cardR{from{opacity:0;transform:translateX(48px) rotate(1.2deg)}}
+@keyframes cardL{from{opacity:0;transform:translateX(-48px) rotate(-1.2deg)}}
+.done-card{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:48px 28px}
+.done-ico{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--ok) 14%,transparent);color:var(--ok)}
+.deck-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:20px}
+.deck-arrow{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:var(--surface);border:1px solid var(--line2);transition:transform .15s,border-color .15s}
+.deck-arrow:hover:not([disabled]){border-color:var(--ink);transform:scale(1.05)}
+.deck-arrow[disabled]{opacity:.35;cursor:default}
+.deck-arrow.ghost{visibility:hidden}
+.deck-read{height:48px;padding:0 24px;gap:10px}
+.deck-count{font-size:14px;color:var(--ink3)}
+kbd{font-family:inherit;font-size:11px;font-weight:600;padding:2px 6px;border-radius:6px;border:1px solid currentColor;opacity:.6}
+.deck-hint{text-align:center;font-size:13px;color:var(--ink3);margin-top:16px}
+.deck-hint kbd{opacity:.8}
+@media (max-width:860px){ .card-art{padding:4px 20px;min-height:0;border-radius:1.4rem} .deck-hint{display:none} }
+a.btn:not(.primary){color:var(--ink)}
+.mail-btn{gap:8px}
+.prov-ico{display:block;flex:none;border-radius:4px}
+.acc-list .btn .prov-ico{margin-right:6px}
+.acc-ico .prov-ico{border-radius:5px}
+.mail-ico{position:relative;width:16px;height:16px;display:grid;place-items:center}
+.mail-ico img{position:absolute;inset:0;width:16px;height:16px;border-radius:3px;background:var(--surface)}
+.platform:has(.medium-mark){background:none}
+.medium-mark{width:30px;height:30px;display:block;fill-rule:nonzero}
+.medium-mark .mi-bg{fill:var(--ink)}
+.medium-mark .mi-fg{fill:var(--surface)}
+/* compact Board panel */
+.sheet-compact{width:min(520px,100%)}
+.sheet-compact .sheet-scroll{padding:26px 28px 40px}
+.sc-head{display:flex;align-items:center;gap:12px}
+.sc-head > div > b{display:block;font-weight:500}
+.sc-head > div > span{display:block;font-size:13px;color:var(--ink3)}
+.sheet-compact .subj{margin-top:18px;font-size:24px}
+.sc-block{margin-top:30px}
+.sc-block .k{margin-bottom:10px}
+.sheet-compact .draft textarea{min-height:260px}
+.sc-mail{background:var(--hover);border:1px solid var(--line);border-radius:1rem;padding:16px 18px;margin-bottom:12px}
+.sc-mail-meta{font-size:12.5px;color:var(--ink3);margin-bottom:8px}
+.sc-mail-body{white-space:pre-wrap;font-size:15px;line-height:1.65;max-height:340px;overflow:auto}
+.write-btn{gap:9px}
+.gem-ico{display:block;flex:none}
+.sc-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.sc-actions .btn{gap:8px}
+.sc-note{margin-top:10px;font-size:13px;color:var(--ink3)}
+
+/* Ask Clearday dock */
+.board-in{padding-bottom:200px}
+.ask-dock{position:fixed;z-index:35;bottom:calc(26px + env(safe-area-inset-bottom,0px));left:calc(248px + (100vw - 260px) / 2);transform:translateX(-50%);width:min(680px,calc(100vw - 300px));display:flex;flex-direction:column;gap:10px}
+.ask-bar{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line2);border-radius:999px;padding:7px 7px 7px 8px;box-shadow:0 14px 40px rgba(0,0,0,.14),0 2px 6px rgba(0,0,0,.06)}
+.ask-bar:focus-within{border-color:var(--ink);box-shadow:0 0 0 4px var(--accent-soft),0 14px 40px rgba(0,0,0,.14)}
+.ask-orb{width:40px;height:40px;border-radius:50%;flex:none;display:grid;place-items:center;position:relative;background:var(--surface)}
+.ask-orb::before{content:"";position:absolute;inset:0;border-radius:50%;padding:2px;background:conic-gradient(from 210deg,var(--acc-personal),var(--acc-university),var(--acc-startup),var(--acc-work),var(--acc-personal));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.ask-orb .orb-bars{height:16px;gap:2px}
+.ask-orb .orb-bars i{width:2.5px}
+.ask-orb .orb-bars i:nth-child(1){height:6px}.ask-orb .orb-bars i:nth-child(2){height:11px}.ask-orb .orb-bars i:nth-child(3){height:16px}.ask-orb .orb-bars i:nth-child(4){height:11px}.ask-orb .orb-bars i:nth-child(5){height:6px}
+.ask-bar textarea{flex:1;min-width:0;border:0;background:transparent;resize:none;font-size:15.5px;line-height:1.45;padding:9px 4px;max-height:120px}
+.ask-bar textarea:focus{outline:none}
+.ask-kbd{flex:none;opacity:.45}
+.ask-bar:focus-within .ask-kbd{display:none}
+.ask-bar .mic,.ask-bar .send{width:42px;height:42px}
+.ask-chips{display:none;flex-wrap:wrap;gap:6px;justify-content:center;order:-1}
+.ask-dock:focus-within .ask-chips,.ask-chips:hover{display:flex}
+.ask-dock.open .ask-chips{display:flex}
+.ask-chips .chip{background:var(--surface);box-shadow:0 4px 14px rgba(0,0,0,.08)}
+.ask-panel{order:-2;background:var(--surface);border:1px solid var(--line);border-radius:1.5rem;box-shadow:0 24px 60px rgba(0,0,0,.18);display:flex;flex-direction:column;max-height:min(56vh,540px);animation:pop .22s cubic-bezier(.2,.8,.2,1)}
+.ask-head{display:flex;align-items:center;justify-content:space-between;padding:10px 10px 10px 18px;border-bottom:1px solid var(--line);font-size:13.5px;font-weight:500}
+.ask-scroll{overflow:auto;padding:4px 18px 18px}
+.ask-scroll .msg{margin-top:16px}
+.ask-empty{color:var(--ink3);font-size:14px;padding:18px 0 4px}
+@media (max-width:860px){
+  .ask-dock{left:50%;width:calc(100vw - 24px);bottom:calc(74px + env(safe-area-inset-bottom,0px))}
+  .ask-kbd{display:none}
+  .board-in{padding-bottom:230px}
+  .ask-dock.has-chat .ask-chips{display:none !important}
+  .ask-panel{max-height:62vh}
+}
+
+/* modal stacking fix */
+.modal > .overlay{z-index:0}
+.modal > .modal-card{z-index:1}
+/* News: airy article list */
+.news-page .page-h{margin-bottom:18px}
+.topic-filter{display:flex;gap:8px;flex-wrap:wrap;padding-bottom:26px;border-bottom:1px solid var(--line)}
+.topic-filter .cnt{font-size:11.5px;opacity:.55;margin-left:2px}
+.topic-chip i{width:8px;height:8px;border-radius:50%;background:var(--c)}
+.topic-chip.on{background:color-mix(in srgb,var(--c) 14%,var(--surface));color:var(--ink);border-color:var(--c)}
+.arts{display:grid}
+.art{padding:44px 0 46px;border-bottom:1px solid var(--line);max-width:680px}
+.art-src{display:flex;align-items:center;gap:12px}
+.art-who b{display:block;font-weight:500;font-size:14.5px;line-height:1.2}
+.art-who span{display:block;font-size:13px;color:var(--ink3);margin-top:3px}
+.art-title{margin-top:18px;font-size:clamp(21px,2.4vw,26px);font-weight:500;line-height:1.22;letter-spacing:-.03em}
+.art-title a{color:inherit;text-decoration:none;background-image:linear-gradient(currentColor,currentColor);background-size:0 1px;background-position:0 100%;background-repeat:no-repeat;transition:background-size .25s}
+.art-title a:hover{background-size:100% 1px}
+.art-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
+.topic{font-size:12px;font-weight:500;padding:3px 10px;border-radius:999px;background:color-mix(in srgb,var(--c) 13%,transparent);color:color-mix(in srgb,var(--c) 78%,var(--ink))}
+.art-sum{margin-top:18px;font-size:15.5px;line-height:1.7;color:var(--ink2);max-width:62ch}
+.art-more{margin-top:8px;font-size:13.5px;font-weight:500;color:var(--ink3);text-decoration:underline;text-underline-offset:3px}
+.art-more:hover{color:var(--ink)}
+.art-why{margin-top:18px;display:flex;gap:10px;font-size:14.5px;line-height:1.6;color:var(--ink2);background:var(--ai);border-radius:1rem;padding:14px 16px;max-width:62ch}
+.art-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:22px}
+.sec .art{padding:28px 0 30px}
+/* board letters: card is clickable, with a separate "open in Gmail" link */
+.letter{cursor:pointer}
+.l-hit{position:absolute;inset:0;border-radius:inherit;z-index:0;background:transparent}
+.letter > :not(.l-hit){position:relative;z-index:1;pointer-events:none}
+.l-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.l-open{pointer-events:auto;display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink2);text-decoration:none;padding:5px 10px;border-radius:999px;border:1px solid var(--line2);background:var(--surface);white-space:nowrap}
+.l-open:hover{border-color:var(--ink);color:var(--ink)}
+.toast button{margin-left:12px;font-weight:600;text-decoration:underline;color:inherit}
+@media (max-width:860px){ .l-right{grid-column:2;flex-direction:row;align-items:center;justify-self:start} .art{padding:34px 0 36px} }
+
 /* mobile */
 .bottom-nav{display:none}
 @media (max-width:860px){
@@ -1059,7 +1237,7 @@ Mika`,
   // based on the publicly visible part of each story; the button opens the original.
   const NEWS = [
   {
-    id:'n1', acc:'personal', hoursAgo:3, from:'Medium Daily Digest', org:'Python in Plain English', fromEmail:'noreply@medium.com',
+    topics:['IT'], id:'n1', acc:'personal', hoursAgo:3, from:'Medium Daily Digest', org:'Python in Plain English', fromEmail:'noreply@medium.com',
     subject:'10 Programming Concepts That Took Me Years to Understand — Until I Saw These Examples', cat:'News', kind:'newsletter', readMin:6,
     url:'https://python.plainenglish.io/10-programming-concepts-that-took-me-years-to-understand-until-i-saw-these-examples-c323f0c10891',
     site:'plainenglish.io', pub:'Python in Plain English', author:'Abdul Ahad', published:'2026-09-07', platform:'Medium',
@@ -1076,7 +1254,7 @@ Mika`,
     why:'You write Python for your bots and scripts. A 6-minute refresher on closures and similar patterns can make that code cleaner.'
   },
   {
-    id:'n2', acc:'startup', hoursAgo:5, from:'Medium Daily Digest', org:'CodeToDeploy', fromEmail:'noreply@medium.com',
+    topics:['AI','IT'], id:'n2', acc:'startup', hoursAgo:5, from:'Medium Daily Digest', org:'CodeToDeploy', fromEmail:'noreply@medium.com',
     subject:'How To Run Claude Like a Tech Lead, Not a Senior Engineer', cat:'News', kind:'newsletter', readMin:11,
     url:'https://medium.com/codetodeploy/how-to-run-claude-like-a-tech-lead-not-a-senior-engineer-fba295ade37d',
     site:'medium.com', pub:'CodeToDeploy', author:'Jerry PM', published:'2026-09-01', platform:'Medium',
@@ -1093,7 +1271,7 @@ Mika`,
     why:'You are building a hackathon product with AI tools on a deadline. Running parallel sessions with clear review steps is exactly that workflow.'
   },
   {
-    id:'n3', acc:'work', hoursAgo:7, from:'Medium Daily Digest', org:'Javarevisited', fromEmail:'noreply@medium.com',
+    topics:['Web dev','IT'], id:'n3', acc:'work', hoursAgo:7, from:'Medium Daily Digest', org:'Javarevisited', fromEmail:'noreply@medium.com',
     subject:'How I Design APIs As Senior Developer For Better Results', cat:'News', kind:'newsletter', readMin:10,
     url:'https://medium.com/javarevisited/how-i-design-apis-as-senior-developer-for-better-results-7209d40e6a29',
     site:'medium.com', pub:'Javarevisited', author:'Vinod Pal', published:'2026-09-06', platform:'Medium',
@@ -1110,7 +1288,7 @@ Mika`,
     why:'You build websites and bot backends in Node.js. These API design habits apply directly to Clearday\'s own server endpoints.'
   },
   {
-    id:'n4', acc:'university', hoursAgo:9, from:'Medium Daily Digest', org:'Python in Plain English', fromEmail:'noreply@medium.com',
+    topics:['AI'], id:'n4', acc:'university', hoursAgo:9, from:'Medium Daily Digest', org:'Python in Plain English', fromEmail:'noreply@medium.com',
     subject:'10 MCP Servers Every Local AI Developer Should Install', cat:'News', kind:'newsletter', readMin:8,
     url:'https://python.plainenglish.io/10-mcp-servers-every-local-ai-developer-should-install-3d80ddb24001',
     site:'plainenglish.io', pub:'Python in Plain English', author:'Arham Ali', published:'2026-09-17', platform:'Medium',
@@ -1127,7 +1305,7 @@ Mika`,
     why:'Clearday already connects AI to real data (Gmail and Outlook). The least-privilege points are the same ones judges will ask you about.'
   },
   {
-    id:'n5', acc:'personal', hoursAgo:12, from:'Medium Daily Digest', org:'Scott Batson', fromEmail:'noreply@medium.com',
+    topics:['AI','Career'], id:'n5', acc:'personal', hoursAgo:12, from:'Medium Daily Digest', org:'Scott Batson', fromEmail:'noreply@medium.com',
     subject:'What Should Programmers Do While the AI Writes Code?', cat:'News', kind:'newsletter', readMin:4,
     url:'https://scottbatson.dev/what-should-programmers-do-while-the-ai-writes-code-a2ce2e6de88e',
     site:'scottbatson.dev', pub:'Medium', author:'Scott Batson', published:'2026-08-31', platform:'Medium',
@@ -1313,6 +1491,7 @@ function runPipeline(){
     e.needsReply = (e._raw.needsReply ?? e.kind === 'personal') && RANK.indexOf(e.priority) <= 2;
     e.link = e._raw.link || null;
     e.status = e.replied ? 'replied' : e.needsReply ? 'awaiting' : 'fyi';
+    e.boardCat = assignCat(e);
     out.push(e);
   }
   out.sort((a,b) => RANK.indexOf(a.priority) - RANK.indexOf(b.priority) || a.hoursAgo - b.hoursAgo);
@@ -1360,6 +1539,8 @@ const S = {
   peopleInput:'',
   theme: store.get('theme', null),
   mode: store.get('mode', 'demo'),
+  cats: store.get('cats:' + store.get('mode', 'demo'), []),
+  catFlow: null, askOpen: false, inboxCat: 'all', newsTopics: [], newsView: store.get('newsView', 'list'), cardIdx: 0, cardDir: '',
   savedDrafts: {},
 };
 if(S.view === 'analyzing' || S.view === 'connect') S.view = 'landing';
@@ -1367,12 +1548,13 @@ if(S.theme) document.documentElement.dataset.theme = S.theme;
 function persist(){ store.set(S.mode === 'live' ? 'liveProfile' : 'profile', S.profile); if(S.mode !== 'live') store.set('accounts', S.accounts); store.set('mode', S.mode); store.set('corr', S.corr); store.set('view', S.view === 'app' ? 'app' : 'landing'); }
 
 /* ---------- derived ---------- */
-const visible = () => S.emails.filter(e => S.accounts[e.acc]?.enabled !== false);
+const visible = () => S.emails.filter(e => S.accounts[e.acc]?.enabled !== false && !(e.kind === 'newsletter' && (S.corr.unsub || []).includes(unsubKey(e))));
 const byId = id => S.emails.find(e => e.id === id);
 const matter = () => visible().filter(e => e.priority === 'critical' || e.priority === 'important');
 const actions = () => visible().filter(e => e.requiresAction);
 const openActions = () => actions().filter(e => !e.done);
-const newsletters = () => visible().filter(e => e.kind === 'newsletter' && e.priority !== 'noise');
+const pubTime = e => (e._raw.published ? new Date(e._raw.published + 'T12:00:00') : e.timestamp).getTime();
+const newsletters = () => visible().filter(e => e.kind === 'newsletter' && e.priority !== 'noise').sort((a, b) => pubTime(b) - pubTime(a));
 const filtered = () => visible().filter(e => e.priority === 'low' || e.priority === 'noise');
 const events = () => visible().filter(e => e.event).sort((a,b) => a.event.date - b.event.date);
 const connectedAccs = () => ACCOUNTS.filter(a => S.accounts[a.id]?.connected);
@@ -1431,7 +1613,7 @@ async function liveSync({quiet} = {}){
 const syncErrorText = () => LIVE.errors.map(e => `${SLOT_NAMES[e.slot]}: ${e.error === 'reauth' ? 'sign-in expired, reconnect it' : e.error}`).join(' — ');
 function blankProfile(){ return {...defaultProfile(), name:'', roles:[], focus:[], responsibilities:'', people:[], news:['AI & technology']}; }
 function startLive(){
-  S.mode = 'live'; store.set('mode', 'live');
+  S.mode = 'live'; store.set('mode', 'live'); S.cats = store.get('cats:live', []);
   S.profile = store.get('liveProfile', null) || blankProfile();
   S.chat = []; S.drafts = {}; S.openId = null;
   S.step = 0; S.view = 'onboarding'; render({top:true});
@@ -1462,12 +1644,12 @@ function liveAccRows(){
   const P = LIVE.providers;
   return Object.keys(SLOT_NAMES).map(slot => {
     const a = accById(slot);
-    const btn = (p, label) => `<button class="btn sm" data-act="liveConnect" data-slot="${slot}" data-p="${p}" ${P[p] ? '' : `disabled title="${label} sign-in isn't configured on the server yet"`}>${label}</button>`;
+    const btn = (p, label) => `<button class="btn sm" data-act="liveConnect" data-slot="${slot}" data-p="${p}" ${P[p] ? '' : `disabled title="${label} sign-in isn't configured on the server yet"`}>${provIcon(label, 15)}${label}</button>`;
     const right = a
       ? `${a.error === 'reauth' ? `<button class="btn sm primary" data-act="liveConnect" data-slot="${slot}" data-p="${a.providerKey}">Reconnect</button>` : `<span class="status-ok">✓ Connected</span>`}<button class="btn sm ghost" data-act="disconnect" data-id="${slot}">Disconnect</button>`
       : `${btn('google','Gmail')}${btn('microsoft','Outlook')}${P.mock ? btn('mock','Mock') : ''}`;
     const sub = a ? `${esc(a.email)} — ${a.provider}${a.error === 'reauth' ? ' — sign-in expired' : a.error ? ' — ' + esc(a.error) : ''}` : 'Not connected';
-    return `<div class="acc-row"><span class="acc-ico">${a ? a.provider[0] : '+'}${accDot(slot)}</span>
+    return `<div class="acc-row"><span class="acc-ico">${a ? (provIcon(a.provider, 20) || a.provider[0]) : '+'}${accDot(slot)}</span>
       <div class="acc-meta"><b>${SLOT_NAMES[slot]}</b><span>${sub}</span></div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center">${right}</div></div>`;
   }).join('');
@@ -1513,6 +1695,23 @@ const ICONS = {
   bolt:'<path d="M13.2 3 5.5 13.6h5.8l-.9 7.4 7.8-10.6h-5.8z"/>',
   briefcase:'<rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M9 7V5.6A1.6 1.6 0 0 1 10.6 4h2.8A1.6 1.6 0 0 1 15 5.6V7M3 12.5h18"/>',
 };
+Object.assign(ICONS, {
+  star:'<path d="m12 3.6 2.6 5.3 5.8.9-4.2 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.2-4.1 5.8-.9z"/>',
+  coin:'<circle cx="12" cy="12" r="8.5"/><path d="M14.8 9.4c-.5-.9-1.6-1.4-2.8-1.4-1.6 0-2.8.8-2.8 2s1.2 1.7 2.8 2.1 2.8.9 2.8 2.1-1.2 2-2.8 2c-1.3 0-2.4-.6-2.9-1.5M12 6.5v11"/>',
+  users:'<circle cx="9" cy="8.5" r="3.2"/><path d="M3 19.5a6 6 0 0 1 12 0M16 5.5a3.2 3.2 0 0 1 0 6.2M21 19.5a6 6 0 0 0-3.5-5.4"/>',
+  calendar:'<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+  plane:'<path d="M21 4 3 10.5l7 2.5 2.5 7z"/><path d="m10 13 4.5-4.5"/>',
+  heart:'<path d="M12 20s-7.5-4.4-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.6-7.5 10-7.5 10z"/>',
+  tag:'<path d="M3.5 12.2V4.5h7.7l9.3 9.3-7.7 7.7z"/><circle cx="8" cy="9" r="1.4"/>',
+  book:'<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H20v3H6.5A2.5 2.5 0 0 1 4 20.5zM8 7.5h8"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  cards:'<rect x="6" y="3.5" width="12" height="17" rx="2.5"/><path d="M3 7v10M21 7v10"/>',
+  left:'<path d="M15 5l-7 7 7 7"/>', right:'<path d="M9 5l7 7-7 7"/>',
+  mail:'<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/>',
+  copy:'<rect x="8.5" y="8.5" width="11.5" height="11.5" rx="2.5"/><path d="M15.5 8.5V6A2.5 2.5 0 0 0 13 3.5H6A2.5 2.5 0 0 0 3.5 6v7A2.5 2.5 0 0 0 6 15.5h2.5"/>',
+  external:'<path d="M14 4h6v6M20 4l-9 9M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/>',
+  trash:'<path d="M4 7h16M10 11v6M14 11v6M6 7l1 12.5A1.5 1.5 0 0 0 8.5 21h7a1.5 1.5 0 0 0 1.5-1.5L18 7M9 7V4.5h6V7"/>',
+});
 const ICON = (name, size = 18) => `<svg class="ico" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ''}</svg>`;
 const ACC_SVG = {personal:'user', university:'cap', startup:'bolt', work:'briefcase'};
 
@@ -1643,7 +1842,7 @@ function vConnect(){
   const rows = ACCOUNTS.map(a => {
     const st = S.accounts[a.id]; const c = S.connecting[a.id];
     return `<div class="acc-row">
-      <span class="acc-ico">${a.provider === 'Gmail' ? 'G' : 'O'}${accDot(a.id)}</span>
+      <span class="acc-ico">${provIcon(a.provider, 20) || a.provider[0]}${accDot(a.id)}</span>
       <div class="acc-meta"><b>${a.name}</b><span>${a.email} — ${a.provider === 'Gmail' ? 'Google' : 'Microsoft'}</span></div>
       ${st?.connected ? `<span class="status-ok">✓ Connected</span>` : c ? `<span class="muted" style="font-size:13.5px;display:inline-flex;gap:8px;align-items:center"><span class="dots"><i></i><i></i><i></i></span>Authorising</span>` : `<button class="btn sm" data-act="connectAcc" data-id="${a.id}">Connect</button>`}
     </div>`;
@@ -1686,7 +1885,7 @@ function row(e){
       <span class="subject">${esc(e.subject)}</span>
       ${dim ? '' : `<span class="ai-line"><span class="spark">✦</span>${esc(e.summary)}</span>`}
     </span>
-    <span class="row-right"><span class="time">${timeLabel(e)}</span>${tag}</span>
+    <span class="row-right"><span class="time">${timeLabel(e)}</span>${customCatOf(e) ? `<span class="cat-tag" style="--c:${customCatOf(e).color}">${esc(customCatOf(e).name)}</span>` : ''}${tag}</span>
   </button>`;
 }
 function list(items, emptyTitle, emptyText){
@@ -1706,17 +1905,38 @@ function todoItem(e){
 }
 
 function newsItem(e, compact){
-  const len = S.sumLen[e.id] || 's30';
-  const text = e.lengths ? e.lengths[len] : e.summary;
-  return `<article class="news-i">
-    ${articleMeta(e)}
-    <h3><button data-act="open" data-id="${e.id}">${esc(e.subject)}</button></h3>
-    ${compact ? '' : `<div style="margin-top:10px">${segLen(e.id, len)}</div>`}
-    <p class="news-sum">${esc(text).replace(/\n\n/g,'<br><br>')}</p>
-    ${e.why ? `<p class="news-why"><b>✦ Why it matters to you</b><span>${esc(e.why)}</span></p>` : ''}
-    ${e._raw.url ? `<div class="news-actions"><a class="btn sm primary" href="${esc(e._raw.url)}" target="_blank" rel="noopener">Read the original on ${esc(hostOf(e._raw.url))} ↗</a><button class="btn sm ghost" data-act="open" data-id="${e.id}">Open summary</button></div>` : ''}
+  const r = e._raw, url = r.url || e.link || '';
+  const site = r.url ? hostOf(r.url) : (orgDomain(e.fromEmail) || '');
+  const source = r.pub ? (r.pub === 'Medium' ? 'Medium' : r.pub) : e.from;
+  const when = r.published ? new Date(r.published + 'T12:00:00') : e.timestamp;
+  const long = S.sumLen[e.id] === 'm2';
+  const text = e.lengths ? (long ? e.lengths.m2 : e.lengths.s30) : e.summary;
+  return `<article class="art">
+    <div class="art-src">${r.platform ? `<span class="platform" tabindex="0" role="img" aria-label="Published on ${esc(r.platform)}" data-tip="${esc(r.platform)}">${r.platform === 'Medium' ? MEDIUM_MARK : ICON('news', 15)}</span>` : badge(e, 34)}<div class="art-who"><b>${esc(source)}${site && !r.pub ? '' : ''}</b><span>${r.author ? `by ${esc(r.author)}, ` : ''}${agoText(when)}${e.readMin ? `, ${e.readMin} min read` : ''}</span></div></div>
+    <h3 class="art-title">${url && r.url ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(e.subject)}</a>` : esc(e.subject)}</h3>
+    <div class="art-tags">${topicsOf(e).map(topicTag).join('')}${(S.corr.newsRead || []).includes(e.id) ? '<span class="read-tag">✓ Read</span>' : ''}</div>
+    <p class="art-sum">${esc(text).replace(/\n\n/g, '<br><br>')}</p>
+    ${e.lengths && !compact ? `<button class="art-more" data-act="sumToggle" data-id="${e.id}">${long ? 'Show shorter summary' : 'Show longer summary'}</button>` : ''}
+    ${e.why && !compact ? `<p class="art-why"><span class="spark">✦</span><span>${esc(e.why)}</span></p>` : ''}
+    <div class="art-actions">
+      ${r.url ? `<a class="btn sm primary" href="${esc(r.url)}" target="_blank" rel="noopener">Read on ${esc(site)} ↗</a>` : ''}
+      ${mailButton(e)}
+      <button class="btn sm ghost" data-act="unsub" data-id="${e.id}">Unsubscribe</button>
+    </div>
   </article>`;
 }
+// Medium icon supplied by the project owner (from Medium's brand assets); colours follow the theme.
+// Provider icons supplied by the project owner (Gmail, Outlook, Yahoo, Mail.ru).
+const PROV_ICONS = {"Gmail": "data:image/svg+xml;base64,PHN2ZyBpZD0iQ2FwYV8xIiBlbmFibGUtYmFja2dyb3VuZD0ibmV3IDAgMCAxNTAgMTUwIiB2aWV3Qm94PSIyNiAzNiA5OCA3OCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Zz48cGF0aCBkPSJtMTIxLjEgNTcuOS0yMiAxNi40djM1LjhoMTUuNGMzLjYgMCA2LjYtMi45IDYuNi02LjZ6IiBmaWxsPSIjNGNhZjUwIi8+PHBhdGggZD0ibTI4LjkgNTcuOSAyMS45IDE2LjV2MzUuOGgtMTUuM2MtMy42IDAtNi42LTIuOS02LjYtNi42eiIgZmlsbD0iIzFlODhlNSIvPjxwYXRoIGQ9Im05OS4xIDQ2LjktMjQuMSAxOC4xLTI0LjEtMTguMXYyNy40bDI0LjEgMTguMSAyNC4xLTE4LjF6IiBmaWxsPSIjZTUzOTM1Ii8+PHBhdGggZD0ibTI4LjkgNDkuM3Y4LjZsMjEuOSAxNi41di0yNy41bC02LjgtNS4xYy0xLjYtMS4yLTMuNi0xLjktNS43LTEuOS01LjIgMC05LjQgNC4yLTkuNCA5LjR6IiBmaWxsPSIjYzYyODI4Ii8+PHBhdGggZD0ibTEyMS4xIDQ5LjN2OC42bC0yMiAxNi40di0yNy40bDYuOS01LjFjMS42LTEuMiAzLjYtMS45IDUuNy0xLjkgNS4yIDAgOS40IDQuMiA5LjQgOS40eiIgZmlsbD0iI2ZiYzAyZCIvPjwvZz48L3N2Zz4=", "Outlook": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjQuMiA0LjYgMjMgMjIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik0yMC4zODA0IDYuOTM1MzNMNi45ODAyNCAxNS40MjkyTDUuODI3ODMgMTMuNjExMlYxMi4wNDQ2QzUuODI3ODMgMTEuNDc0MiA2LjExNjYgMTAuOTQyNiA2LjU5NTA3IDEwLjYzMjFMMTQuMzg0NiA1LjU3NzY0QzE1LjU3MTQgNC44MDc1NyAxNy4xIDQuODA3NDQgMTguMjg2OSA1LjU3NzM0TDIwLjM4MDQgNi45MzUzM1oiIGZpbGw9InVybCgjcGFpbnQwX2xpbmVhcl84OV8xNzE5KSIvPgo8cGF0aCBkPSJNMTguMTY2OSA1LjUwMjk5QzE4LjIwNzIgNS41MjY5NSAxOC4yNDcyIDUuNTUxNzcgMTguMjg2NyA1LjU3NzQ0TDI0LjM2NTkgOS41MjA4M0w5LjI5MjczIDE5LjA3NTJMNi45Nzk3MSAxNS40MjYyTDE4LjA0MiA4LjQwMDYxQzE5LjA4OTggNy43MzUxNiAxOS4xMzU3IDYuMjM4MTUgMTguMTY2OSA1LjUwMjk5WiIgZmlsbD0idXJsKCNwYWludDFfbGluZWFyXzg5XzE3MTkpIi8+CjxwYXRoIGQ9Ik0xOC4xNjY5IDUuNTAyOTlDMTguMjA3MiA1LjUyNjk1IDE4LjI0NzIgNS41NTE3NyAxOC4yODY3IDUuNTc3NDRMMjQuMzY1OSA5LjUyMDgzTDkuMjkyNzMgMTkuMDc1Mkw2Ljk3OTcxIDE1LjQyNjJMMTguMDQyIDguNDAwNjFDMTkuMDg5OCA3LjczNTE2IDE5LjEzNTcgNi4yMzgxNSAxOC4xNjY5IDUuNTAyOTlaIiBmaWxsPSJ1cmwoI3BhaW50Ml9saW5lYXJfODlfMTcxOSkiIGZpbGwtb3BhY2l0eT0iMC4yIi8+CjxwYXRoIGQ9Ik0xNS4zMDY3IDIwLjg5OTdMOS4yOTI4NSAxOS4wNzUzTDIyLjA3ODkgMTAuOTcwNEMyMy4xNTU4IDEwLjI4NzggMjMuMTUzIDguNzE1NzYgMjIuMDczNyA4LjAzNzAxTDIyLjAxNjEgOC4wMDA4MUwyMi4xODE5IDguMTAzOTZMMjYuMDczMyAxMC42MjgyQzI2LjU1MTkgMTAuOTM4NyAyNi44NDA4IDExLjQ3MDQgMjYuODQwOCAxMi4wNDA4VjEzLjU1N0wxNS4zMDY3IDIwLjg5OTdaIiBmaWxsPSJ1cmwoI3BhaW50M19saW5lYXJfODlfMTcxOSkiLz4KPHBhdGggZD0iTTE1LjMwNjcgMjAuODk5N0w5LjI5Mjg1IDE5LjA3NTNMMjIuMDc4OSAxMC45NzA0QzIzLjE1NTggMTAuMjg3OCAyMy4xNTMgOC43MTU3NiAyMi4wNzM3IDguMDM3MDFMMjIuMDE2MSA4LjAwMDgxTDIyLjE4MTkgOC4xMDM5NkwyNi4wNzMzIDEwLjYyODJDMjYuNTUxOSAxMC45Mzg3IDI2Ljg0MDggMTEuNDcwNCAyNi44NDA4IDEyLjA0MDhWMTMuNTU3TDE1LjMwNjcgMjAuODk5N1oiIGZpbGw9InVybCgjcGFpbnQ0X2xpbmVhcl84OV8xNzE5KSIgZmlsbC1vcGFjaXR5PSIwLjIiLz4KPHBhdGggZD0iTTE4LjI4NjkgNS41NzczNEMxNy4xIDQuODA3NDQgMTUuNTcxNCA0LjgwNzU3IDE0LjM4NDYgNS41Nzc2NEw2LjU5NTA3IDEwLjYzMjFDNi4xMTY2IDEwLjk0MjYgNS44Mjc4MyAxMS40NzQyIDUuODI3ODMgMTIuMDQ0NlYxMi4xMjEyQzUuODQ2NjEgMTIuNjkzNyA2LjE0NzkzIDEzLjIyMTUgNi42MzQ1OSAxMy41MjgzTDE2LjMyMDEgMTkuNjM0NUwyNi4wMyAxMy41Mzc2QzI2LjUzNDMgMTMuMjIwOSAyNi44NDAzIDEyLjY2NzMgMjYuODQwMyAxMi4wNzE5VjEzLjU1NzJMMjYuODQwNiAxMi4wNDA5QzI2Ljg0MDYgMTEuNDcwNCAyNi41NTE3IDEwLjkzODggMjYuMDczMSAxMC42MjgzTDE4LjI4NjkgNS41NzczNFoiIGZpbGw9InVybCgjcGFpbnQ1X3JhZGlhbF84OV8xNzE5KSIvPgo8cGF0aCBkPSJNMTQuNjEyNyAyNkgyMy4xOTE1QzI1LjIwNjQgMjYgMjYuODM5OCAyNC4zNjY2IDI2LjgzOTggMjIuMzUxN1YxMi4wNzE4QzI2LjgzOTggMTIuNjY3MyAyNi41MzM3IDEzLjIyMDkgMjYuMDI5NCAxMy41Mzc2TDEzLjI2OTEgMjEuNTQ5OUMxMi41ODA3IDIxLjk4MjEgMTIuMTYzIDIyLjczNzggMTIuMTYzIDIzLjU1MDZDMTIuMTYzMSAyNC45MDM0IDEzLjI1OTggMjYgMTQuNjEyNyAyNloiIGZpbGw9InVybCgjcGFpbnQ2X2xpbmVhcl84OV8xNzE5KSIvPgo8cGF0aCBkPSJNMTQuNjEyNyAyNkgyMy4xOTE1QzI1LjIwNjQgMjYgMjYuODM5OCAyNC4zNjY2IDI2LjgzOTggMjIuMzUxN1YxMi4wNzE4QzI2LjgzOTggMTIuNjY3MyAyNi41MzM3IDEzLjIyMDkgMjYuMDI5NCAxMy41Mzc2TDEzLjI2OTEgMjEuNTQ5OUMxMi41ODA3IDIxLjk4MjEgMTIuMTYzIDIyLjczNzggMTIuMTYzIDIzLjU1MDZDMTIuMTYzMSAyNC45MDM0IDEzLjI1OTggMjYgMTQuNjEyNyAyNloiIGZpbGw9InVybCgjcGFpbnQ3X3JhZGlhbF84OV8xNzE5KSIgZmlsbC1vcGFjaXR5PSIwLjQiLz4KPHBhdGggZD0iTTE0LjYxMjcgMjZIMjMuMTkxNUMyNS4yMDY0IDI2IDI2LjgzOTggMjQuMzY2NiAyNi44Mzk4IDIyLjM1MTdWMTIuMDcxOEMyNi44Mzk4IDEyLjY2NzMgMjYuNTMzNyAxMy4yMjA5IDI2LjAyOTQgMTMuNTM3NkwxMy4yNjkxIDIxLjU0OTlDMTIuNTgwNyAyMS45ODIxIDEyLjE2MyAyMi43Mzc4IDEyLjE2MyAyMy41NTA2QzEyLjE2MzEgMjQuOTAzNCAxMy4yNTk4IDI2IDE0LjYxMjcgMjZaIiBmaWxsPSJ1cmwoI3BhaW50OF9yYWRpYWxfODlfMTcxOSkiIGZpbGwtb3BhY2l0eT0iMC41Ii8+CjxwYXRoIGQ9Ik0xOC4xMDA3IDI1Ljk5OTNIOS40NzQ2OEM3LjQ1OTgxIDI1Ljk5OTMgNS44MjY0MiAyNC4zNjU5IDUuODI2NDIgMjIuMzUxVjEyLjA2NDNDNS44MjY0MiAxMi42NTg2IDYuMTMxMzcgMTMuMjExNCA2LjYzNDExIDEzLjUyODNMMTkuMzgxOCAyMS41NjVDMjAuMDc5NyAyMi4wMDUgMjAuNTAzIDIyLjc3MjQgMjAuNTAyOSAyMy41OTczQzIwLjUwMjggMjQuOTI0IDE5LjQyNzMgMjUuOTk5MyAxOC4xMDA3IDI1Ljk5OTNaIiBmaWxsPSJ1cmwoI3BhaW50OV9yYWRpYWxfODlfMTcxOSkiLz4KPHBhdGggZD0iTTE4LjEwMDcgMjUuOTk5M0g5LjQ3NDY4QzcuNDU5ODEgMjUuOTk5MyA1LjgyNjQyIDI0LjM2NTkgNS44MjY0MiAyMi4zNTFWMTIuMDY0M0M1LjgyNjQyIDEyLjY1ODYgNi4xMzEzNyAxMy4yMTE0IDYuNjM0MTEgMTMuNTI4M0wxOS4zODE4IDIxLjU2NUMyMC4wNzk3IDIyLjAwNSAyMC41MDMgMjIuNzcyNCAyMC41MDI5IDIzLjU5NzNDMjAuNTAyOCAyNC45MjQgMTkuNDI3MyAyNS45OTkzIDE4LjEwMDcgMjUuOTk5M1oiIGZpbGw9InVybCgjcGFpbnQxMF9saW5lYXJfODlfMTcxOSkiLz4KPHBhdGggZD0iTTYuNTU2NTMgMTQuOTA3MkgxMi4xMDE5QzEzLjE0OTYgMTQuOTA3MiAxMy45OTkgMTUuNzU2NiAxMy45OTkgMTYuODA0M1YyMi4zNDk3QzEzLjk5OSAyMy4zOTc0IDEzLjE0OTYgMjQuMjQ2OCAxMi4xMDE5IDI0LjI0NjhINi41NTY1M0M1LjUwODc5IDI0LjI0NjggNC42NTk0MiAyMy4zOTc0IDQuNjU5NDIgMjIuMzQ5N1YxNi44MDQzQzQuNjU5NDIgMTUuNzU2NiA1LjUwODc5IDE0LjkwNzIgNi41NTY1MyAxNC45MDcyWiIgZmlsbD0idXJsKCNwYWludDExX3JhZGlhbF84OV8xNzE5KSIvPgo8cGF0aCBkPSJNNi41NTY1MyAxNC45MDcySDEyLjEwMTlDMTMuMTQ5NiAxNC45MDcyIDEzLjk5OSAxNS43NTY2IDEzLjk5OSAxNi44MDQzVjIyLjM0OTdDMTMuOTk5IDIzLjM5NzQgMTMuMTQ5NiAyNC4yNDY4IDEyLjEwMTkgMjQuMjQ2OEg2LjU1NjUzQzUuNTA4NzkgMjQuMjQ2OCA0LjY1OTQyIDIzLjM5NzQgNC42NTk0MiAyMi4zNDk3VjE2LjgwNDNDNC42NTk0MiAxNS43NTY2IDUuNTA4NzkgMTQuOTA3MiA2LjU1NjUzIDE0LjkwNzJaIiBmaWxsPSJ1cmwoI3BhaW50MTJfcmFkaWFsXzg5XzE3MTkpIiBmaWxsLW9wYWNpdHk9IjAuNSIvPgo8cGF0aCBkPSJNOS4zMDUyOCAyMi4yNjIxQzguNTMzMDEgMjIuMjYyMSA3Ljg5OTA2IDIyLjAyMDUgNy40MDMzMyAyMS41MzczQzYuOTA3NiAyMS4wNTQyIDYuNjU5NzQgMjAuNDIzNyA2LjY1OTc0IDE5LjY0NThDNi42NTk3NCAxOC44MjQ0IDYuOTExMzQgMTguMTYwMSA3LjQxNDU0IDE3LjY1MjdDNy45MTc3NCAxNy4xNDU1IDguNTc2NjIgMTYuODkxOCA5LjM5MTIxIDE2Ljg5MThDMTAuMTYxIDE2Ljg5MTggMTAuNzg3NSAxNy4xMzQ2IDExLjI3MDcgMTcuNjIwMkMxMS43NTY1IDE4LjEwNTcgMTEuOTk5NCAxOC43NDU5IDExLjk5OTQgMTkuNTQwN0MxMS45OTk0IDIwLjM1NzMgMTEuNzQ3OCAyMS4wMTU1IDExLjI0NDYgMjEuNTE1NkMxMC43NDM5IDIyLjAxMzIgMTAuMDk3NSAyMi4yNjIxIDkuMzA1MjggMjIuMjYyMVpNOS4zMjc3IDIxLjIzNjZDOS43NDg2OCAyMS4yMzY2IDEwLjA4NzUgMjEuMDkyOCAxMC4zNDQxIDIwLjgwNTRDMTAuNjAwNiAyMC41MTc5IDEwLjcyODkgMjAuMTE4IDEwLjcyODkgMTkuNjA1OUMxMC43Mjg5IDE5LjA3MiAxMC42MDQ0IDE4LjY1NjUgMTAuMzU1MyAxOC4zNTk0QzEwLjEwNjIgMTguMDYyMiA5Ljc3MzYgMTcuOTEzNyA5LjM1NzU4IDE3LjkxMzdDOC45MjkxMyAxNy45MTM3IDguNTg0MDkgMTguMDY3MSA4LjMyMjUyIDE4LjM3MzlDOC4wNjA5NyAxOC42NzgzIDcuOTMwMTkgMTkuMDgxNyA3LjkzMDE5IDE5LjU4NDJDNy45MzAxOSAyMC4wOTM5IDguMDYwOTcgMjAuNDk3MyA4LjMyMjUyIDIwLjc5NDVDOC41ODQwOSAyMS4wODkyIDguOTE5MTUgMjEuMjM2NiA5LjMyNzcgMjEuMjM2NloiIGZpbGw9IiNmZmZmZmYiLz4KPHBhdGggZD0iTTkuMzAzMTggMjIuMzM0MUM4LjUzMzg5IDIyLjMzNDEgNy45MDIzMSAyMi4wODYgNy40MDg0NyAyMS41ODk3QzYuOTE0NjQgMjEuMDkzMyA2LjY2NzcyIDIwLjQ0NTYgNi42Njc3MiAxOS42NDY2QzYuNjY3NzIgMTguODAyOCA2LjkxODM2IDE4LjEyMDQgNy40MTk2NCAxNy41OTkzQzcuOTIwOTIgMTcuMDc4MSA4LjU3NzMyIDE2LjgxNzYgOS4zODg3NSAxNi44MTc2QzEwLjE1NTYgMTYuODE3NiAxMC43Nzk3IDE3LjA2NyAxMS4yNjEyIDE3LjU2NThDMTEuNzQ1MSAxOC4wNjQ2IDExLjk4NyAxOC43MjIyIDExLjk4NyAxOS41Mzg2QzExLjk4NyAyMC4zNzc0IDExLjczNjQgMjEuMDUzNiAxMS4yMzUxIDIxLjU2NzNDMTAuNzM2MyAyMi4wNzg1IDEwLjA5MjMgMjIuMzM0MSA5LjMwMzE4IDIyLjMzNDFaTTkuMzI1NDggMjEuMjgwN0M5Ljc0NDg4IDIxLjI4MDcgMTAuMDgyNCAyMS4xMzMgMTAuMzM4IDIwLjgzNzdDMTAuNTkzNiAyMC41NDI0IDEwLjcyMTQgMjAuMTMxNyAxMC43MjE0IDE5LjYwNTZDMTAuNzIxNCAxOS4wNTcyIDEwLjU5NzMgMTguNjMwNCAxMC4zNDkyIDE4LjMyNTFDMTAuMTAxIDE4LjAxOTkgOS43Njk2OSAxNy44NjczIDkuMzU1MzEgMTcuODY3M0M4LjkyODQzIDE3Ljg2NzMgOC41ODQ3MyAxOC4wMjQ5IDguMzI0MTYgMTguMzRDOC4wNjM2MSAxOC42NTI3IDcuOTMzMzMgMTkuMDY3MSA3LjkzMzMzIDE5LjU4MzNDNy45MzMzMyAyMC4xMDY5IDguMDYzNjEgMjAuNTIxMyA4LjMyNDE2IDIwLjgyNjZDOC41ODQ3MyAyMS4xMjkzIDguOTE4NTEgMjEuMjgwNyA5LjMyNTQ4IDIxLjI4MDdaIiBmaWxsPSIjZmZmZmZmIi8+CjxkZWZzPgo8bGluZWFyR3JhZGllbnQgaWQ9InBhaW50MF9saW5lYXJfODlfMTcxOSIgeDE9IjcuMDUwNzYiIHkxPSIxMi43NTU1IiB4Mj0iMTkuMjc1OCIgeTI9IjUuMTcyOTgiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KPHN0b3Agc3RvcC1jb2xvcj0iIzIwQTdGQSIvPgo8c3RvcCBvZmZzZXQ9IjAuNCIgc3RvcC1jb2xvcj0iIzNCRDVGRiIvPgo8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNDNEIwRkYiLz4KPC9saW5lYXJHcmFkaWVudD4KPGxpbmVhckdyYWRpZW50IGlkPSJwYWludDFfbGluZWFyXzg5XzE3MTkiIHgxPSIxMi42NTU1IiB5MT0iMTcuMzA0OSIgeDI9IjE5LjQ2MTIiIHkyPSI2LjQwNzQ4IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CjxzdG9wIHN0b3AtY29sb3I9IiMxNjVBRDkiLz4KPHN0b3Agb2Zmc2V0PSIwLjUwMDgiIHN0b3AtY29sb3I9IiMxODgwRTUiLz4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjODU4N0ZGIi8+CjwvbGluZWFyR3JhZGllbnQ+CjxsaW5lYXJHcmFkaWVudCBpZD0icGFpbnQyX2xpbmVhcl84OV8xNzE5IiB4MT0iMTguNTgzNyIgeTE9IjE1LjcyNzUiIHgyPSIxMS4wMjY1IiB5Mj0iOS41Njk4MyIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgo8c3RvcCBvZmZzZXQ9IjAuMjM2OTQ2IiBzdG9wLWNvbG9yPSIjNDQ4QUZGIiBzdG9wLW9wYWNpdHk9IjAiLz4KPHN0b3Agb2Zmc2V0PSIwLjc5MjExMyIgc3RvcC1jb2xvcj0iIzAwMzJCMSIvPgo8L2xpbmVhckdyYWRpZW50Pgo8bGluZWFyR3JhZGllbnQgaWQ9InBhaW50M19saW5lYXJfODlfMTcxOSIgeDE9IjE0LjY4NDQiIHkxPSIxNy4wMTUxIiB4Mj0iMjYuNjI1NCIgeTI9IjkuMzcyODgiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KPHN0b3Agc3RvcC1jb2xvcj0iIzFBNDNBNiIvPgo8c3RvcCBvZmZzZXQ9IjAuNDkyMjY3IiBzdG9wLWNvbG9yPSIjMjA1MkNCIi8+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVGMjBDQiIvPgo8L2xpbmVhckdyYWRpZW50Pgo8bGluZWFyR3JhZGllbnQgaWQ9InBhaW50NF9saW5lYXJfODlfMTcxOSIgeDE9IjIxLjAwNiIgeTE9IjE3LjcxNjYiIHgyPSIxMy43NDk5IiB5Mj0iMTEuNDM3OCIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgo8c3RvcCBzdG9wLWNvbG9yPSIjMDA0NUI5IiBzdG9wLW9wYWNpdHk9IjAiLz4KPHN0b3Agb2Zmc2V0PSIwLjY2OTg1OSIgc3RvcC1jb2xvcj0iIzBEMUY2OSIvPgo8L2xpbmVhckdyYWRpZW50Pgo8cmFkaWFsR3JhZGllbnQgaWQ9InBhaW50NV9yYWRpYWxfODlfMTcxOSIgY3g9IjAiIGN5PSIwIiByPSIxIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgZ3JhZGllbnRUcmFuc2Zvcm09InRyYW5zbGF0ZSgxNi4zMzQyIDUuNDYxMzEpIHJvdGF0ZSgtOTApIHNjYWxlKDE1Ljc2MSAxNy4wNTg4KSI+CjxzdG9wIG9mZnNldD0iMC41NjgxODIiIHN0b3AtY29sb3I9IiMyNzVGRjAiIHN0b3Atb3BhY2l0eT0iMCIvPgo8c3RvcCBvZmZzZXQ9IjAuOTkyNDI0IiBzdG9wLWNvbG9yPSIjMDAyMTc3Ii8+CjwvcmFkaWFsR3JhZGllbnQ+CjxsaW5lYXJHcmFkaWVudCBpZD0icGFpbnQ2X2xpbmVhcl84OV8xNzE5IiB4MT0iMjYuODM5OCIgeTE9IjE5LjAzNTkiIHgyPSIxNi4yNDczIiB5Mj0iMTkuMDM1OSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgo8c3RvcCBzdG9wLWNvbG9yPSIjNERDNEZGIi8+CjxzdG9wIG9mZnNldD0iMC4xOTYxNDUiIHN0b3AtY29sb3I9IiMwRkFGRkYiLz4KPC9saW5lYXJHcmFkaWVudD4KPHJhZGlhbEdyYWRpZW50IGlkPSJwYWludDdfcmFkaWFsXzg5XzE3MTkiIGN4PSIwIiBjeT0iMCIgcj0iMSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiIGdyYWRpZW50VHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTguNzIzIDIzLjYxMTUpIHJvdGF0ZSgtNDUpIHNjYWxlKDYuNzU0ODUpIj4KPHN0b3Agb2Zmc2V0PSIwLjI1OTQ3NyIgc3RvcC1jb2xvcj0iIzAwNjBEMSIvPgo8c3RvcCBvZmZzZXQ9IjAuOTA4MTY2IiBzdG9wLWNvbG9yPSIjMDM4M0YxIiBzdG9wLW9wYWNpdHk9IjAiLz4KPC9yYWRpYWxHcmFkaWVudD4KPHJhZGlhbEdyYWRpZW50IGlkPSJwYWludDhfcmFkaWFsXzg5XzE3MTkiIGN4PSIwIiBjeT0iMCIgcj0iMSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiIGdyYWRpZW50VHJhbnNmb3JtPSJ0cmFuc2xhdGUoOC41MzAzNSAyOC42MDg0KSByb3RhdGUoLTUyLjY1NzcpIHNjYWxlKDIyLjkyOTUgMjAuNzM0MSkiPgo8c3RvcCBvZmZzZXQ9IjAuNzMyMzE3IiBzdG9wLWNvbG9yPSIjRjRBN0Y3IiBzdG9wLW9wYWNpdHk9IjAiLz4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjRjRBN0Y3Ii8+CjwvcmFkaWFsR3JhZGllbnQ+CjxyYWRpYWxHcmFkaWVudCBpZD0icGFpbnQ5X3JhZGlhbF84OV8xNzE5IiBjeD0iMCIgY3k9IjAiIHI9IjEiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiBncmFkaWVudFRyYW5zZm9ybT0idHJhbnNsYXRlKDEzLjE2NDggMTcuNTUyNikgcm90YXRlKDEyMy4zMzkpIHNjYWxlKDEyLjA5ODEgMzEuMzk2MSkiPgo8c3RvcCBzdG9wLWNvbG9yPSIjNDlERUZGIi8+CjxzdG9wIG9mZnNldD0iMC43MjQzNDkiIHN0b3AtY29sb3I9IiMyOUMzRkYiLz4KPC9yYWRpYWxHcmFkaWVudD4KPGxpbmVhckdyYWRpZW50IGlkPSJwYWludDEwX2xpbmVhcl84OV8xNzE5IiB4MT0iNC4zNDA2MyIgeTE9IjE5LjAzNzMiIHgyPSIxNC41MzkyIiB5Mj0iMTkuMDMiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KPHN0b3Agb2Zmc2V0PSIwLjIwNTg4MiIgc3RvcC1jb2xvcj0iIzZDRTBGRiIvPgo8c3RvcCBvZmZzZXQ9IjAuNTM1IiBzdG9wLWNvbG9yPSIjNTBENUZGIiBzdG9wLW9wYWNpdHk9IjAiLz4KPC9saW5lYXJHcmFkaWVudD4KPHJhZGlhbEdyYWRpZW50IGlkPSJwYWludDExX3JhZGlhbF84OV8xNzE5IiBjeD0iMCIgY3k9IjAiIHI9IjEiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiBncmFkaWVudFRyYW5zZm9ybT0idHJhbnNsYXRlKDQuNjI2MDkgMTUuMjY2NCkgcm90YXRlKDQ2LjkyNDIpIHNjYWxlKDEyLjI5NDMpIj4KPHN0b3Agb2Zmc2V0PSIwLjAzODg3NyIgc3RvcC1jb2xvcj0iIzAwOTFGRiIvPgo8c3RvcCBvZmZzZXQ9IjAuOTE5MTE5IiBzdG9wLWNvbG9yPSIjMTgzREFEIi8+CjwvcmFkaWFsR3JhZGllbnQ+CjxyYWRpYWxHcmFkaWVudCBpZD0icGFpbnQxMl9yYWRpYWxfODlfMTcxOSIgY3g9IjAiIGN5PSIwIiByPSIxIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgZ3JhZGllbnRUcmFuc2Zvcm09InRyYW5zbGF0ZSg5LjMyOTIxIDIwLjU5NDkpIHJvdGF0ZSg5MCkgc2NhbGUoNi41Mzc3MSA3LjU0MTAxKSI+CjxzdG9wIG9mZnNldD0iMC41NTc3OTYiIHN0b3AtY29sb3I9IiMwRkE1RjciIHN0b3Atb3BhY2l0eT0iMCIvPgo8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM3NEM2RkYiLz4KPC9yYWRpYWxHcmFkaWVudD4KPC9kZWZzPgo8L3N2Zz4=", "Yahoo": "data:image/svg+xml;base64,PHN2ZyBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDE1MiAxNTIiIHdpZHRoPSI1MTIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiPjxyYWRpYWxHcmFkaWVudCBpZD0icmFkaWFsLWdyYWRpZW50IiBjeD0iNzYiIGN5PSI3NiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiIHI9Ijc2Ij48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM2NDAxZDkiLz48c3RvcCBvZmZzZXQ9Ii45OSIgc3RvcC1jb2xvcj0iIzUyMDFiMyIvPjwvcmFkaWFsR3JhZGllbnQ+PGcgaWQ9IkxheWVyXzIiIGRhdGEtbmFtZT0iTGF5ZXIgMiI+PGcgaWQ9IlNxdWFyZSI+PGcgaWQ9Il80OS5ZYWhvbyIgZGF0YS1uYW1lPSI0OS5ZYWhvbyI+PHJlY3QgaWQ9IkJhY2tncm91bmQiIGZpbGw9InVybCgjcmFkaWFsLWdyYWRpZW50KSIgaGVpZ2h0PSIxNTIiIHJ4PSIyNCIgd2lkdGg9IjE1MiIvPjxnIGZpbGw9IiNmZmYiPjxwYXRoIGlkPSJTaGFkZSIgZD0ibTE0MyA1LjI3Yy0xMC41MyAyNi40Mi0yOS44IDU1LjI4LTU2LjEyIDgxLjZzLTU1LjE5IDQ1LjU5LTgxLjYxIDU2LjEzYTIzLjg1IDIzLjg1IDAgMCAxIC01LjI3LTE1di0xMDRhMjQgMjQgMCAwIDEgMjQtMjRoMTA0YTIzLjg1IDIzLjg1IDAgMCAxIDE1IDUuMjd6IiBvcGFjaXR5PSIuMSIvPjxnIGlkPSJJY29uIj48cGF0aCBkPSJtNzAuMDcgNTUuNjMtMTAuMDcgMjQuOTktOS43NS0yNWExLjkyIDEuOTIgMCAwIDAgLTEuNzgtMS4yMmgtMTMuNTVhMS45MSAxLjkxIDAgMCAwIC0xLjc3IDIuNjNsMTguMjQgNDQuNzctNC42NiAxMS41NGExLjkxIDEuOTEgMCAwIDAgMS43NyAyLjY2aDEzLjA5YTEuOSAxLjkgMCAwIDAgMS43Ny0xLjE5bDIzLjM1LTU3Ljc0YTEuOTEgMS45MSAwIDAgMCAtMS43MS0yLjYzaC0xMy4xN2ExLjkgMS45IDAgMCAwIC0xLjc2IDEuMTl6Ii8+PHBhdGggZD0ibTEwMi4yIDM3LjE5YTEuOTIgMS45MiAwIDAgMSAxLjgtMS4xOWgxMy4xMWExLjkgMS45IDAgMCAxIDEuNzcgMi42MmwtMTMuODggMzQuMTJhMS45MSAxLjkxIDAgMCAxIC0xLjc3IDEuMmgtMTMuMDlhMS45MSAxLjkxIDAgMCAxIC0xLjc3LTIuNjN6Ii8+PGNpcmNsZSBjeD0iOTEuMTgiIGN5PSI5MC4zNSIgcj0iMTAuNTkiLz48L2c+PC9nPjwvZz48L2c+PC9nPjwvc3ZnPg==", "Mail.ru": "data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMzIgMzIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiBmaWxsPSJub25lIj48cGF0aCBmaWxsPSIjMDdGIiBkPSJNMCAwaDMydjMySDB6Ii8+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTE5LjAwOCAxNkEzLjAxIDMuMDEgMCAwIDEgMTYgMTkuMDA4IDMuMDEgMy4wMSAwIDAgMSAxMi45OTIgMTYgMy4wMSAzLjAxIDAgMCAxIDE2IDEyLjk5MiAzLjAxIDMuMDEgMCAwIDEgMTkuMDA4IDE2TTE2IDZDMTAuNDg2IDYgNiAxMC40ODYgNiAxNnM0LjQ4NiAxMCAxMCAxMGMyLjAyIDAgMy45NjgtLjYwMSA1LjYzMy0xLjc0bC4wMjktLjAyLTEuMzQ4LTEuNTY2LS4wMjIuMDE1QTcuOSA3LjkgMCAwIDEgMTYgMjMuOTVjLTQuMzg0IDAtNy45NS0zLjU2Ni03Ljk1LTcuOTVTMTEuNjE2IDguMDUgMTYgOC4wNXM3Ljk1IDMuNTY2IDcuOTUgNy45NWE4IDggMCAwIDEtLjE4NyAxLjcwOWMtLjI1MiAxLjAzMi0uOTc0IDEuMzQ4LTEuNTE3IDEuMzA2LS41NDUtLjA0NC0xLjE4My0uNDMzLTEuMTg4LTEuMzg0VjE2QTUuMDYzIDUuMDYzIDAgMCAwIDE2IDEwLjk0MiA1LjA2MyA1LjA2MyAwIDAgMCAxMC45NDIgMTYgNS4wNjMgNS4wNjMgMCAwIDAgMTYgMjEuMDU4YzEuMzU1IDAgMi42MjYtLjUzIDMuNTg0LTEuNDkzYTMuMjUgMy4yNSAwIDAgMCAyLjc2NyAxLjUwNGMuNzI3IDAgMS40NDgtLjI0MyAyLjAzLS42ODUuNTk5LS40NTUgMS4wNDYtMS4xMTMgMS4yOTQtMS45MDMuMDQtLjEyOC4xMTItLjQyLjExMy0uNDIybC4wMDEtLjAxQzI1LjkzNSAxNy40MTMgMjYgMTYuNzggMjYgMTZjMC01LjUxNC00LjQ4Ni0xMC0xMC0xMCIvPjwvc3ZnPg=="};
+const provIcon = (name, size = 16) => PROV_ICONS[name] ? `<img class="prov-ico" src="${PROV_ICONS[name]}" width="${size}" height="${size}" alt="">` : '';
+// Gemini icon supplied by the project owner.
+const GEMINI_ICON = '<img class="gem-ico" src="data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSI1IDUgMjIgMjIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiBmaWxsPSJub25lIj48ZyBjbGlwLXBhdGg9InVybCgjYSkiPjxtYXNrIGlkPSJjIiB3aWR0aD0iMjIiIGhlaWdodD0iMjIiIHg9IjUiIHk9IjUiIG1hc2tVbml0cz0idXNlclNwYWNlT25Vc2UiIHN0eWxlPSJtYXNrLXR5cGU6YWxwaGEiPjxwYXRoIGZpbGw9IiMwMDAwMDAiIGQ9Ik0xNS45ODIgNWMuMjMgMCAuNDMuMTU3LjQ4Ny4zOHEuMjU4IDEuMDI3LjY3NyAyYTE0LjEgMTQuMSAwIDAgMCAyLjk5NiA0LjQ0MiAxNC4xIDE0LjEgMCAwIDAgNC40NDMgMi45OTdxLjk3Mi40MTggMS45OTkuNjc2YS41MDIuNTAyIDAgMCAxIDAgLjk3NHEtMS4wMjcuMjU4LTIgLjY3N2ExNC4xIDE0LjEgMCAwIDAtNC40NDIgMi45OTYgMTQuMSAxNC4xIDAgMCAwLTMuNjczIDYuNDQyLjUwMy41MDMgMCAwIDEtLjk3NCAwIDE0LjA5IDE0LjA5IDAgMCAwLTMuNjc0LTYuNDQxIDE0LjEgMTQuMSAwIDAgMC02LjQ0LTMuNjc0LjUuNSAwIDAgMS0uMzgxLS40ODdjMC0uMjMuMTU3LS40My4zOC0uNDg2YTE0LjA5MiAxNC4wOTIgMCAwIDAgNi40NC0zLjY3NCAxNC4xIDE0LjEgMCAwIDAgMy42NzUtNi40NC41LjUgMCAwIDEgLjQ4Ny0uMzgyIi8+PHBhdGggZmlsbD0idXJsKCNiKSIgZD0iTTE1Ljk4MiA1Yy4yMyAwIC40My4xNTcuNDg3LjM4cS4yNTggMS4wMjcuNjc3IDJhMTQuMSAxNC4xIDAgMCAwIDIuOTk2IDQuNDQyIDE0LjEgMTQuMSAwIDAgMCA0LjQ0MyAyLjk5N3EuOTcyLjQxOCAxLjk5OS42NzZhLjUwMi41MDIgMCAwIDEgMCAuOTc0cS0xLjAyNy4yNTgtMiAuNjc3YTE0LjEgMTQuMSAwIDAgMC00LjQ0MiAyLjk5NiAxNC4xIDE0LjEgMCAwIDAtMy42NzMgNi40NDIuNTAzLjUwMyAwIDAgMS0uOTc0IDAgMTQuMDkgMTQuMDkgMCAwIDAtMy42NzQtNi40NDEgMTQuMSAxNC4xIDAgMCAwLTYuNDQtMy42NzQuNS41IDAgMCAxLS4zODEtLjQ4N2MwLS4yMy4xNTctLjQzLjM4LS40ODZhMTQuMDkyIDE0LjA5MiAwIDAgMCA2LjQ0LTMuNjc0IDE0LjEgMTQuMSAwIDAgMCAzLjY3NS02LjQ0LjUuNSAwIDAgMSAuNDg3LS4zODIiLz48L21hc2s+PGcgbWFzaz0idXJsKCNjKSI+PGcgZmlsdGVyPSJ1cmwoI2QpIj48cGF0aCBmaWxsPSIjRkZFNDMyIiBkPSJNMy4wMTcgMjIuMTcyYzIuNTM3LjkgNS40NTQtLjc4OSA2LjUxNS0zLjc3NXMtLjEzOC02LjEzNi0yLjY3NS03LjAzOGMtMi41MzgtLjkwMS01LjQ1NS43ODktNi41MTYgMy43NzQtMS4wNiAyLjk4Ni4xMzggNi4xMzcgMi42NzYgNy4wMzkiLz48L2c+PGcgZmlsdGVyPSJ1cmwoI2UpIj48cGF0aCBmaWxsPSIjRkM0MTNEIiBkPSJNMTQuMjg1IDEyLjMyN2MzLjQ4NiAwIDYuMzEzLTIuODg4IDYuMzEzLTYuNDUxIDAtMy41NjQtMi44MjYtNi40NTItNi4zMTMtNi40NTJTNy45NzIgMi4zMTMgNy45NzIgNS44NzZzMi44MjYgNi40NTEgNi4zMTMgNi40NTEiLz48L2c+PGcgZmlsdGVyPSJ1cmwoI2YpIj48cGF0aCBmaWxsPSIjMDBCOTVDIiBkPSJNMTEuODMxIDMyLjk2YzMuNjQtLjE3OCA2LjQwMy00LjE0NCA2LjE3My04Ljg2LS4yMy00LjcxNC0zLjM2OC04LjM5Mi03LjAwOC04LjIxNC0zLjYzOS4xNzgtNi40MDMgNC4xNDQtNi4xNzIgOC44NTlzMy4zNjggOC4zOTMgNy4wMDcgOC4yMTUiLz48L2c+PGcgZmlsdGVyPSJ1cmwoI2cpIj48cGF0aCBmaWxsPSIjMDBCOTVDIiBkPSJNMTEuODMxIDMyLjk2YzMuNjQtLjE3OCA2LjQwMy00LjE0NCA2LjE3My04Ljg2LS4yMy00LjcxNC0zLjM2OC04LjM5Mi03LjAwOC04LjIxNC0zLjYzOS4xNzgtNi40MDMgNC4xNDQtNi4xNzIgOC44NTlzMy4zNjggOC4zOTMgNy4wMDcgOC4yMTUiLz48L2c+PGcgZmlsdGVyPSJ1cmwoI2gpIj48cGF0aCBmaWxsPSIjMDBCOTVDIiBkPSJNMTUuNDc3IDMwLjEwOGMzLjA1LTEuODU3IDMuODY3LTYuMDg1IDEuODI0LTkuNDQzLTIuMDQ0LTMuMzYtNi4xNzQtNC41NzgtOS4yMjUtMi43MjItMy4wNTIgMS44NTctMy44NjggNi4wODUtMS44MjUgOS40NDQgMi4wNDUgMy4zNTkgNi4xNzUgNC41NzcgOS4yMjYgMi43MiIvPjwvZz48ZyBmaWx0ZXI9InVybCgjaSkiPjxwYXRoIGZpbGw9IiMzMTg2RkYiIGQ9Ik0yNy44MDkgMTkuNTUyYzMuNDMgMCA2LjIxLTIuNjc4IDYuMjEtNS45OHMtMi43OC01Ljk4LTYuMjEtNS45OC02LjIxIDIuNjc4LTYuMjEgNS45OCAyLjc4IDUuOTggNi4yMSA1Ljk4Ii8+PC9nPjxnIGZpbHRlcj0idXJsKCNqKSI+PHBhdGggZmlsbD0iI0ZCQkMwNCIgZD0iTS41NzggMTguODU4YzMuMTU4IDIuNCA3Ljc3IDEuNjQ4IDEwLjMwNC0xLjY4MyAyLjUzMi0zLjMzIDIuMDI2LTcuOTc3LTEuMTMyLTEwLjM3OEM2LjU5MiA0LjM5NSAxLjk4IDUuMTQ4LS41NTMgOC40NzlTLTIuNTggMTYuNDU3LjU3OCAxOC44NTgiLz48L2c+PGcgZmlsdGVyPSJ1cmwoI2spIj48cGF0aCBmaWxsPSIjMzE4NkZGIiBkPSJNMTYuNzU4IDIyLjQwN2MzLjc2OSAyLjU5MiA4Ljc2NSAxLjg3IDExLjE1OC0xLjYxMiAyLjM5NC0zLjQ4MiAxLjI4LTguNDA1LTIuNDktMTAuOTk2LTMuNzY5LTIuNTkyLTguNzY1LTEuODctMTEuMTU5IDEuNjEyLTIuMzkzIDMuNDgyLTEuMjc5IDguNDA1IDIuNDkgMTAuOTk2Ii8+PC9nPjxnIGZpbHRlcj0idXJsKCNsKSI+PHBhdGggZmlsbD0iIzc0OUJGRiIgZD0iTTIzLjYxIDQuMjFjLjk1OSAxLjMwMy0uMjc0IDMuODM3LTIuNzUyIDUuNjYtMi40OCAxLjgyNC01LjI2NiAyLjI0NS02LjIyNS45NDJzLjI3NC0zLjg0IDIuNzUyLTUuNjYyYzIuNDgtMS44MjMgNS4yNjYtMi4yNDQgNi4yMjQtLjk0MSIvPjwvZz48ZyBmaWx0ZXI9InVybCgjbSkiPjxwYXRoIGZpbGw9IiNGQzQxM0QiIGQ9Ik0xNS43MzggMTAuNDVjMy44MzQtMy41NTUgNS4xNS04LjM3IDIuOTQtMTAuNzUyUzExLjU2Ny0xLjczNSA3LjczMyAxLjgyYy0zLjgzMyAzLjU1Ni01LjE1IDguMzctMi45MzkgMTAuNzUzIDIuMjEgMi4zODMgNy4xMSAxLjQzMiAxMC45NDMtMi4xMjMiLz48L2c+PGcgZmlsdGVyPSJ1cmwoI24pIj48cGF0aCBmaWxsPSIjRkZFRTQ4IiBkPSJNNy44OCAyMy4yMjJjMi4yNzkgMS42MyA0Ljg5NSAxLjg3OCA1Ljg0My41NTQuOTQ4LTEuMzI1LS4xMy0zLjcyMS0yLjQwOS01LjM1Mi0yLjI3OC0xLjYzLTQuODk0LTEuODc4LTUuODQyLS41NTQtLjk0OCAxLjMyNS4xMyAzLjcyMSAyLjQwOCA1LjM1MiIvPjwvZz48L2c+PC9nPjxkZWZzPjxmaWx0ZXIgaWQ9ImQiIHdpZHRoPSIxMy4yOTMiIGhlaWdodD0iMTQuNjI4IiB4PSItMS43MSIgeT0iOS40NTEiIGNvbG9yLWludGVycG9sYXRpb24tZmlsdGVycz0ic1JHQiIgZmlsdGVyVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48ZmVGbG9vZCBmbG9vZC1vcGFjaXR5PSIwIiByZXN1bHQ9IkJhY2tncm91bmRJbWFnZUZpeCIvPjxmZUJsZW5kIGluPSJTb3VyY2VHcmFwaGljIiBpbjI9IkJhY2tncm91bmRJbWFnZUZpeCIgcmVzdWx0PSJzaGFwZSIvPjxmZUdhdXNzaWFuQmx1ciByZXN1bHQ9ImVmZmVjdDFfZm9yZWdyb3VuZEJsdXJfMjU4XzEzNDAiIHN0ZERldmlhdGlvbj0iLjgzMyIvPjwvZmlsdGVyPjxmaWx0ZXIgaWQ9ImUiIHdpZHRoPSIyOC43MjUiIGhlaWdodD0iMjkuMDAyIiB4PSItLjA3OCIgeT0iLTguNjI1IiBjb2xvci1pbnRlcnBvbGF0aW9uLWZpbHRlcnM9InNSR0IiIGZpbHRlclVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PGZlRmxvb2QgZmxvb2Qtb3BhY2l0eT0iMCIgcmVzdWx0PSJCYWNrZ3JvdW5kSW1hZ2VGaXgiLz48ZmVCbGVuZCBpbj0iU291cmNlR3JhcGhpYyIgaW4yPSJCYWNrZ3JvdW5kSW1hZ2VGaXgiIHJlc3VsdD0ic2hhcGUiLz48ZmVHYXVzc2lhbkJsdXIgcmVzdWx0PSJlZmZlY3QxX2ZvcmVncm91bmRCbHVyXzI1OF8xMzQwIiBzdGREZXZpYXRpb249IjQuMDI1Ii8+PC9maWx0ZXI+PGZpbHRlciBpZD0iZiIgd2lkdGg9IjI2Ljg5MyIgaGVpZ2h0PSIzMC43NzIiIHg9Ii0yLjAzMiIgeT0iOS4wMzciIGNvbG9yLWludGVycG9sYXRpb24tZmlsdGVycz0ic1JHQiIgZmlsdGVyVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48ZmVGbG9vZCBmbG9vZC1vcGFjaXR5PSIwIiByZXN1bHQ9IkJhY2tncm91bmRJbWFnZUZpeCIvPjxmZUJsZW5kIGluPSJTb3VyY2VHcmFwaGljIiBpbjI9IkJhY2tncm91bmRJbWFnZUZpeCIgcmVzdWx0PSJzaGFwZSIvPjxmZUdhdXNzaWFuQmx1ciByZXN1bHQ9ImVmZmVjdDFfZm9yZWdyb3VuZEJsdXJfMjU4XzEzNDAiIHN0ZERldmlhdGlvbj0iMy40MjIiLz48L2ZpbHRlcj48ZmlsdGVyIGlkPSJnIiB3aWR0aD0iMjYuODkzIiBoZWlnaHQ9IjMwLjc3MiIgeD0iLTIuMDMyIiB5PSI5LjAzNyIgY29sb3ItaW50ZXJwb2xhdGlvbi1maWx0ZXJzPSJzUkdCIiBmaWx0ZXJVbml0cz0idXNlclNwYWNlT25Vc2UiPjxmZUZsb29kIGZsb29kLW9wYWNpdHk9IjAiIHJlc3VsdD0iQmFja2dyb3VuZEltYWdlRml4Ii8+PGZlQmxlbmQgaW49IlNvdXJjZUdyYXBoaWMiIGluMj0iQmFja2dyb3VuZEltYWdlRml4IiByZXN1bHQ9InNoYXBlIi8+PGZlR2F1c3NpYW5CbHVyIHJlc3VsdD0iZWZmZWN0MV9mb3JlZ3JvdW5kQmx1cl8yNThfMTM0MCIgc3RkRGV2aWF0aW9uPSIzLjQyMiIvPjwvZmlsdGVyPjxmaWx0ZXIgaWQ9ImgiIHdpZHRoPSIyNi45ODYiIGhlaWdodD0iMjcuNTg3IiB4PSItMS43MTciIHk9IjEwLjIzMiIgY29sb3ItaW50ZXJwb2xhdGlvbi1maWx0ZXJzPSJzUkdCIiBmaWx0ZXJVbml0cz0idXNlclNwYWNlT25Vc2UiPjxmZUZsb29kIGZsb29kLW9wYWNpdHk9IjAiIHJlc3VsdD0iQmFja2dyb3VuZEltYWdlRml4Ii8+PGZlQmxlbmQgaW49IlNvdXJjZUdyYXBoaWMiIGluMj0iQmFja2dyb3VuZEltYWdlRml4IiByZXN1bHQ9InNoYXBlIi8+PGZlR2F1c3NpYW5CbHVyIHJlc3VsdD0iZWZmZWN0MV9mb3JlZ3JvdW5kQmx1cl8yNThfMTM0MCIgc3RkRGV2aWF0aW9uPSIzLjQyMiIvPjwvZmlsdGVyPjxmaWx0ZXIgaWQ9ImkiIHdpZHRoPSIyNS40MjQiIGhlaWdodD0iMjQuOTY0IiB4PSIxNS4wOTciIHk9IjEuMDkiIGNvbG9yLWludGVycG9sYXRpb24tZmlsdGVycz0ic1JHQiIgZmlsdGVyVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48ZmVGbG9vZCBmbG9vZC1vcGFjaXR5PSIwIiByZXN1bHQ9IkJhY2tncm91bmRJbWFnZUZpeCIvPjxmZUJsZW5kIGluPSJTb3VyY2VHcmFwaGljIiBpbjI9IkJhY2tncm91bmRJbWFnZUZpeCIgcmVzdWx0PSJzaGFwZSIvPjxmZUdhdXNzaWFuQmx1ciByZXN1bHQ9ImVmZmVjdDFfZm9yZWdyb3VuZEJsdXJfMjU4XzEzNDAiIHN0ZERldmlhdGlvbj0iMy4yNTEiLz48L2ZpbHRlcj48ZmlsdGVyIGlkPSJqIiB3aWR0aD0iMjYuNDQ2IiBoZWlnaHQ9IjI2LjY1NyIgeD0iLTguMDU5IiB5PSItLjUwMSIgY29sb3ItaW50ZXJwb2xhdGlvbi1maWx0ZXJzPSJzUkdCIiBmaWx0ZXJVbml0cz0idXNlclNwYWNlT25Vc2UiPjxmZUZsb29kIGZsb29kLW9wYWNpdHk9IjAiIHJlc3VsdD0iQmFja2dyb3VuZEltYWdlRml4Ii8+PGZlQmxlbmQgaW49IlNvdXJjZUdyYXBoaWMiIGluMj0iQmFja2dyb3VuZEltYWdlRml4IiByZXN1bHQ9InNoYXBlIi8+PGZlR2F1c3NpYW5CbHVyIHJlc3VsdD0iZWZmZWN0MV9mb3JlZ3JvdW5kQmx1cl8yNThfMTM0MCIgc3RkRGV2aWF0aW9uPSIyLjk0NyIvPjwvZmlsdGVyPjxmaWx0ZXIgaWQ9ImsiIHdpZHRoPSIyNi42OTciIGhlaWdodD0iMjYuMjQ1IiB4PSI3Ljc0MyIgeT0iMi45ODEiIGNvbG9yLWludGVycG9sYXRpb24tZmlsdGVycz0ic1JHQiIgZmlsdGVyVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48ZmVGbG9vZCBmbG9vZC1vcGFjaXR5PSIwIiByZXN1bHQ9IkJhY2tncm91bmRJbWFnZUZpeCIvPjxmZUJsZW5kIGluPSJTb3VyY2VHcmFwaGljIiBpbjI9IkJhY2tncm91bmRJbWFnZUZpeCIgcmVzdWx0PSJzaGFwZSIvPjxmZUdhdXNzaWFuQmx1ciByZXN1bHQ9ImVmZmVjdDFfZm9yZWdyb3VuZEJsdXJfMjU4XzEzNDAiIHN0ZERldmlhdGlvbj0iMi42MzIiLz48L2ZpbHRlcj48ZmlsdGVyIGlkPSJsIiB3aWR0aD0iMTkuMDQ2IiBoZWlnaHQ9IjE3LjUzNiIgeD0iOS41OTkiIHk9Ii0xLjI1OCIgY29sb3ItaW50ZXJwb2xhdGlvbi1maWx0ZXJzPSJzUkdCIiBmaWx0ZXJVbml0cz0idXNlclNwYWNlT25Vc2UiPjxmZUZsb29kIGZsb29kLW9wYWNpdHk9IjAiIHJlc3VsdD0iQmFja2dyb3VuZEltYWdlRml4Ii8+PGZlQmxlbmQgaW49IlNvdXJjZUdyYXBoaWMiIGluMj0iQmFja2dyb3VuZEltYWdlRml4IiByZXN1bHQ9InNoYXBlIi8+PGZlR2F1c3NpYW5CbHVyIHJlc3VsdD0iZWZmZWN0MV9mb3JlZ3JvdW5kQmx1cl8yNThfMTM0MCIgc3RkRGV2aWF0aW9uPSIyLjM1NSIvPjwvZmlsdGVyPjxmaWx0ZXIgaWQ9Im0iIHdpZHRoPSIyMy45ODIiIGhlaWdodD0iMjMuNDU3IiB4PSItLjI1NSIgeT0iLTUuNTkzIiBjb2xvci1pbnRlcnBvbGF0aW9uLWZpbHRlcnM9InNSR0IiIGZpbHRlclVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PGZlRmxvb2QgZmxvb2Qtb3BhY2l0eT0iMCIgcmVzdWx0PSJCYWNrZ3JvdW5kSW1hZ2VGaXgiLz48ZmVCbGVuZCBpbj0iU291cmNlR3JhcGhpYyIgaW4yPSJCYWNrZ3JvdW5kSW1hZ2VGaXgiIHJlc3VsdD0ic2hhcGUiLz48ZmVHYXVzc2lhbkJsdXIgcmVzdWx0PSJlZmZlY3QxX2ZvcmVncm91bmRCbHVyXzI1OF8xMzQwIiBzdGREZXZpYXRpb249IjEuOTg5Ii8+PC9maWx0ZXI+PGZpbHRlciBpZD0ibiIgd2lkdGg9IjE4Ljc4NiIgaGVpZ2h0PSIxNy40NTUiIHg9Ii4yMDUiIHk9IjEyLjA5NSIgY29sb3ItaW50ZXJwb2xhdGlvbi1maWx0ZXJzPSJzUkdCIiBmaWx0ZXJVbml0cz0idXNlclNwYWNlT25Vc2UiPjxmZUZsb29kIGZsb29kLW9wYWNpdHk9IjAiIHJlc3VsdD0iQmFja2dyb3VuZEltYWdlRml4Ii8+PGZlQmxlbmQgaW49IlNvdXJjZUdyYXBoaWMiIGluMj0iQmFja2dyb3VuZEltYWdlRml4IiByZXN1bHQ9InNoYXBlIi8+PGZlR2F1c3NpYW5CbHVyIHJlc3VsdD0iZWZmZWN0MV9mb3JlZ3JvdW5kQmx1cl8yNThfMTM0MCIgc3RkRGV2aWF0aW9uPSIyLjQ2MiIvPjwvZmlsdGVyPjxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDE9IjExLjI0NCIgeDI9IjIyLjY1MiIgeTE9IjE5LjY5NiIgeTI9IjEwLjA3OCIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPjxzdG9wIHN0b3AtY29sb3I9IiM0ODkzRkMiLz48c3RvcCBvZmZzZXQ9Ii4yNyIgc3RvcC1jb2xvcj0iIzQ4OTNGQyIvPjxzdG9wIG9mZnNldD0iLjc3NyIgc3RvcC1jb2xvcj0iIzk2OURGRiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI0JEOTlGRSIvPjwvbGluZWFyR3JhZGllbnQ+PGNsaXBQYXRoIGlkPSJhIj48cGF0aCBmaWxsPSIjZmZmZmZmIiBkPSJNNSA1aDIydjIySDV6Ii8+PC9jbGlwUGF0aD48L2RlZnM+PC9zdmc+" width="17" height="17" alt="">';
+const MEDIUM_MARK = '<svg class="medium-mark" viewBox="0 0 512 512" aria-hidden="true"><path class="mi-bg" d="M89.825 0h332.35C471.776 0 512 40.224 512 89.825v332.35c0 49.6-40.224 89.825-89.825 89.825H89.825C40.225 512 0 471.775 0 422.175V89.825C0 40.224 40.225 0 89.825 0z"/><path class="mi-fg" d="M512 352.368v46.5c-2.92.282-5.92.426-9 .426-54.97 0-85.917-45.786-87.252-103.078-.039-2.215-.024-4.416.025-6.602.03-1.363.084-2.722.153-4.076.034-.724.068-1.404.123-2.161.054-.759.108-1.517.173-2.275 1.979-25.296 10.122-47.805 23.562-64.46 8.349-10.339 18.383-18.216 29.761-23.484 9.994-5.031 24.04-7.809 35.49-7.809h.495a97.2 97.2 0 016.47.216v12.793c-2.275-.623-4.71-.958-7.3-1.001-23.157.478-36.957 28.216-38.676 66.647H512v10.831h-47.014l-.015.01c-2.12 37.445 18.375 69.09 47.029 77.523zm-93.943-230.055l.404-.089v-3.126h-82.454l-76.562 179.944-76.561-179.944H94.03v3.126l.398.089c15.05 3.397 22.692 8.463 22.692 26.733v213.89c0 18.27-7.671 23.336-22.721 26.733l-.399.089v3.136h60.285v-3.126l-.399-.089c-15.05-3.397-22.691-8.463-22.691-26.733V161.453l98.351 231.441h5.579l101.216-237.896v213.23c-1.289 14.431-8.861 18.886-22.489 21.963l-.404.094v3.101h105.013v-3.101l-.404-.094c-13.642-3.077-21.396-7.532-22.686-21.963l-.069-219.182h.069c0-18.27 7.641-23.336 22.686-26.733z"/></svg>';
+const TOPIC_COLORS = {'IT':'#3A6FF0','AI':'#8B5CF6','Web dev':'#0EA5A4','Career':'#F59E0B','Marketing':'#EA4C89','Events':'#10B981','Design':'#F43F5E','Business':'#6366F1','Science':'#0891B2'};
+const topicsOf = e => (e._raw.topics && e._raw.topics.length ? e._raw.topics : ['IT']);
+const topicTag = t => `<span class="topic" style="--c:${TOPIC_COLORS[t] || '#787878'}">${esc(t)}</span>`;
+function agoText(d){ const days = Math.round((dayStart(NOW) - dayStart(d)) / 864e5); return days <= 0 ? 'today' : days === 1 ? 'yesterday' : `${days} days ago`; }
+const unsubKey = e => (e._raw.author || e.fromEmail || e.from).toLowerCase();
 const hostOf = u => { try{ return new URL(u).hostname.replace(/^www\./, ''); }catch(_){ return u; } };
 function articleMeta(e){
   const r = e._raw;
@@ -1777,7 +1997,7 @@ function pBriefing(){
 function pInbox(){
   let items = visible();
   if(S.inboxPrio !== 'all') items = items.filter(e => e.priority === S.inboxPrio);
-  if(S.inboxAcc !== 'all') items = items.filter(e => e.acc === S.inboxAcc);
+  if(S.inboxCat !== 'all') items = items.filter(e => e.boardCat === S.inboxCat);
   if(S.query.trim()){ const q = S.query.toLowerCase(); items = items.filter(e => (e.from + e.subject + e.summary + e.body + (e.org||'')).toLowerCase().includes(q)); }
   const pr = ['all', ...RANK];
   return `<div class="page">
@@ -1786,7 +2006,7 @@ function pInbox(){
       <div class="search"><input class="input" id="f-search" type="search" placeholder="Search all inboxes" value="${esc(S.query)}" aria-label="Search all inboxes"></div>
       <div class="seg" role="group" aria-label="Priority">${pr.map(p => `<button class="${S.inboxPrio===p?'on':''}" data-act="prio" data-v="${p}">${p==='all'?'All':PLABEL[p]}</button>`).join('')}</div>
     </div>
-    <div class="filters">${['all', ...connectedAccs().map(a => a.id)].map(a => `<button class="chip sm ${S.inboxAcc===a?'on':''}" data-act="accFilter" data-v="${a}">${a==='all' ? 'All accounts' : accDot(a)+' '+accById(a).name}</button>`).join('')}</div>
+    <div class="filters">${[{id:'all', name:'All categories'}, ...boardCats()].map(c => `<button class="chip sm ${S.inboxCat===c.id?'on':''}" data-act="catFilter" data-v="${esc(c.id)}">${c.color ? `<span class="acc-dot" style="--c:${c.color}"></span>` : ''}${esc(c.name)}</button>`).join('')}<button class="chip sm" data-act="catNew" style="border-style:dashed">${ICON('plus', 14)}New category</button></div>
     ${list(items, 'No emails match', S.query ? 'Try a different search.' : 'Change the filters above.')}
   </div>`;
 }
@@ -1803,8 +2023,54 @@ function pAction(){
   </div>`;
 }
 function pNews(){
-  return `<div class="page"><div class="page-h"><div><h1>News</h1><p>Newsletters condensed to what you need, and why it matters to you.</p></div></div>
-  <div class="news">${newsletters().map(e => newsItem(e, false)).join('') || '<div class="empty"><b>No newsletters</b>Connect an account that receives newsletters.</div>'}</div></div>`;
+  const all = newsletters();
+  const counts = {}; all.forEach(e => topicsOf(e).forEach(t => counts[t] = (counts[t] || 0) + 1));
+  const topics = Object.keys(TOPIC_COLORS).filter(t => counts[t]);
+  const sel = S.newsTopics || [];
+  const items = sel.length ? all.filter(e => topicsOf(e).some(t => sel.includes(t))) : all;
+  const viewSeg = `<div class="seg" role="group" aria-label="View"><button class="${S.newsView !== 'cards' ? 'on' : ''}" data-act="newsView" data-v="list">${ICON('news', 15)}List</button><button class="${S.newsView === 'cards' ? 'on' : ''}" data-act="newsView" data-v="cards">${ICON('cards', 15)}Cards</button></div>`;
+  if(S.newsView === 'cards') return `<div class="page news-page"><div class="page-h"><div><h1>News</h1></div>${viewSeg}</div>
+    <div class="topic-filter" role="group" aria-label="Filter by topic">
+      <button class="chip sm ${sel.length ? '' : 'on'}" data-act="newsTopic" data-v="">All<span class="cnt">${all.length}</span></button>
+      ${topics.map(t => `<button class="chip sm topic-chip ${sel.includes(t) ? 'on' : ''}" style="--c:${TOPIC_COLORS[t]}" data-act="newsTopic" data-v="${esc(t)}" aria-pressed="${sel.includes(t)}"><i></i>${esc(t)}<span class="cnt">${counts[t]}</span></button>`).join('')}
+    </div>${deck(items)}</div>`;
+  return `<div class="page news-page"><div class="page-h"><div><h1>News</h1></div>${viewSeg}</div>
+    <div class="topic-filter" role="group" aria-label="Filter by topic">
+      <button class="chip sm ${sel.length ? '' : 'on'}" data-act="newsTopic" data-v="">All<span class="cnt">${all.length}</span></button>
+      ${topics.map(t => `<button class="chip sm topic-chip ${sel.includes(t) ? 'on' : ''}" style="--c:${TOPIC_COLORS[t]}" data-act="newsTopic" data-v="${esc(t)}" aria-pressed="${sel.includes(t)}"><i></i>${esc(t)}<span class="cnt">${counts[t]}</span></button>`).join('')}
+    </div>
+    <div class="arts">${items.map(e => newsItem(e, false)).join('') || '<div class="empty"><b>Nothing here</b>No articles match these topics.</div>'}</div></div>`;
+}
+function deck(items){
+  const n = items.length, read = S.corr.newsRead || [];
+  if(!n) return '<div class="empty"><b>Nothing here</b>No articles match these topics.</div>';
+  const i = Math.max(0, Math.min(S.cardIdx || 0, n)); S.cardIdx = i;
+  const nRead = items.filter(e => read.includes(e.id)).length;
+  const bar = `<div class="deck-bar">${items.map((e, k) => `<button class="seg-dot ${read.includes(e.id) ? 'done' : ''} ${k === i ? 'cur' : ''}" data-act="cardGo" data-v="${k}" aria-label="Article ${k + 1}"></button>`).join('')}</div>`;
+  if(i === n) return `<div class="deck">${bar}
+    <div class="deck-meta"><span>&nbsp;</span><span>${nRead} read</span></div>
+    <div class="card-art done-card ${S.cardDir || ''}"><div class="done-ico">${ICON('check', 30)}</div><h3 class="art-title">${nRead === n ? "You're all caught up" : 'End of the stack'}</h3><p class="art-sum">You read ${nRead} of ${n} articles${S.newsTopics?.length ? ' in these topics' : ''}.</p>
+    <div class="art-actions" style="justify-content:center"><button class="btn sm primary" data-act="cardGo" data-v="0">Start over</button><button class="btn sm ghost" data-act="newsView" data-v="list">Back to list</button></div></div>
+    <div class="deck-nav"><button class="deck-arrow" data-act="cardPrev" aria-label="Previous article">${ICON('left', 20)}</button><span class="deck-count">${nRead} of ${n} read</span><span class="deck-arrow ghost"></span></div></div>`;
+  const e = items[i], isRead = read.includes(e.id);
+  return `<div class="deck">${bar}
+    <div class="deck-meta"><span>Article ${i + 1} of ${n}</span><span>${nRead} read</span></div>
+    <div class="card-art ${isRead ? 'is-read' : ''} ${S.cardDir || ''}" id="cardArt">${newsItem(e, false)}</div>
+    <div class="deck-nav">
+      <button class="deck-arrow" data-act="cardPrev" aria-label="Previous article" ${i === 0 ? 'disabled' : ''}>${ICON('left', 20)}</button>
+      <button class="btn ${isRead ? '' : 'primary'} deck-read" data-act="cardRead" data-id="${e.id}">${isRead ? '✓ Read — undo' : 'Mark as read'}<kbd>R</kbd></button>
+      <button class="deck-arrow" data-act="cardNext" aria-label="Next article">${ICON('right', 20)}</button>
+    </div>
+    <p class="deck-hint">Use <kbd>←</kbd> <kbd>→</kbd> to move between articles, <kbd>R</kbd> to mark as read${'ontouchstart' in window ? ', or swipe' : ''}.</p>
+  </div>`;
+}
+function deckItems(){ const all = newsletters(), sel = S.newsTopics || []; return sel.length ? all.filter(e => topicsOf(e).some(t => sel.includes(t))) : all; }
+function cardMove(d){ const n = deckItems().length; const next = Math.max(0, Math.min((S.cardIdx || 0) + d, n)); if(next === S.cardIdx) return; S.cardIdx = next; S.cardDir = d > 0 ? 'from-right' : 'from-left'; render({noFocus:true}); S.cardDir = ''; }
+function cardToggleRead(id){
+  const r = S.corr.newsRead || (S.corr.newsRead = []);
+  if(r.includes(id)){ S.corr.newsRead = r.filter(x => x !== id); persist(); render({noFocus:true}); return; }
+  r.push(id); if(!S.corr.seen.includes(id)) S.corr.seen.push(id); persist(); runPipeline();
+  setTimeout(() => cardMove(1), 220); render({noFocus:true});
 }
 function pCategories(){
   const cats = UserProfileService.categoriesFor(S.profile);
@@ -1826,7 +2092,7 @@ function pAccounts(){
   <div class="acc-list" style="margin-top:0">${ACCOUNTS.map(a => { const st = S.accounts[a.id];
     const n = MAILBOX.filter(m => m.acc === a.id).length;
     return `<div class="acc-row">
-      <span class="acc-ico">${a.provider === 'Gmail' ? 'G' : 'O'}${accDot(a.id)}</span>
+      <span class="acc-ico">${provIcon(a.provider, 20) || a.provider[0]}${accDot(a.id)}</span>
       <div class="acc-meta"><b>${a.name}</b><span>${a.email} — ${a.provider}${st?.connected ? `, ${n} emails` : ''}</span></div>
       ${st?.connected ? `<button class="switch ${st.enabled !== false ? 'on':''}" data-act="toggleAcc" data-id="${a.id}" role="switch" aria-checked="${st.enabled !== false}" aria-label="Show ${a.name} in briefing"></button>
         <button class="btn sm ghost" data-act="disconnect" data-id="${a.id}">Disconnect</button>`
@@ -1920,6 +2186,42 @@ function pAssistant(){
     </div></div>
   </div>`;
 }
+
+/* ---------- Ask Clearday dock: always visible on the Board, answers in place ---------- */
+function chatThread(){
+  const msgs = S.chat.map(m => m.role === 'user'
+    ? `<div class="msg user"><div class="bubble">${esc(m.text)}</div></div>`
+    : `<div class="msg bot"><div class="bubble"><div class="who"><span class="spark">✦</span>Clearday</div>
+        <div class="answer">${formatAnswer(m.text)}</div>
+        ${m.draft ? `<div class="chat-draft"><div class="k" style="color:var(--ai-ink)">Draft reply to ${esc(byId(m.draftFor)?.from || '')} — not sent</div><pre>${esc(m.draft)}</pre>
+          <div class="draft-foot"><button class="btn sm" data-act="openDraft" data-id="${m.draftFor}" data-i="${S.chat.indexOf(m)}">Edit draft</button><button class="btn sm ghost" data-act="copyText" data-i="${S.chat.indexOf(m)}">Copy</button></div></div>` : ''}
+        ${m.refs?.length ? `<div class="refs">${m.refs.map(id => byId(id)).filter(Boolean).map(e => `<button class="ref" data-act="open" data-id="${e.id}">${accDot(e.acc)}<span>${esc(e.from)}: ${esc(e.subject)}</span></button>`).join('')}</div>` : ''}
+      </div></div>`).join('');
+  const busy = S.chatBusy ? `<div class="msg bot"><div class="bubble"><div class="who"><span class="spark">✦</span>Clearday</div><div class="busy-line" style="padding-left:0"><span class="dots"><i></i><i></i><i></i></span>Reading your inbox</div></div></div>` : '';
+  return msgs + busy;
+}
+function askContext(){
+  const cat = S.boardOpen && boardCats().find(c => c.id === S.boardOpen);
+  if(cat) return {placeholder:`Ask about ${cat.name}…`, chips:[`What needs my reply in ${cat.name}?`, `Summarise ${cat.name}`, `Draft a reply to the most urgent email`]};
+  return {placeholder:'Ask Clearday about your emails…', chips:['What still needs my reply?', 'Draft a reply to the most urgent email', 'Summarise my unread emails']};
+}
+function askDock(){
+  const ctx = askContext();
+  return `<div class="ask-dock ${S.askOpen ? 'open' : ''} ${S.chat.length ? 'has-chat' : ''}">
+    ${S.askOpen ? `<div class="ask-panel" role="region" aria-label="Clearday answers">
+      <div class="ask-head"><span><span class="spark">✦</span> Clearday</span><div style="display:flex;gap:4px">${S.chat.length ? `<button class="btn sm ghost" data-act="askClear">Clear</button>` : ''}<button class="icon-btn" data-act="askClose" aria-label="Close answers">×</button></div></div>
+      <div class="ask-scroll" id="chatScroll">${S.chat.length || S.chatBusy ? chatThread() : `<p class="ask-empty">Ask anything about your ${visible().length} emails, or pick a suggestion below.</p>`}</div>
+    </div>` : ''}
+    <div class="ask-chips" role="group" aria-label="Suggestions">${ctx.chips.map(q => `<button class="chip sm" data-act="ask" data-v="${esc(q)}">${esc(q)}</button>`).join('')}</div>
+    <div class="ask-bar">
+      <span class="ask-orb" aria-hidden="true"><span class="orb-bars"><i></i><i></i><i></i><i></i><i></i></span></span>
+      <textarea id="chatInput" rows="1" placeholder="${esc(ctx.placeholder)}" aria-label="Ask Clearday"></textarea>
+      <kbd class="ask-kbd" title="Press / to ask">/</kbd>
+      <button class="mic ${S.listening ? 'live' : ''}" data-act="mic" aria-label="${S.listening ? 'Stop listening' : 'Talk to Clearday'}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+      <button class="send" data-act="send" aria-label="Ask" ${S.chatBusy ? 'disabled' : ''}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+    </div>
+  </div>`;
+}
 function formatAnswer(t){
   const lines = String(t).split('\n');
   let html = '', inList = false;
@@ -1935,9 +2237,29 @@ function formatAnswer(t){
 /* ---------- board ---------- */
 const ACC_ICON = {personal:'👤', university:'🎓', startup:'🚀', work:'💼'};
 const STATUS_LABEL = {awaiting:'Awaiting reply', replied:'Replied', fyi:'No reply needed'};
-function boardEmails(acc){
-  return S.emails.filter(e => e.acc === acc && (S.boardScope === 'all' ? true : RANK.indexOf(e.priority) <= 2 && e.kind !== 'newsletter'));
+function boardEmails(catId){
+  const custom = String(catId).startsWith('c_');
+  return S.emails.filter(e => S.accounts[e.acc]?.enabled !== false && e.boardCat === catId &&
+    (custom || S.boardScope === 'all' || (RANK.indexOf(e.priority) <= 2 && e.kind !== 'newsletter')));
 }
+/* ---------- Board categories (inbox folders + your own categories) ---------- */
+const CAT_COLORS = ['#8B5CF6','#0EA5A4','#F59E0B','#10B981','#F43F5E','#6366F1','#0891B2','#D946EF'];
+const CAT_ICONS = ['star','coin','users','calendar','plane','heart','tag','book'];
+const catKey = () => 'cats:' + (S.mode === 'live' ? 'live' : 'demo');
+function saveCats(){ store.set(catKey(), S.cats); }
+function boardCats(){
+  const base = connectedAccs().filter(a => S.accounts[a.id].enabled !== false)
+    .map(a => ({id:'acc:' + a.id, name:a.name, color:`var(--acc-${a.id})`, icon:ACC_SVG[a.id] || 'user', kind:'inbox', email:a.email}));
+  return [...base, ...S.cats.map(c => ({...c, kind:'custom'}))];
+}
+function assignCat(e){
+  for(const c of (S.cats || [])){
+    if(c.ids?.includes(e.id)) return c.id;
+    if(c.auto){ const d = orgDomain(e.fromEmail); if((d && c.domains?.includes(d)) || c.senders?.includes(e.fromEmail)) return c.id; }
+  }
+  return 'acc:' + e.acc;
+}
+const customCatOf = e => S.cats.find(c => c.id === e.boardCat);
 const initials = n => n.replace(/^(Prof\.|Dr\.)\s*/,'').split(/\s+/).map(w => w[0]).slice(0,2).join('').toUpperCase();
 function avatarHue(n){ let h = 0; for(const c of n) h = (h*31 + c.charCodeAt(0)) % 360; return h; }
 // Sender identity: organisations get a rounded-square badge (their own site icon in live mode,
@@ -1961,18 +2283,19 @@ function monogram(label){
   const w = label.replace(/[^\p{L}\p{N} ]/gu, ' ').split(/\s+/).filter(x => x && !/^(of|the|and|for|ab|inc|ltd|royal|institute)$/i.test(x));
   return w.length >= 2 ? (w[0][0] + w[1][0]).toUpperCase() : (w[0] || '?').slice(0, 2).replace(/^./, c => c.toUpperCase());
 }
+const logosOn = () => S.mode === 'live' || (typeof LIVE !== 'undefined' && LIVE.available);
 function senderKey(e){ return orgDomain(e.fromEmail) || e.from; }
 function badge(e, size = 28){
   const r = e._raw || {};
   if(r.site){
     const label = r.pub && r.pub !== 'Medium' ? r.pub : (r.author || r.pub);
-    const img = S.mode === 'live' ? `<img src="/api/logo?d=${encodeURIComponent(r.site)}" alt="" loading="lazy" onerror="this.remove()">` : '';
+    const img = logosOn() ? `<img src="/api/logo?d=${encodeURIComponent(r.site)}" alt="" loading="lazy" onerror="this.remove()">` : '';
     return `<span class="ob org" style="--s:${size}px;--h:${avatarHue(r.site + label)}" title="${esc(label)} (${esc(r.site)})">${esc(monogram(label))}${img}</span>`;
   }
   const dom = orgDomain(e.fromEmail);
   if(!dom) return `<span class="ob person" style="--s:${size}px;--h:${avatarHue(e.from)}" title="${esc(e.from)}">${esc(initials(e.from))}</span>`;
   const label = orgLabel(e, dom);
-  const img = S.mode === 'live' ? `<img src="/api/logo?d=${encodeURIComponent(dom)}" alt="" loading="lazy" onerror="this.remove()">` : '';
+  const img = logosOn() ? `<img src="/api/logo?d=${encodeURIComponent(dom)}" alt="" loading="lazy" onerror="this.remove()">` : '';
   return `<span class="ob org" style="--s:${size}px;--h:${avatarHue(dom)}" title="${esc(label)}">${esc(monogram(label))}${img}</span>`;
 }
 function avatars(list){
@@ -1980,28 +2303,28 @@ function avatars(list){
   for(const e of list){ const k = senderKey(e); if(!seen.has(k)){ seen.add(k); uniq.push(e); } }
   return `<span class="avatars">${uniq.slice(0,3).map(e => badge(e, 28)).join('')}${uniq.length > 3 ? `<span class="ob more" style="--s:28px">+${uniq.length-3}</span>` : ''}</span>`;
 }
-function folder(acc, list, open){
-  const a = accById(acc);
+function folder(cat, list, open){
   const awaiting = list.filter(e => e.status === 'awaiting').length;
   const unseen = list.filter(e => !e.seen).length;
   const pos = [['2%',-8],['24%',-2],['44%',4],['60%',9]];
   const top = list.slice(0,4).reverse();
   const papers = top.map((e, i) => { const [l, r] = pos[i + (4 - top.length)];
     return `<span class="paper ${e.status} ${e.seen ? '' : 'unseen'}" style="--l:${l};--r:${r}deg"><span class="pa-top">${badge(e, 18)}<span class="pa-from">${esc(e.from)}</span></span><span class="pa-line"></span><span class="pa-line short"></span></span>`; }).join('');
-  return `<div class="folder ${open ? 'is-open' : ''}" style="--c:var(--acc-${acc})">
+  return `<div class="folder ${open ? 'is-open' : ''}" style="--c:${cat.color}">
     <span class="f-back"></span>
     <span class="f-papers" aria-hidden="true">${open ? '' : papers}</span>
     <span class="f-front">
-      <span class="f-emoji f-ico" aria-hidden="true">${ICON(ACC_SVG[acc], 18)}</span>
+      <span class="f-emoji f-ico" aria-hidden="true">${ICON(cat.icon, 18)}</span>
       <span class="stamp ${awaiting ? '' : 'done'}"><b>${awaiting || '✓'}</b><small>${awaiting ? 'to reply' : 'all done'}</small></span>
-      ${avatars(list)}
-      <span class="f-new">${unseen ? `<i></i>${unseen} unread` : 'All read'}</span>
+      ${list.length ? avatars(list) : ''}
+      <span class="f-new">${!list.length ? 'Empty' : unseen ? `<i></i>${unseen} unread` : 'All read'}</span>
     </span>
   </div>`;
 }
-function letter(e, i){
+function letter(e, i, color){
   return `<li class="${S.boardDeal ? 'deal' : ''}" style="--i:${i}">
-    <button class="letter ${e.status}" data-act="open" data-id="${e.id}" style="--c:var(--acc-${e.acc})">
+    <div class="letter ${e.status}" style="--c:${color || `var(--acc-${e.acc})`}">
+      <button class="l-hit" data-act="open" data-compact="1" data-id="${e.id}" aria-label="Open ${esc(e.subject)}"></button>
       <span class="l-num">${i+1}</span>
       ${badge(e, 40)}
       <span class="l-main">
@@ -2009,72 +2332,245 @@ function letter(e, i){
         <span class="l-subj">${esc(e.subject)}</span>
         <span class="l-sum">${esc(e.summary)}</span>
       </span>
-      <span class="l-status ${e.status}">${e.status === 'replied' ? '✓ ' : ''}${STATUS_LABEL[e.status]}</span>
-    </button>
+      <span class="l-right"><span class="l-status ${e.status}">${e.status === 'replied' ? '✓ ' : ''}${STATUS_LABEL[e.status]}</span>${mailLink(e)}</span>
+    </div>
   </li>`;
 }
+const mailProv = e => (accById(e.acc)?.provider === 'Outlook' ? 'Outlook' : 'Gmail');
+function mailHref(e){
+  const prov = mailProv(e);
+  return e.link || (prov === 'Outlook' ? `https://outlook.office.com/mail/search?q=${encodeURIComponent(e.subject)}` : `https://mail.google.com/mail/u/0/#search/${encodeURIComponent(`from:${e.fromEmail} subject:"${e.subject}"`)}`);
+}
+function mailButton(e){
+  const prov = mailProv(e), dom = prov === 'Outlook' ? 'outlook.live.com' : 'mail.google.com';
+  return `<a class="btn sm mail-btn" href="${esc(mailHref(e))}" target="_blank" rel="noopener" title="Open the original email in ${prov}"><span class="mail-ico">${provIcon(prov, 17) || ICON('mail', 15)}</span>Open in ${prov}</a>`;
+}
+function mailLink(e){
+  const prov = mailProv(e);
+  const href = mailHref(e);
+  return `<a class="l-open" href="${esc(href)}" target="_blank" rel="noopener" title="Open this email in ${prov}">${provIcon(prov, 15) || ICON('external', 13)}Open in ${prov}</a>`;
+}
+function ruleText(c){
+  const parts = [...(c.domains || []).map(d => '@' + d), ...(c.senders || [])];
+  return parts.length ? parts.slice(0, 3).join(', ') + (parts.length > 3 ? ` and ${parts.length - 3} more` : '') : '';
+}
 function pBoard(){
-  const sel = connectedAccs().filter(a => S.accounts[a.id].enabled !== false);
-  const all = sel.flatMap(a => boardEmails(a.id));
-  const seen = all.filter(e => e.seen).length;
-  const awaiting = all.filter(e => e.status === 'awaiting').length;
-  const replied = all.filter(e => e.status === 'replied').length;
-  const controls = `<div class="board-controls">
-      <div class="board-inboxes" role="group" aria-label="Inboxes on the board">${connectedAccs().map(a => { const on = S.accounts[a.id].enabled !== false;
-        return `<button class="chip sm ${on ? 'on-soft' : 'off'}" data-act="boardAcc" data-id="${a.id}" aria-pressed="${on}" style="--c:var(--acc-${a.id})">${accDot(a.id)}${a.name}</button>`; }).join('')}</div>
-      <div class="seg" role="group" aria-label="What to show"><button class="${S.boardScope==='priority'?'on':''}" data-act="boardScope" data-v="priority">Most important</button><button class="${S.boardScope==='all'?'on':''}" data-act="boardScope" data-v="all">Everything</button></div>
-    </div>
-    <div class="legend"><span><i class="lg awaiting"></i>Awaiting your reply</span><span><i class="lg replied"></i>Replied</span><span><i class="lg fyi"></i>No reply needed</span><span><i class="lg unread"></i>Unread</span></div>`;
-
-  if(S.boardOpen && sel.some(a => a.id === S.boardOpen)){
-    const acc = S.boardOpen, a = accById(acc), list = boardEmails(acc);
+  const cats = boardCats();
+  const open = S.boardOpen && cats.find(c => c.id === S.boardOpen);
+  if(open){
+    const cat = open, list = boardEmails(cat.id);
     const ls = list.filter(e => e.seen).length, la = list.filter(e => e.status === 'awaiting').length;
+    const custom = cat.kind === 'custom';
     return `<div class="board"><div class="board-in">
-      <div class="board-head"><button class="btn sm ghost back" data-act="boardBack">← All inboxes</button></div>
+      <div class="board-head"><button class="btn sm ghost back" data-act="boardBack">← All categories</button></div>
       <div class="spread">
         <aside class="spread-side">
-          ${folder(acc, list, true)}
-          <h2 class="sp-name">${a.name}</h2>
-          <p class="sp-mail">${esc(a.email)}</p>
+          ${folder(cat, list, true)}
+          <h2 class="sp-name">${esc(cat.name)}</h2>
+          <p class="sp-mail">${esc(custom ? cat.desc : cat.email)}</p>
+          ${custom ? `<p class="sp-rule">${cat.auto && ruleText(cat) ? `New emails from ${esc(ruleText(cat))} are sorted here automatically.` : 'Holds only the emails you picked.'}</p>` : ''}
           <div class="sp-stats">
             <div><b>${ls}<span>/${list.length}</span></b><small>read</small></div>
             <div><b>${la}</b><small>to reply</small></div>
             <div><b>${list.filter(e => e.status === 'replied').length}</b><small>replied</small></div>
           </div>
           <div class="meter" aria-label="${ls} of ${list.length} read"><i style="width:${list.length ? ls/list.length*100 : 0}%"></i></div>
-          ${ls < list.length ? `<button class="btn sm" data-act="markAllSeen" data-v="${acc}" style="margin-top:14px">Mark all as read</button>` : ''}
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+            ${ls < list.length ? `<button class="btn sm" data-act="markAllSeen" data-v="${cat.id}">Mark all as read</button>` : ''}
+            ${custom ? `<button class="btn sm ghost" data-act="catDelete" data-v="${cat.id}">${ICON('trash', 15)}Delete</button>` : ''}
+          </div>
         </aside>
         <div class="spread-main">
           <p class="sp-hint">Ordered by what matters most. Open a letter to read it, reply, or mark it as replied.</p>
-          ${list.length ? `<ol class="letters">${list.map(letter).join('')}</ol>` : `<div class="empty"><b>Nothing here</b>No ${S.boardScope === 'all' ? '' : 'important '}emails in this inbox.</div>`}
+          ${list.length ? `<ol class="letters">${list.map((e, i) => letter(e, i, cat.color)).join('')}</ol>` : `<div class="empty"><b>Nothing here yet</b>${custom ? 'New emails that match will land here.' : 'No important emails in this inbox.'}</div>`}
         </div>
       </div>
     </div></div>`;
   }
-
   return `<div class="board"><div class="board-in">
-    ${sel.length ? `<div class="board-grid">${sel.map(a => { const list = boardEmails(a.id); const s = list.filter(e => e.seen).length;
-      return `<button class="folder-wrap" data-act="boardOpen" data-v="${a.id}" aria-label="Open ${a.name}: ${list.length} emails, ${list.length - s} unread">
-        ${folder(a.id, list, false)}
-        <span class="f-name">${a.name}</span>
-      </button>`; }).join('')}</div>
-      <section class="board-ai" aria-label="Ask Clearday">
-        <button class="orb" data-act="boardAsk" aria-label="Ask Clearday about your emails"><span class="orb-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span></button>
-        <h2 class="orb-title">Ask Clearday</h2>
-        <p class="orb-sub">Talk about your emails, or get a reply drafted for you.</p>
-        <div class="orb-box">
-          <input id="boardQ" placeholder="What still needs my reply?" aria-label="Ask about your emails">
-          <button class="mic" data-act="boardMic" aria-label="Talk to Clearday"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
-          <button class="send" data-act="boardSend" aria-label="Ask"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
-        </div>
-        <div class="orb-chips">${['What still needs my reply?','Draft a reply to the most urgent email','Summarise my unread emails'].map(q => `<button class="chip sm" data-act="ask" data-v="${esc(q)}">${esc(q)}</button>`).join('')}</div>
-      </section>`
-    : `<div class="empty"><b>No inboxes turned on</b>Turn an inbox back on in the sidebar.</div>`}
+    <div class="board-grid">${cats.map(c => { const list = boardEmails(c.id); const s = list.filter(e => e.seen).length;
+      return `<button class="folder-wrap" data-act="boardOpen" data-v="${c.id}" aria-label="Open ${esc(c.name)}: ${list.length} emails, ${list.length - s} unread">
+        ${folder(c, list, false)}
+        <span class="f-name">${esc(c.name)}</span>
+      </button>`; }).join('')}
+      <button class="folder-wrap add-cat" data-act="catNew" aria-label="Add a category">
+        <span class="folder add"><span class="f-add">${ICON('plus', 22)}</span></span>
+        <span class="f-name">New category</span>
+      </button>
+    </div>
   </div></div>`;
 }
 
+/* ---------- New category flow: read everything, suggest, ask what belongs, match ---------- */
+const SUGGEST_CATS = [
+  {name:'Investors', icon:'coin', desc:'Investors, VCs and advisors writing about fundraising, decks and intro calls', terms:['investor','ventures','vc','fund','fundrais*','seed','deck','angel','advisor']},
+  {name:'Customers', icon:'users', desc:'Pilot customers and clients sending feedback, bug reports or requests', terms:['customer','client','pilot','feedback','clinics']},
+  {name:'Bills & receipts', icon:'tag', desc:'Receipts, payouts, payslips, invoices and payment notices', terms:['receipt','invoice','payment','payout','payslip','billing','usage summary']},
+  {name:'Events & invites', icon:'calendar', desc:'Meetups, dinners, invitations and other events with a date', terms:['event','meetup','invite','invitation','dinner','quiz','workshop','drop-in','fair','all-hands']},
+  {name:'Travel', icon:'plane', desc:'Bookings, trains, flights and trip confirmations', terms:['travel','trip','booking','train','flight','hotel','nordrail']},
+  {name:'Family & friends', icon:'heart', desc:'Personal messages from family and friends', terms:['mum','mom','dad','grandma','family','friend'], personal:true},
+  {name:'Reading', icon:'book', desc:'Newsletters, digests and articles to read later', terms:['newsletter','digest','weekly','article']},
+];
+const SYN = {
+  invest:['investor','ventures','venture','vc','fund','fundrais*','seed','deck','angel','advisor','intro'],
+  vc:['investor','ventures','vc','fund','seed','deck'], fund:['fund','fundrais*','investor','ventures','seed'],
+  advis:['advisor','advisory'],
+  customer:['customer','client','pilot','feedback','clinic','bug'], client:['client','customer','pilot','feedback'],
+  bill:['receipt','invoice','payment','payout','payslip','billing'], receipt:['receipt','invoice','payment','payout','payslip','billing'],
+  invoice:['invoice','receipt','payment','billing'], payment:['payment','payout','receipt','invoice','billing'], money:['payment','payout','receipt','invoice','bank'],
+  financ:['bank','payment','payout','receipt','invoice','payslip'],
+  event:['event','meetup','invite','invitation','dinner','quiz','session','workshop','drop-in','fair','all-hands'], invit:['invite','invitation','dinner','meetup','event'],
+  meeting:['meeting','call','sync','supervision','review'],
+  travel:['travel','trip','booking','train','flight','hotel','rail'], trip:['trip','booking','train','flight','hotel'], flight:['flight','booking','trip'],
+  family:['mum','mom','dad','grandma','sister','brother','family','love'], friend:['friend','dinner'],
+  univers:['university','professor','prof','exam','course','lecture','student','thesis','campus'], study:['exam','course','lecture','student','thesis','professor'], school:['school','exam','course','student'],
+  work:['halden','manager','report','team','colleague','office'],
+  news:['newsletter','digest','weekly','article'], newsletter:['newsletter','digest','weekly'], article:['article','digest','read'], read:['digest','article','newsletter'],
+  promo:['sale','offer','discount','deal','free delivery','upgrade'], shop:['sale','offer','discount','deal','order'],
+};
+const STOP = new Set('call calls intro new today stuff things related request requests update updates the and for from with any anything emails email mail mails that about like are all into onto other their them they this these those what which who whose will would should could into have has had been being also just only more most some such than then there here where when your you our out over under very send sent writing write about'.split(' '));
+function expandTerms(text){
+  const toks = (text.toLowerCase().match(/[\p{L}\d]+/gu) || []).filter(t => t.length >= 3 && !STOP.has(t)).map(t => t.replace(/(ies)$/, 'y').replace(/s$/, ''));
+  const out = new Set(toks);
+  for(const t of toks) for(const [k, list] of Object.entries(SYN)) if(t.startsWith(k) || (k.length >= 4 && k.startsWith(t))) list.forEach(x => out.add(x));
+  return [...out];
+}
+const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+function localMatch(name, desc, curated, personalFlag){
+  const terms = curated && curated.length ? curated : expandTerms(`${name} ${desc}`);
+  const personal = personalFlag || terms.some(t => /^(family|friend|mum|mom|personal)$/.test(t));
+  const res = [];
+  for(const e of S.emails){
+    const who = `${e.from} ${e.org || ''} ${e.fromEmail}`.toLowerCase(), subj = e.subject.toLowerCase();
+    const weak = `${e.summary} ${(e.body || '').slice(0, 600)} ${e.category} ${e.kind}`.toLowerCase();
+    let score = 0, reason = '';
+    for(const t of terms){
+      const pre = t.endsWith('*'), w = pre ? t.slice(0, -1) : t;
+      const re = new RegExp(`(^|[^\\p{L}\\d])${reEsc(w)}${pre ? '' : '(s|es)?(?![\\p{L}\\d])'}`, 'u');
+      if(re.test(who)){ score += 2; reason = reason || (e.org && e.org.includes(',') ? `From ${e.org.split(',').pop().trim()}` : `From ${e.from}${e.org ? ', ' + e.org : ''}`); }
+      else if(re.test(subj)){ score += 2; reason = reason || `Subject mentions “${w}”`; }
+      else if(re.test(weak)){ score += 1; reason = reason || `Mentions “${w}”`; }
+    }
+    if(personal && !orgDomain(e.fromEmail) && e.kind === 'personal'){ score += 2; reason = reason || 'Personal message from a private address'; }
+    if(score >= 2) res.push({e, id:e.id, score, reason, from:e.from, fromEmail:e.fromEmail, subject:e.subject, checked:true});
+  }
+  return res.sort((a, b) => b.score - a.score);
+}
+function localSuggest(){
+  const have = boardCats().map(c => c.name.toLowerCase());
+  return SUGGEST_CATS.filter(s => !have.includes(s.name.toLowerCase())).map(s => {
+    const m = localMatch(s.name, s.desc, s.terms, s.personal);
+    return {...s, count:m.length, examples:[...new Set(m.map(x => x.e.org ? x.e.org.split(',').pop().trim() : x.e.from))].slice(0, 3)};
+  }).filter(s => s.count > 0).slice(0, 6);
+}
+function vCatFlow(){
+  const f = S.catFlow; if(!f) return '';
+  let body = '', foot = '';
+  if(f.step === 'scan' || f.step === 'matching'){
+    const scan = f.step === 'scan';
+    body = `<div class="cf-scan">
+      <div class="cf-orb"><span class="orb-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span></div>
+      <h2 class="cu-h">${scan ? 'Reading all your emails' : `Finding emails for “${esc(f.name)}”`}</h2>
+      <p class="cu-sub" id="cfProgress">${scan ? (f.total ? `${f.done || 0} of ${f.total} emails analysed` : 'Fetching your whole mailbox…') : `Checking every one of your ${f.total} emails…`}</p>
+      ${scan && f.total ? `<div class="meter"><i id="cfMeter" style="width:${(f.done || 0) / f.total * 100}%"></i></div>` : ''}
+    </div>`;
+    foot = `<span></span><button class="btn sm ghost" data-act="catCancel">Cancel</button>`;
+  }
+  if(f.step === 'define'){
+    body = `<div class="k"><span class="spark">✦</span> New category</div>
+      <h2 class="cu-h">What should go in this folder?</h2>
+      <p class="cu-sub">I've read all ${f.total} of your emails. Pick a suggestion, or describe your own and I'll find the emails that belong there.</p>
+      ${f.suggestions.length ? `<div class="cf-sugs">${f.suggestions.map((s, i) => `<button class="cf-sug ${f.pick === i ? 'on' : ''}" data-act="catPick" data-i="${i}"><span class="cf-ico">${ICON(s.icon || 'tag', 17)}</span><span class="cf-st"><b>${esc(s.name)}</b><small>${s.count} ${s.count === 1 ? 'email' : 'emails'}${s.examples?.length ? ', e.g. ' + esc(s.examples.join(', ')) : ''}</small></span></button>`).join('')}</div>` : ''}
+      <label class="field"><span>Category name</span><input class="input" id="cfName" value="${esc(f.name)}" placeholder="e.g. Investors" maxlength="40"></label>
+      <label class="field"><span>Which emails should go here?</span><textarea class="input" id="cfDesc" rows="3" placeholder="e.g. Anything from investors or VCs: intro calls, decks, fundraising">${esc(f.desc)}</textarea></label>
+      <div class="cf-pick">
+        <div><div class="k">Colour</div><div class="cf-colors">${CAT_COLORS.map(c => `<button class="cf-color ${f.color === c ? 'on' : ''}" style="--c:${c}" data-act="catColor" data-v="${c}" aria-label="Colour ${c}"></button>`).join('')}</div></div>
+        <div><div class="k">Icon</div><div class="cf-icons">${CAT_ICONS.map(ic => `<button class="cf-icon ${f.icon === ic ? 'on' : ''}" data-act="catIcon" data-v="${ic}" aria-label="${ic}">${ICON(ic, 16)}</button>`).join('')}</div></div>
+      </div>`;
+    foot = `<button class="btn sm ghost" data-act="catCancel">Cancel</button><button class="btn sm primary" data-act="catFind">Find matching emails</button>`;
+  }
+  if(f.step === 'match'){
+    const n = f.matches.filter(m => m.checked).length;
+    body = `<div class="k"><span class="spark">✦</span> ${esc(f.name)}</div>
+      <h2 class="cu-h">${f.matches.length ? `${f.matches.length} ${f.matches.length === 1 ? 'email belongs' : 'emails belong'} here` : 'No emails match yet'}</h2>
+      <p class="cu-sub">${f.matches.length ? `Checked across all ${f.total} emails. Untick anything that doesn't fit.` : 'You can still create the folder, and new matching emails will land in it.'}</p>
+      ${f.matches.length ? `<ul class="cf-list">${f.matches.map(m => `<li><label><input type="checkbox" data-cfm="${esc(m.id)}" ${m.checked ? 'checked' : ''}><span class="cf-m"><b>${esc(m.from)}</b><span>${esc(m.subject)}</span><small>✦ ${esc(m.reason || 'Matches your description')}</small></span></label></li>`).join('')}</ul>` : ''}
+      <label class="cf-auto"><input type="checkbox" id="cfAuto" ${f.auto ? 'checked' : ''}><span>Also sort new emails from these senders here automatically</span></label>`;
+    foot = `<button class="btn sm ghost" data-act="catBack">Back</button><button class="btn sm primary" data-act="catCreate">Create “${esc(f.name)}”${n ? ` with ${n}` : ''}</button>`;
+  }
+  return `<div class="modal" role="dialog" aria-modal="true" aria-label="New category"><div class="overlay" data-act="catCancel"></div>
+    <div class="modal-card cf"><div class="modal-in">${body}</div><div class="modal-foot">${foot}</div></div></div>`;
+}
+async function catStart(){
+  S.catFlow = {step:'scan', total:0, done:0, suggestions:[], name:'', desc:'', icon:'star', color:CAT_COLORS[S.cats.length % CAT_COLORS.length], matches:[], auto:true, pick:-1};
+  render({noFocus:true});
+  const f = S.catFlow;
+  if(S.mode === 'live'){
+    try{
+      const r = await api('/api/categories/suggest', {method:'POST', body:{existing:boardCats().map(c => c.name)}});
+      if(S.catFlow !== f) return;
+      f.total = r.total; f.suggestions = r.suggestions || [];
+    }catch(e){ if(S.catFlow !== f) return; toast(e.message); f.total = S.emails.length; f.suggestions = []; }
+  } else {
+    f.total = S.emails.length;
+    render({noFocus:true});
+    const steps = 24;
+    for(let i = 1; i <= steps; i++){
+      await wait(55); if(S.catFlow !== f) return;
+      f.done = Math.round(f.total * i / steps);
+      const p = document.getElementById('cfProgress'), m = document.getElementById('cfMeter');
+      if(p) p.textContent = `${f.done} of ${f.total} emails analysed`; if(m) m.style.width = (f.done / f.total * 100) + '%';
+    }
+    f.suggestions = localSuggest();
+  }
+  f.step = 'define'; render({noFocus:true});
+  setTimeout(() => document.getElementById('cfName')?.focus(), 30);
+}
+function catDomainsSenders(list){
+  const count = {};
+  list.forEach(m => { const d = orgDomain(m.fromEmail || ''); if(d) count[d] = (count[d] || 0) + 1; });
+  const domains = Object.keys(count).filter(d => count[d] >= 2);
+  const senders = [...new Set(list.filter(m => !domains.includes(orgDomain(m.fromEmail || '') || '')).map(m => m.fromEmail).filter(Boolean))];
+  return {domains, senders};
+}
+
 /* ---------- detail sheet ---------- */
+// Compact panel used on the Board: just the original email link and a reply draft.
+function vSheetCompact(e){
+  const acc = accById(e.acc), prov = mailProv(e);
+  const d = S.drafts[e.id] || null;
+  return `<div class="overlay" data-act="close"></div>
+  <aside class="sheet sheet-compact" role="dialog" aria-modal="true" aria-label="${esc(e.subject)}">
+    <div class="sheet-bar"><div class="acc-label">${accDot(e.acc)}<span>${esc(acc.name)} inbox</span></div>
+      <button class="icon-btn" data-act="close" aria-label="Close">×</button></div>
+    <div class="sheet-scroll">
+      <div class="sc-head">${badge(e, 40)}<div><b>${esc(e.from)}</b><span>${esc(e.fromEmail)}</span></div></div>
+      <h2 class="subj">${esc(e.subject)}</h2>
+
+      <section class="sc-block">
+        <div class="k">Original email</div>
+        <div class="sc-mail"><div class="sc-mail-meta">${timeLabel(e)}${e.org ? `, ${esc(e.org)}` : ''}</div><div class="sc-mail-body">${esc(e.body)}</div></div>
+        ${mailButton(e)}
+      </section>
+
+      <section class="sc-block">
+        <div class="k">Reply draft</div>
+        ${d ? `<div class="draft">
+            <textarea id="draftText" data-id="${e.id}" aria-label="Reply draft">${esc(d.text)}</textarea>
+            ${d.busy ? `<div class="busy-line"><span class="dots"><i></i><i></i><i></i></span>Writing</div>` : ''}
+          </div>
+          <div class="sc-actions">
+            <button class="btn" data-act="copyDraft" data-id="${e.id}">${ICON('copy', 16)}Copy draft</button>
+            <button class="btn primary" data-act="sendDraft" data-id="${e.id}">${provIcon(prov, 16)}Send from ${prov}</button>
+          </div>
+          <p class="sc-note">Send opens this reply in ${prov}, ready to go. You press Send there.</p>`
+        : `<button class="btn write-btn" data-act="makeDraft" data-id="${e.id}">${GEMINI_ICON}Write a reply</button>`}
+      </section>
+    </div>
+  </aside>`;
+}
 function vSheet(){
+  { const ce = byId(S.openId); if(ce && S.sheetCompact) return vSheetCompact(ce); }
   const e = byId(S.openId); if(!e) return '';
   const acc = accById(e.acc);
   const d = S.drafts[e.id] || (e.draftReply ? {text:e.draftReply, tone:'Professional'} : null);
@@ -2150,7 +2646,7 @@ function vCatchup(){
 
 /* ---------- shell ---------- */
 const NAV = [
-  ['board','board','Board'],['briefing','briefing','Briefing'],['inbox','inbox','Inbox'],['important','flag','Important'],['action','check','Needs action'],['news','news','News'],['categories','grid','Categories'],
+  ['board','board','Board'],['briefing','briefing','Briefing'],['inbox','inbox','Inbox'],['important','flag','Important'],['action','check','Needs action'],['news','news','News'],
   'sep',['accounts','link','Connected accounts'],['privacy','shield','Privacy & security'],['settings','sliders','Settings']
 ];
 function vApp(){
@@ -2176,8 +2672,10 @@ function vApp(){
     </main>
     <nav class="bottom-nav">${bn.map(b => `<button class="${S.page===b[0]?'on':''}" data-act="go" data-v="${b[0]}"><span class="ni">${ICON(b[1], 20)}</span>${b[2]}</button>`).join('')}<button data-act="navOpen"><span class="ni">${ICON('menu', 20)}</span>More</button></nav>
   </div>
+  ${S.page === 'board' && !S.catFlow ? askDock() : ''}
   ${S.openId ? vSheet() : ''}
-  ${S.catchup ? vCatchup() : ''}`;
+  ${S.catchup ? vCatchup() : ''}
+  ${S.catFlow ? vCatFlow() : ''}`;
 }
 
 /* =========================================================================
@@ -2203,10 +2701,11 @@ function render(opts = {}){
 }
 
 let toastTimer;
-function toast(msg){
+function toast(msg, actionLabel, action){
   document.querySelector('.toast')?.remove();
   const t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role','status'); t.textContent = msg;
-  document.body.appendChild(t); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.remove(), 3200);
+  if(actionLabel){ const b = document.createElement('button'); b.textContent = actionLabel; b.onclick = () => { t.remove(); action(); }; t.appendChild(b); }
+  document.body.appendChild(t); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.remove(), actionLabel ? 6000 : 3200);
 }
 async function copy(text){
   try{ await navigator.clipboard.writeText(text); toast('Copied to clipboard'); }
@@ -2227,7 +2726,7 @@ function speak(text){
 function startDemo(){
   S.mode = 'demo'; store.set('mode', 'demo');
   ACCOUNTS = DEMO_ACCOUNTS.slice(); MAILBOX = DEMO_MAILBOX;
-  S.accounts = store.get('accounts', {}); S.chat = []; S.drafts = {}; S.openId = null;
+  S.accounts = store.get('accounts', {}); S.chat = []; S.drafts = {}; S.openId = null; S.cats = store.get('cats:demo', []);
   S.profile = store.get('profile', null) || defaultProfile();
   S.step = 0; S.view = 'onboarding'; render({top:true});
 }
@@ -2359,7 +2858,8 @@ Respond with JSON only, no markdown fences:
 
 async function ask(q){
   q = q.trim(); if(!q || S.chatBusy) return;
-  if(S.page !== 'assistant'){ S.page = 'assistant'; }
+  if(S.page === 'board') S.askOpen = true;
+  else if(S.page !== 'assistant'){ S.page = 'assistant'; }
   S.chat.push({role:'user', text:q}); S.chatBusy = true;
   const ci = document.getElementById('chatInput'); if(ci) ci.value = '';
   render({noFocus:true});
@@ -2374,6 +2874,7 @@ async function ask(q){
 /* ---------- voice ---------- */
 let recog = null;
 function toggleMic(){
+  if(S.page === 'board' && !S.askOpen){ S.askOpen = true; render({noFocus:true}); }
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   S.voiceMode = true;
   if(!SR){ render(); toast('Speech recognition isn\'t available in this browser — try Chrome, or tap a phrase'); return; }
@@ -2484,13 +2985,73 @@ const ACT = {
   goInbox(el){ S.page = 'inbox'; S.inboxPrio = el.dataset.v || 'all'; render({top:true}); },
   navOpen(){ S.navOpen = true; render({noFocus:true}); },
   navClose(){ S.navOpen = false; render({noFocus:true}); },
-  open(el){ S.openId = el.dataset.id; S.catchup = false; if(!S.corr.seen.includes(el.dataset.id)){ S.corr.seen.push(el.dataset.id); persist(); runPipeline(); } render({sheetTop:true, noFocus:true}); setTimeout(() => document.querySelector('.sheet .icon-btn')?.focus(), 20); },
+  open(el){ S.sheetCompact = !!el.dataset.compact || S.page === 'board'; S.openId = el.dataset.id; S.catchup = false; if(!S.corr.seen.includes(el.dataset.id)){ S.corr.seen.push(el.dataset.id); persist(); runPipeline(); } render({sheetTop:true, noFocus:true}); setTimeout(() => document.querySelector('.sheet .icon-btn')?.focus(), 20); },
   openFromCatch(el){ S.catchup = false; S.openId = el.dataset.id; if(!S.corr.seen.includes(el.dataset.id)){ S.corr.seen.push(el.dataset.id); persist(); runPipeline(); } render({sheetTop:true, noFocus:true}); },
   close(){ S.openId = null; render({noFocus:true}); },
   boardOpen(el){ S.boardOpen = el.dataset.v; S.boardDeal = true; render({top:true, noFocus:true}); S.boardDeal = false; },
   boardAsk(){ const i = document.getElementById('boardQ'); i?.focus(); i?.scrollIntoView({block:'center', behavior:'smooth'}); },
   boardSend(){ const v = (document.getElementById('boardQ')?.value || '').trim(); if(v) ask(v); else ACT.boardAsk(); },
-  boardMic(){ S.page = 'assistant'; S.navOpen = false; render({top:true, noFocus:true}); toggleMic(); },
+  boardMic(){ S.askOpen = true; render({noFocus:true}); toggleMic(); },
+  askClose(){ S.askOpen = false; render({noFocus:true}); },
+  askClear(){ S.chat = []; render({noFocus:true}); document.getElementById('chatInput')?.focus(); },
+  newsView(el){ S.newsView = el.dataset.v; store.set('newsView', S.newsView); render({top:true, noFocus:true}); },
+  cardPrev(){ cardMove(-1); }, cardNext(){ cardMove(1); },
+  cardGo(el){ const k = +el.dataset.v; S.cardDir = k > (S.cardIdx || 0) ? 'from-right' : 'from-left'; S.cardIdx = k; render({noFocus:true}); S.cardDir = ''; },
+  cardRead(el){ cardToggleRead(el.dataset.id); },
+  sumToggle(el){ const id = el.dataset.id; S.sumLen[id] = S.sumLen[id] === 'm2' ? 's30' : 'm2'; render({noFocus:true}); },
+  newsTopic(el){ S.cardIdx = 0; const v = el.dataset.v; if(!v) S.newsTopics = []; else { const cur = S.newsTopics || []; S.newsTopics = cur.includes(v) ? cur.filter(x => x !== v) : [...cur, v]; } render({noFocus:true}); },
+  async unsub(el){
+    const e = byId(el.dataset.id); if(!e) return;
+    const key = unsubKey(e), name = e._raw.author || e._raw.pub || e.from;
+    const hide = () => { S.corr.unsub = [...new Set([...(S.corr.unsub || []), key])]; persist(); render({noFocus:true}); };
+    const undo = () => { S.corr.unsub = (S.corr.unsub || []).filter(k => k !== key); persist(); render({noFocus:true}); };
+    if(S.mode === 'live'){
+      try{
+        const r = await api('/api/unsubscribe', {method:'POST', body:{id:e.id}});
+        hide();
+        if(r.done) toast(`Unsubscribed from ${name}`);
+        else if(r.open){ window.open(r.open, '_blank', 'noopener'); toast(`Finish unsubscribing on ${name}'s page — hidden here meanwhile`); }
+        else if(r.mailto){ location.href = r.mailto; toast(`Send the prepared email to unsubscribe from ${name}`); }
+        else toast(`${name} has no unsubscribe link — hidden from Clearday instead`, 'Undo', undo);
+      }catch(err){ hide(); toast(`${err.message} — hidden from Clearday instead`, 'Undo', undo); }
+      return;
+    }
+    hide(); toast(`Unsubscribed from ${name}. You won't see these emails here anymore.`, 'Undo', undo);
+  },
+  catNew(){ S.navOpen = false; catStart(); },
+  catFilter(el){ S.inboxCat = el.dataset.v; render({noFocus:true}); },
+  catCancel(){ S.catFlow = null; render({noFocus:true}); },
+  catPick(el){ const f = S.catFlow, s = f.suggestions[+el.dataset.i]; f.pick = +el.dataset.i; f.terms = s.terms || null; f.personal = !!s.personal; f.name = s.name; f.desc = s.desc || s.description || ''; if(s.icon && CAT_ICONS.includes(s.icon)) f.icon = s.icon; render({noFocus:true}); },
+  catColor(el){ S.catFlow.color = el.dataset.v; render({noFocus:true}); },
+  catIcon(el){ S.catFlow.icon = el.dataset.v; render({noFocus:true}); },
+  catBack(){ S.catFlow.step = 'define'; render({noFocus:true}); },
+  async catFind(){
+    const f = S.catFlow;
+    f.name = (document.getElementById('cfName')?.value || f.name).trim(); f.desc = (document.getElementById('cfDesc')?.value || f.desc).trim();
+    if(!f.name){ toast('Give the category a name'); document.getElementById('cfName')?.focus(); return; }
+    if(!f.desc){ toast('Describe which emails should go here'); document.getElementById('cfDesc')?.focus(); return; }
+    if(boardCats().some(c => c.name.toLowerCase() === f.name.toLowerCase())){ toast('You already have a category with that name'); return; }
+    f.step = 'matching'; render({noFocus:true});
+    if(S.mode === 'live'){
+      try{ const r = await api('/api/categories/match', {method:'POST', body:{name:f.name, description:f.desc}}); if(S.catFlow !== f) return; f.total = r.total || f.total; f.matches = (r.matches || []).map(m => ({...m, checked:true})); }
+      catch(e){ if(S.catFlow !== f) return; toast(e.message); f.matches = localMatch(f.name, f.desc, f.terms, f.personal); }
+    } else { await wait(900); if(S.catFlow !== f) return; f.matches = localMatch(f.name, f.desc, f.terms, f.personal); }
+    f.step = 'match'; render({noFocus:true});
+  },
+  catCreate(){
+    const f = S.catFlow, picked = f.matches.filter(m => m.checked);
+    const {domains, senders} = catDomainsSenders(picked);
+    const cat = {id:'c_' + Date.now().toString(36), name:f.name, desc:f.desc, icon:f.icon, color:f.color, ids:picked.map(m => m.id), auto:f.auto, domains, senders, createdAt:Date.now()};
+    S.cats.push(cat); saveCats(); S.catFlow = null; runPipeline();
+    S.page = 'board'; S.boardOpen = cat.id; S.boardDeal = true; render({top:true, noFocus:true}); S.boardDeal = false;
+    toast(`“${cat.name}” created${picked.length ? ` — ${picked.length} ${picked.length === 1 ? 'email' : 'emails'} moved here` : ''}`);
+  },
+  catDelete(el){
+    const c = S.cats.find(x => x.id === el.dataset.v); if(!c) return;
+    if(!confirm(`Delete “${c.name}”? Its emails go back to their inbox folders. Nothing is deleted from your mailbox.`)) return;
+    S.cats = S.cats.filter(x => x.id !== c.id); saveCats(); runPipeline(); S.boardOpen = null; if(S.inboxCat === c.id) S.inboxCat = 'all';
+    render({noFocus:true}); toast(`“${c.name}” deleted`);
+  },
   boardBack(){ S.boardOpen = null; render({noFocus:true}); },
   boardScope(el){ S.boardScope = el.dataset.v; S.boardDeal = !!S.boardOpen; render({noFocus:true}); S.boardDeal = false; },
   boardAcc(el){ const st = S.accounts[el.dataset.id]; st.enabled = st.enabled === false; if(S.boardOpen === el.dataset.id && !st.enabled) S.boardOpen = null; persist(); render({noFocus:true}); },
@@ -2520,11 +3081,36 @@ const ACT = {
   },
   tone(el){ rewrite(el.dataset.id, null, el.dataset.v); },
   rewrite(el){ const inp = document.getElementById('draftAsk'); const v = (inp?.value || '').trim(); if(!v){ inp?.focus(); return; } rewrite(el.dataset.id, v, null); },
-  makeDraft(el){ const e = byId(el.dataset.id); if(S.mode === 'live'){ S.drafts[e.id] = {text:'', tone:'Professional'}; rewrite(e.id, 'Write a helpful, concise reply to this email.', null); return; } S.drafts[e.id] = {text:`Hi ${e.from.split(' ')[0]},\n\nThanks for your email. \n\nBest,\n${firstName()}`, tone:'Professional'}; render({noFocus:true}); },
+  makeDraft(el){
+    const e = byId(el.dataset.id); if(!e) return;
+    if(S.mode === 'live' && !e.draftReply){ S.drafts[e.id] = {text:'', tone:'Professional'}; rewrite(e.id, 'Write a helpful, concise reply to this email.', null); return; }
+    S.drafts[e.id] = {text:'', tone:'Professional', busy:true}; render({noFocus:true});
+    setTimeout(() => { S.drafts[e.id] = {text: e.draftReply || `Hi ${e.from.split(' ')[0]},
+
+Thanks for your email. 
+
+Best,
+${firstName()}`, tone:'Professional'}; render({noFocus:true}); document.getElementById('draftText')?.focus(); }, 750);
+  },
+  async sendDraft(el){
+    const e = byId(el.dataset.id); if(!e) return;
+    const body = document.getElementById('draftText')?.value || '';
+    if(!body.trim()){ toast('The draft is empty'); return; }
+    const prov = mailProv(e), subj = /^re:/i.test(e.subject) ? e.subject : 'Re: ' + e.subject;
+    const compose = prov === 'Outlook'
+      ? `https://outlook.office.com/mail/deeplink/compose?${new URLSearchParams({to:e.fromEmail, subject:subj, body})}`
+      : `https://mail.google.com/mail/?${new URLSearchParams({view:'cm', fs:'1', to:e.fromEmail, su:subj, body})}`;
+    const w = window.open('', '_blank');
+    let url = compose;
+    if(S.mode === 'live'){ try{ const r = await api('/api/draft', {method:'POST', body:{id:e.id, body}}); if(r.link) url = r.link; }catch(err){ toast(err.message); } }
+    if(w){ w.opener = null; w.location = url; } else { location.href = url; }
+    if(!S.corr.replied.includes(e.id)){ S.corr.replied.push(e.id); persist(); runPipeline(); render({noFocus:true}); }
+    toast(`Opened in ${prov} — press Send there. Marked as replied.`, 'Undo', () => { S.corr.replied = S.corr.replied.filter(x => x !== e.id); persist(); runPipeline(); render({noFocus:true}); });
+  },
   copyDraft(el){ copy(document.getElementById('draftText')?.value || ''); },
   openClient(el){ const em = byId(el.dataset.id); if(em?.link){ window.open(em.link, '_blank', 'noopener'); return; } toast(`Demo mode: in production this opens the draft in ${el.dataset.v}, where you send it yourself`); },
   addCal(el){ const e = byId(el.dataset.id); if(e?.event){ const w = window.open(calLink(e), '_blank', 'noopener'); if(!w) toast('Allow pop-ups to open your calendar'); } },
-  openDraft(el){ const m = S.chat[+el.dataset.i]; if(m && m.draft) S.drafts[el.dataset.id] = {text:m.draft, tone:'Professional'}; S.openId = el.dataset.id; render({sheetTop:true, noFocus:true}); setTimeout(() => document.querySelector('.ai .ai-block:last-child')?.scrollIntoView({block:'start', behavior:'smooth'}), 60); },
+  openDraft(el){ S.sheetCompact = S.page === 'board'; const m = S.chat[+el.dataset.i]; if(m && m.draft) S.drafts[el.dataset.id] = {text:m.draft, tone:'Professional'}; S.openId = el.dataset.id; render({sheetTop:true, noFocus:true}); setTimeout(() => document.querySelector('.ai .ai-block:last-child')?.scrollIntoView({block:'start', behavior:'smooth'}), 60); },
   copyText(el){ const m = S.chat[+el.dataset.i]; if(m) copy(m.draft); },
   ask(el){ ask(el.dataset.v); },
   send(){ ask(document.getElementById('chatInput')?.value || ''); },
@@ -2555,14 +3141,33 @@ document.addEventListener('input', ev => {
   if(t.id === 'f-search'){ S.query = t.value; render(); }
   if(t.id === 'draftText'){ const id = t.dataset.id; S.drafts[id] = {...(S.drafts[id] || {tone:'Professional'}), text:t.value}; }
   if(t.id === 'f-people'){ S.peopleInput = t.value; }
+  if(t.id === 'cfName' && S.catFlow){ S.catFlow.name = t.value; S.catFlow.pick = -1; S.catFlow.terms = null; S.catFlow.personal = false; }
+  if(t.id === 'cfDesc' && S.catFlow){ S.catFlow.desc = t.value; S.catFlow.terms = null; S.catFlow.personal = false; }
   if(t.id === 'chatInput'){ t.style.height = 'auto'; t.style.height = Math.min(140, t.scrollHeight) + 'px'; }
 });
+document.addEventListener('mousedown', ev => { if(ev.target.closest('.ask-chips button')) ev.preventDefault(); });
+document.addEventListener('change', ev => {
+  const t = ev.target;
+  if(t.dataset && t.dataset.cfm && S.catFlow){ const m = S.catFlow.matches.find(x => String(x.id) === t.dataset.cfm); if(m) m.checked = t.checked; const b = document.querySelector('[data-act="catCreate"]'); const n = S.catFlow.matches.filter(x => x.checked).length; if(b) b.textContent = `Create “${S.catFlow.name}”${n ? ` with ${n}` : ''}`; }
+  if(t.id === 'cfAuto' && S.catFlow) S.catFlow.auto = t.checked;
+});
+let touchX = null;
+document.addEventListener('touchstart', ev => { if(ev.target.closest('#cardArt')) touchX = ev.touches[0].clientX; }, {passive:true});
+document.addEventListener('touchend', ev => { if(touchX == null) return; const dx = ev.changedTouches[0].clientX - touchX; touchX = null; if(Math.abs(dx) > 60) cardMove(dx < 0 ? 1 : -1); }, {passive:true});
 document.addEventListener('keydown', ev => {
   const t = ev.target;
   if(t.id === 'chatInput' && ev.key === 'Enter' && !ev.shiftKey){ ev.preventDefault(); ask(t.value); }
   if(t.id === 'f-people' && ev.key === 'Enter'){ ev.preventDefault(); const v = t.value.trim(); if(v && !S.profile.people.includes(v)) S.profile.people.push(v); S.peopleInput = ''; render(); document.getElementById('f-people')?.focus(); }
   if(t.id === 'boardQ' && ev.key === 'Enter'){ ev.preventDefault(); const v = t.value.trim(); if(v) ask(v); }
   if(t.id === 'draftAsk' && ev.key === 'Enter'){ ev.preventDefault(); const v = t.value.trim(); if(v) rewrite(t.dataset.id, v, null); }
+  if(S.view === 'app' && S.page === 'news' && S.newsView === 'cards' && !S.openId && !S.catFlow && !/INPUT|TEXTAREA/.test(t.tagName || '') && !ev.metaKey && !ev.ctrlKey){
+    if(ev.key === 'ArrowRight'){ ev.preventDefault(); cardMove(1); return; }
+    if(ev.key === 'ArrowLeft'){ ev.preventDefault(); cardMove(-1); return; }
+    if(ev.key === 'r' || ev.key === 'R'){ const it = deckItems()[S.cardIdx || 0]; if(it){ ev.preventDefault(); cardToggleRead(it.id); } return; }
+  }
+  if(ev.key === '/' && S.view === 'app' && S.page === 'board' && !S.openId && !S.catFlow && !/INPUT|TEXTAREA/.test(t.tagName || '')){ ev.preventDefault(); document.getElementById('chatInput')?.focus(); return; }
+  if(ev.key === 'Escape' && S.page === 'board' && S.askOpen && !S.openId && !S.catFlow){ S.askOpen = false; render({noFocus:true}); return; }
+  if(ev.key === 'Escape' && S.catFlow){ ACT.catCancel(); return; }
   if(ev.key === 'Escape'){ if(S.catchup){ ACT.closeCatch(); } else if(S.openId){ ACT.close(); } else if(S.navOpen){ ACT.navClose(); } }
 });
 
@@ -2577,7 +3182,7 @@ document.addEventListener('keydown', ev => {
   let me = null; try{ me = await api('/api/me'); }catch(e){}
   if(qs.has('connected') || qs.has('auth_error')){
     history.replaceState(null, '', location.pathname);
-    S.mode = 'live'; store.set('mode', 'live');
+    S.mode = 'live'; store.set('mode', 'live'); S.cats = store.get('cats:live', []);
     S.profile = store.get('liveProfile', null) || me?.profile || blankProfile();
     setLiveAccounts(me?.accounts || []);
     S.view = 'connect'; render({top:true});

@@ -109,10 +109,26 @@ export async function fetchMessages(token, { hours, max, selfEmail }) {
       unread: labels.includes('UNREAD'),
       replied: (lastSent.get(m.threadId) || 0) > date,
       listUnsubscribe: !!header(m.payload, 'List-Unsubscribe'),
+      unsub: header(m.payload, 'List-Unsubscribe'), unsubPost: header(m.payload, 'List-Unsubscribe-Post'),
       providerCategory: labels.includes('CATEGORY_PROMOTIONS') ? 'promotions' : labels.includes('CATEGORY_SOCIAL') ? 'social' : null,
       messageIdHeader: header(m.payload, 'Message-ID') || header(m.payload, 'Message-Id'),
       link: `https://mail.google.com/mail/u/?authuser=${encodeURIComponent(selfEmail)}#all/${m.threadId}`,
     };
+  }).filter(m => m.fromEmail !== selfEmail);
+}
+
+// Lightweight index of the whole mailbox (sender, subject, snippet) for category analysis.
+export async function fetchIndex(token, { max, selfEmail }) {
+  const ids = []; let pageToken;
+  while (ids.length < max) {
+    const j = await g(`/messages?${new URLSearchParams({ q: '-in:chats -in:spam -in:trash -in:sent', maxResults: String(Math.min(500, max - ids.length)), ...(pageToken ? { pageToken } : {}) })}`, token);
+    (j.messages || []).forEach(m => ids.push(m.id));
+    pageToken = j.nextPageToken; if (!pageToken) break;
+  }
+  const msgs = (await pMap(ids, id => g(`/messages/${id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject`, token).catch(() => null), 10)).filter(Boolean);
+  return msgs.map(m => {
+    const from = parseAddress(header(m.payload, 'From'));
+    return { providerId: m.id, fromName: from.name, fromEmail: from.email, subject: header(m.payload, 'Subject') || '(no subject)', snippet: m.snippet || '', date: new Date(+m.internalDate).toISOString() };
   }).filter(m => m.fromEmail !== selfEmail);
 }
 

@@ -16,3 +16,4 @@ export async function fetchMessages() {
   ];
 }
 export async function createDraft() { return { id: 'd1', link: 'https://example.com/drafts' }; }
+export async function fetchIndex() { return (await fetchMessages()).map(m => ({ providerId: m.providerId, fromName: m.fromName, fromEmail: m.fromEmail, subject: m.subject, snippet: m.snippet, date: m.date })); }

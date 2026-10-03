@@ -7,7 +7,7 @@ import { getUser, ensureUser, deleteUser, save, pruneCache, encrypt, decrypt, si
 import * as google from './providers/google.js';
 import * as microsoft from './providers/microsoft.js';
 import * as mock from './providers/mock.js';
-import { hasAI, classify, heuristic, answer, rewrite } from './ai.js';
+import { hasAI, classify, heuristic, answer, rewrite, suggestCategories, matchCategory } from './ai.js';
 
 const PROVIDERS = { google, microsoft, ...(process.env.DEV_MOCK === '1' ? { mock } : {}) };
 const SLOTS = ['personal', 'university', 'startup', 'work'];
@@ -174,7 +174,7 @@ app.post('/api/sync', async (req, res) => {
   for (const f of todo) u.cache[f.id] = { a: analyses[f.id] || heuristic(f.m), ph, t: Date.now() };
   for (const f of fetched) {
     // keep what the draft endpoint needs (no body stored)
-    u.cache[f.id].meta = { slot: f.slot, providerId: f.m.providerId, threadId: f.m.threadId, fromEmail: f.m.fromEmail, fromName: f.m.fromName, subject: f.m.subject, messageIdHeader: f.m.messageIdHeader };
+    u.cache[f.id].meta = { slot: f.slot, providerId: f.m.providerId, threadId: f.m.threadId, fromEmail: f.m.fromEmail, fromName: f.m.fromName, subject: f.m.subject, messageIdHeader: f.m.messageIdHeader, unsub: f.m.unsub || '', unsubPost: f.m.unsubPost || '' };
   }
   pruneCache(u);
   save();
@@ -186,7 +186,7 @@ app.post('/api/sync', async (req, res) => {
       subject: m.subject, body: m.body || m.snippet, cat: a.category, kind: a.kind, base: a.priority, reasons: a.reasons,
       summary: a.summary, catch: a.catchLine, needsReply: a.needsReply,
       action: a.action ? { desc: a.action.task, deadline: a.action.deadline, how: a.action.how } : null,
-      event: a.event, draft: a.draft, sums: a.newsletter?.sums || null, why: a.newsletter?.why || null, readMin: a.newsletter?.readMin || null,
+      event: a.event, draft: a.draft, topics: a.newsletter?.topics || null, sums: a.newsletter?.sums || null, why: a.newsletter?.why || null, readMin: a.newsletter?.readMin || null,
       seen: !m.unread, replied: m.replied, link: m.link,
     };
   }).sort((x, y) => new Date(y.receivedAt) - new Date(x.receivedAt));
@@ -234,6 +234,68 @@ app.post('/api/chat', async (req, res) => {
   try {
     const u = getUser(req.uid);
     res.json(await answer({ question: String(question).slice(0, 2000), history: Array.isArray(history) ? history : [], context: Array.isArray(context) ? context : [], profile: u?.profile, today: todayStr() }));
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ---------- Unsubscribe (RFC 8058 one-click when offered, otherwise hand the link to the user) ----------
+app.post('/api/unsubscribe', async (req, res) => {
+  const c = getUser(req.uid)?.cache?.[req.body?.id];
+  if (!c?.meta) return res.status(400).json({ error: 'Email not found — sync again and retry.' });
+  const links = [...String(c.meta.unsub || '').matchAll(/<([^>]+)>/g)].map(m => m[1].trim());
+  const http = links.find(l => /^https:\/\//i.test(l));
+  const mailto = links.find(l => /^mailto:/i.test(l));
+  if (http && /one-click/i.test(c.meta.unsubPost || '')) {
+    try {
+      const r = await fetch(http, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: 'List-Unsubscribe=One-Click', redirect: 'follow', signal: AbortSignal.timeout(8000) });
+      if (r.ok) return res.json({ done: true });
+    } catch { /* fall back to opening the page */ }
+  }
+  if (http) return res.json({ open: http });
+  if (mailto) return res.json({ mailto });
+  res.json({ none: true });
+});
+
+// ---------- Categories: analyse the whole mailbox, suggest folders, match emails ----------
+const scanCache = new Map();
+async function scanMailbox(u, uid) {
+  const hit = scanCache.get(uid);
+  if (hit && Date.now() - hit.t < 15 * 60e3) return hit.items;
+  const max = Math.min(1000, +process.env.SCAN_MAX || 300);
+  const items = [];
+  await Promise.all(Object.entries(u.accounts).map(async ([slot, acc]) => {
+    try {
+      const token = await freshToken(acc);
+      const list = await PROVIDERS[acc.provider].fetchIndex(token, { max, selfEmail: acc.email });
+      list.forEach(m => items.push({ id: `${slot}_${m.providerId}`.replace(/[^\w-]/g, '').slice(0, 120), inbox: SLOT_NAMES[slot], from: m.fromName || m.fromEmail, fromEmail: m.fromEmail, subject: m.subject, snippet: m.snippet, date: m.date }));
+    } catch (e) { console.error(`scan ${slot}:`, e.message); }
+  }));
+  scanCache.set(uid, { t: Date.now(), items });
+  return items;
+}
+function keywordMatch(items, name, description) {
+  const terms = `${name} ${description}`.toLowerCase().match(/[\p{L}\d]{4,}/gu) || [];
+  return items.filter(i => terms.some(t => `${i.from} ${i.fromEmail} ${i.subject} ${i.snippet}`.toLowerCase().includes(t))).map(i => ({ id: i.id, reason: 'Matches your keywords' }));
+}
+app.post('/api/categories/suggest', async (req, res) => {
+  const u = getUser(req.uid);
+  if (!u || !Object.keys(u.accounts).length) return res.status(400).json({ error: 'Connect an inbox first.' });
+  if (!limit('cat:' + req.uid, 2000)) return res.status(429).json({ error: 'One moment…' });
+  try {
+    const items = await scanMailbox(u, req.uid);
+    const suggestions = hasAI() && items.length ? await suggestCategories(items, req.body?.existing || [], u.profile) : [];
+    res.json({ total: items.length, suggestions });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/categories/match', async (req, res) => {
+  const u = getUser(req.uid);
+  const name = String(req.body?.name || '').slice(0, 60), description = String(req.body?.description || '').slice(0, 600);
+  if (!u || !Object.keys(u.accounts).length) return res.status(400).json({ error: 'Connect an inbox first.' });
+  if (!name || !description) return res.status(400).json({ error: 'Name and description are required.' });
+  try {
+    const items = await scanMailbox(u, req.uid);
+    const found = hasAI() ? await matchCategory(items, name, description) : keywordMatch(items, name, description);
+    const byId = new Map(items.map(i => [i.id, i]));
+    res.json({ total: items.length, matches: found.map(f => ({ ...f, from: byId.get(f.id).from, fromEmail: byId.get(f.id).fromEmail, subject: byId.get(f.id).subject })) });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
