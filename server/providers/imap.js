@@ -76,6 +76,25 @@ export function makeImapProvider({ key, label, host, port = 993, webmail, drafts
       });
     },
 
+    // Latest Junk/Spam folder mail (read-only, for the spam memory).
+    async fetchSpam(creds, { max = 30, selfEmail }) {
+      return withClient(creds, async c => {
+        const boxes = await c.list();
+        const junk = boxes.find(b => b.specialUse === '\\Junk')?.path || boxes.find(b => /^(junk|spam|bulk)|нежелат|спам/i.test(b.name))?.path;
+        if (!junk) return [];
+        const box = await c.mailboxOpen(junk, { readOnly: true });
+        if (!box.exists) return [];
+        const from = Math.max(1, box.exists - max + 1), out = [];
+        for await (const m of c.fetch(`${from}:*`, { uid: true, envelope: true, internalDate: true, source: true })) {
+          let parsed = null; try { parsed = await simpleParser(m.source); } catch { /* keep going */ }
+          const f = m.envelope?.from?.[0] || {};
+          const text = parsed ? (parsed.text || htmlToText(parsed.html || '')) : '';
+          out.push({ providerId: String(m.uid), fromName: f.name || f.address || '', fromEmail: String(f.address || '').toLowerCase(), subject: m.envelope?.subject || '(no subject)', date: new Date(m.internalDate || Date.now()).toISOString(), body: clip(stripQuoted(text), 1500), snippet: text.replace(/\s+/g, ' ').trim().slice(0, 160), link: webmail });
+        }
+        return out.reverse().filter(x => x.fromEmail && x.fromEmail !== selfEmail);
+      });
+    },
+
     // Appends a reply to the Drafts folder. Never sends.
     async createDraft(creds, { to, subject, body, inReplyTo, selfEmail }) {
       return withClient(creds, async c => {
@@ -93,3 +112,7 @@ export function makeImapProvider({ key, label, host, port = 993, webmail, drafts
 
 export const yahoo = makeImapProvider({ key: 'yahoo', label: 'Yahoo', host: 'imap.mail.yahoo.com', webmail: 'https://mail.yahoo.com/', draftsWeb: 'https://mail.yahoo.com/d/folders/3' });
 export const mailru = makeImapProvider({ key: 'mailru', label: 'Mail.ru', host: 'imap.mail.ru', webmail: 'https://e.mail.ru/inbox/', draftsWeb: 'https://e.mail.ru/drafts/' });
+export const icloud = makeImapProvider({ key: 'icloud', label: 'iCloud', host: 'imap.mail.me.com', webmail: 'https://www.icloud.com/mail' });
+export const gmx = makeImapProvider({ key: 'gmx', label: 'GMX', host: 'imap.gmx.com', webmail: 'https://www.gmx.com/' });
+export const aol = makeImapProvider({ key: 'aol', label: 'AOL', host: 'imap.aol.com', webmail: 'https://mail.aol.com/' });
+export const zoho = makeImapProvider({ key: 'zoho', label: 'Zoho', host: 'imap.zoho.com', webmail: 'https://mail.zoho.com/' });

@@ -777,6 +777,26 @@ a.btn:not(.primary){color:var(--ink)}
 .who-color{width:22px;height:22px;border-radius:50%;background:var(--c);box-shadow:0 0 0 2px var(--surface),0 0 0 3px var(--line2)}
 .who-tools{display:flex;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap}
 
+
+/* ---- v3: tabs, newsletters, strips, status, calendar ---- */
+.sp-mail{word-break:normal;overflow-wrap:anywhere}
+.cat-tabs{display:inline-flex;background:var(--sunk);border-radius:12px;padding:4px;gap:2px;margin-bottom:12px}
+.cat-tabs button{height:34px;padding:0 14px;border-radius:9px;font-size:14px;color:var(--ink2);display:inline-flex;align-items:center;gap:8px}
+.cat-tabs button.on{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.cat-tabs .cnt{font-size:12px;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--line);display:inline-grid;place-items:center;font-variant-numeric:tabular-nums}
+.cat-tabs button.on .cnt{background:var(--ink);color:var(--bg)}
+.letter.ng{grid-template-columns:40px minmax(0,1fr) auto}
+.ng-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.strip{display:flex;align-items:center;gap:12px;width:100%;margin:0 0 12px;padding:12px 16px;border-radius:14px;background:var(--surface);border:1px solid var(--line);text-align:left;font-size:14.5px;box-shadow:0 1px 2px rgba(20,24,40,.05)}
+.strip:hover{border-color:var(--line2)}
+.strip.warn{background:color-mix(in srgb,var(--imp) 10%,var(--surface));border-color:color-mix(in srgb,var(--imp) 35%,var(--line))}
+.strip span:nth-child(2){flex:1}
+.strip .chev{margin-left:auto;font-size:13px;color:var(--ink3);font-weight:500}
+.board-status{display:flex;align-items:center;justify-content:flex-end;gap:10px;font-size:12.5px;color:var(--ink3);margin-bottom:10px}
+.evt-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.evt-fields label{display:grid;gap:5px;font-size:13px;color:var(--ink2)}
+.evt-fields .wide{grid-column:1 / -1}
+.landing .note.back a{text-decoration:underline;text-underline-offset:3px;font-weight:500}
 /* mobile */
 .bottom-nav{display:none}
 @media (max-width:860px){
@@ -1566,12 +1586,12 @@ const S = {
   theme: store.get('theme', null),
   mode: store.get('mode', 'demo'),
   cats: store.get('cats:' + store.get('mode', 'demo'), []),
-  catFlow: null, imapForm: null, whoCats: null, catsBusy: false, dictating: false, askOpen: false, liveState: 'idle', mem: null, inboxCat: 'all', newsTopics: [], newsView: store.get('newsView', 'list'), cardIdx: 0, cardDir: '',
+  catFlow: null, catTab: 'attention', spamImp: [], spamOpen: false, spamList: [], spamScan: true, evt: null, evtList: false, newsSender: null, imapForm: null, whoCats: null, catsBusy: false, dictating: false, askOpen: false, liveState: 'idle', mem: null, inboxCat: 'all', newsTopics: [], newsView: store.get('newsView', 'list'), cardIdx: 0, cardDir: '',
   savedDrafts: {},
 };
 if(S.view === 'analyzing' || S.view === 'connect') S.view = 'landing';
 if(S.theme) document.documentElement.dataset.theme = S.theme;
-function persist(){ store.set(S.mode === 'live' ? 'liveProfile' : 'profile', S.profile); if(S.mode !== 'live') store.set('accounts', S.accounts); store.set('mode', S.mode); store.set('corr', S.corr); store.set('view', S.view === 'app' ? 'app' : 'landing'); }
+function persist(){ store.set(S.mode === 'live' ? 'liveProfile' : 'profile', S.profile); if(S.mode !== 'live') store.set('accounts', S.accounts); store.set('mode', S.mode); store.set('corr', S.corr); store.set('view', S.view === 'app' ? 'app' : 'landing'); syncState(); }
 
 /* ---------- derived ---------- */
 const visible = () => S.emails.filter(e => S.accounts[e.acc]?.enabled !== false && !(e.kind === 'newsletter' && (S.corr.unsub || []).includes(unsubKey(e))));
@@ -1607,13 +1627,13 @@ const SLOT_NAMES = {personal:'Personal', university:'University', startup:'Start
 async function api(path, opts = {}){
   const r = await fetch(path, {method: opts.method || 'GET', credentials:'same-origin', headers: opts.body ? {'content-type':'application/json'} : {}, body: opts.body ? JSON.stringify(opts.body) : undefined});
   const j = await r.json().catch(() => ({}));
-  if(!r.ok) throw Object.assign(new Error(j.error || `Request failed (${r.status})`), {status:r.status});
+  if(!r.ok) throw Object.assign(new Error(j.error || `Request failed (${r.status})`), {status:r.status, data:j});
   return j;
 }
 const validDate = v => { if(!v) return null; const d = new Date(String(v).length === 10 ? v + 'T12:00:00' : v); return isNaN(d) ? null : d; };
 function setLiveAccounts(list){
   const prev = S.accounts || {};
-  ACCOUNTS = list.map(a => ({id:a.slot, name:a.name, email:a.email, provider:a.provider, providerKey:a.providerKey, error:a.error, lastSync:a.lastSync}));
+  ACCOUNTS = list.map(a => ({id:a.slot, name:a.name, email:a.email, provider:a.provider, providerKey:a.providerKey, error:a.error, lastSync:a.lastSync, calendar:a.calendar}));
   S.accounts = {};
   ACCOUNTS.forEach(a => { S.accounts[a.id] = {connected:true, enabled: prev[a.id]?.enabled !== false}; });
 }
@@ -1634,7 +1654,7 @@ async function liveSync({quiet} = {}){
     runPipeline();
     if(!quiet && LIVE.errors.length) toast(syncErrorText());
     return r;
-  } finally { LIVE.syncing = false; }
+  } finally { LIVE.syncing = false; if(S.view === 'app') render({noFocus:true}); }
 }
 const syncErrorText = () => LIVE.errors.map(e => `${SLOT_NAMES[e.slot]}: ${e.error === 'reauth' ? 'sign-in expired, reconnect it' : e.error}`).join(' — ');
 function blankProfile(){ return {...defaultProfile(), name:'', roles:[], focus:[], responsibilities:'', people:[], news:['AI & technology'], about:''}; }
@@ -1670,10 +1690,10 @@ function liveAccRows(){
   const P = LIVE.providers;
   return Object.keys(SLOT_NAMES).map(slot => {
     const a = accById(slot);
-    const btn = (p, label) => `<button class="btn sm" data-act="${p === 'yahoo' || p === 'mailru' ? 'imapConnect' : 'liveConnect'}" data-slot="${slot}" data-p="${p}" ${P[p] ? '' : `disabled title="${label} sign-in isn't set up on the server yet (see README)"`}>${provIcon(label, 15)}${label}</button>`;
+    const btn = (p, label) => `<button class="btn sm" data-act="${IMAP_KEYS.includes(p) ? 'imapConnect' : 'liveConnect'}" data-slot="${slot}" data-p="${p}" ${P[p] ? '' : `disabled title="${label} sign-in isn't set up on the server yet (see README)"`}>${provIcon(label, 15)}${label}</button>`;
     const right = a
-      ? `${a.error === 'reauth' ? `<button class="btn sm primary" data-act="liveConnect" data-slot="${slot}" data-p="${a.providerKey}">Reconnect</button>` : `<span class="status-ok">✓ Connected</span>`}<button class="btn sm ghost" data-act="disconnect" data-id="${slot}">Disconnect</button>`
-      : `${btn('google','Gmail')}${btn('microsoft','Outlook')}${btn('yahoo','Yahoo')}${btn('mailru','Mail.ru')}${P.mock ? btn('mock','Mock') : ''}`;
+      ? `${a.error === 'reauth' ? `<button class="btn sm primary" data-act="${IMAP_KEYS.includes(a.providerKey) ? 'imapConnect' : 'liveConnect'}" data-slot="${slot}" data-p="${a.providerKey}">Reconnect</button>` : `<span class="status-ok">✓ Connected</span>`}<button class="btn sm ghost" data-act="disconnect" data-id="${slot}">Disconnect</button>`
+      : `${btn('google','Gmail')}${btn('microsoft','Outlook')}${btn('yahoo','Yahoo')}${btn('mailru','Mail.ru')}${btn('icloud','iCloud')}${btn('gmx','GMX')}${btn('aol','AOL')}${btn('zoho','Zoho')}${P.mock ? btn('mock','Mock') : ''}`;
     const sub = a ? `${esc(a.email)} — ${a.provider}${a.error === 'reauth' ? ' — sign-in expired' : a.error ? ' — ' + esc(a.error) : ''}` : 'Not connected';
     return `<div class="acc-row"><span class="acc-ico">${a ? (provIcon(a.provider, 20) || a.provider[0]) : '+'}${accDot(slot)}</span>
       <div class="acc-meta"><b>${SLOT_NAMES[slot]}</b><span>${sub}</span></div>
@@ -1683,7 +1703,12 @@ function liveAccRows(){
 const IMAP_HELP = {
   yahoo: {label:'Yahoo', steps:'Yahoo account → Account security → Generate app password. Copy the 16-character password it shows.', link:'https://help.yahoo.com/kb/SLN15241.html'},
   mailru: {label:'Mail.ru', steps:'Mail.ru → Settings → Security → Passwords for external applications → Add. Copy the password it shows.', link:''},
+  icloud: {label:'iCloud', steps:'appleid.apple.com → Sign-In and Security → App-Specific Passwords → Generate. Use your @icloud.com address.', link:'https://support.apple.com/102654'},
+  gmx: {label:'GMX', steps:'GMX → Settings → Security → App passwords (and switch on IMAP in POP3/IMAP settings). Copy the password it shows.', link:''},
+  aol: {label:'AOL', steps:'AOL account → Account security → Generate app password. Copy the password it shows.', link:'https://help.aol.com/articles/Create-and-manage-app-password'},
+  zoho: {label:'Zoho', steps:'Zoho Accounts → Security → App Passwords → Generate (IMAP must be enabled in Mail settings).', link:''},
 };
+const IMAP_KEYS = Object.keys(IMAP_HELP);
 function vImapForm(){
   const f = S.imapForm, h = IMAP_HELP[f.p];
   return `<div class="modal" role="dialog" aria-modal="true" aria-label="Connect ${h.label}"><div class="overlay" data-act="imapCancel"></div>
@@ -1705,7 +1730,7 @@ function vConnectLive(){
     <div class="setup-top"><div class="logo"><span class="logo-mark"></span>Clearday</div><span class="muted" style="font-size:13px">Connect inboxes</span></div>
     <div class="setup-body"><div class="q">
       <h2>Connect the inboxes you check.</h2>
-      <p class="hint">Choose a slot and connect Gmail, Outlook, Yahoo or Mail.ru. Clearday reads your mail and can save reply drafts. It never sends anything.</p>
+      <p class="hint">Choose a slot and connect Gmail, Outlook, Yahoo, iCloud, GMX, AOL, Zoho or Mail.ru. Clearday reads your mail and can save reply drafts. It never sends anything.</p>
       <div class="acc-list">${liveAccRows()}</div>
       <p class="oauth-note"><span>🔒</span><span>You sign in on Google's or Microsoft's own page. Clearday never sees your password; access tokens are stored encrypted on this server, and you can disconnect at any time.</span></p>
       ${!LIVE.providers.google ? `<p class="oauth-note"><span>⚠</span><span>Gmail isn't set up: the server can't see GOOGLE_CLIENT_ID. Make sure your settings file is called <b>.env</b>, sits in the Clearday folder, then restart <code>npm start</code>.</span></p>` : ''}
@@ -1778,6 +1803,7 @@ function vLanding(){
         <button class="btn" style="height:46px;padding:0 20px" data-act="demo">Try demo</button>
       </div>
       <p class="note">Clearday never sends email on its own. You stay in control of every reply.</p>
+      ${LIVE.available && (LIVE.providers.google || LIVE.providers.microsoft) ? `<p class="note back">Been here before? Continue with ${[LIVE.providers.google ? '<a href="/auth/google/start?slot=personal">Google</a>' : '', LIVE.providers.microsoft ? '<a href="/auth/microsoft/start?slot=personal">Microsoft</a>' : ''].filter(Boolean).join(' or ')} and your folders and mails will be waiting.</p>` : ''}
     </div>
     <div class="funnel" aria-label="How Clearday condenses seven inboxes">
       <div class="funnel-in">${inboxes.map(([n,c,k]) => `<div class="f-inbox">${accDot(c)}${n}<b>${k}</b></div>`).join('')}</div>
@@ -2161,19 +2187,20 @@ function pAction(){
   ${others.length ? `<section class="sec"><div class="sec-h"><h2>Replies you might want to send</h2></div>${list(others)}</section>` : ''}
   </div>`;
 }
+const newsPool = () => newsletters().filter(e => !S.newsSender || unsubKey(e) === S.newsSender);
 function pNews(){
-  const all = newsletters();
+  const all = newsPool();
   const counts = {}; all.forEach(e => topicsOf(e).forEach(t => counts[t] = (counts[t] || 0) + 1));
   const topics = Object.keys(TOPIC_COLORS).filter(t => counts[t]);
   const sel = S.newsTopics || [];
   const items = sel.length ? all.filter(e => topicsOf(e).some(t => sel.includes(t))) : all;
   const viewSeg = `<div class="seg" role="group" aria-label="View"><button class="${S.newsView !== 'cards' ? 'on' : ''}" data-act="newsView" data-v="list">${ICON('news', 15)}List</button><button class="${S.newsView === 'cards' ? 'on' : ''}" data-act="newsView" data-v="cards">${ICON('cards', 15)}Cards</button></div>`;
-  if(S.newsView === 'cards') return `<div class="page news-page"><div class="page-h"><div><h1>News</h1></div>${viewSeg}</div>
+  if(S.newsView === 'cards') return `<div class="page news-page"><div class="page-h"><div><h1>News</h1></div>${viewSeg}</div>${S.newsSender ? `<div style="margin-bottom:12px"><button class="chip sm on" data-act="newsAll">From ${esc(((newsletters().find(e => unsubKey(e) === S.newsSender) || {})._raw?.author) || (newsletters().find(e => unsubKey(e) === S.newsSender) || {}).from || S.newsSender)} ✕</button></div>` : ''}
     <div class="topic-filter" role="group" aria-label="Filter by topic">
       <button class="chip sm ${sel.length ? '' : 'on'}" data-act="newsTopic" data-v="">All<span class="cnt">${all.length}</span></button>
       ${topics.map(t => `<button class="chip sm topic-chip ${sel.includes(t) ? 'on' : ''}" style="--c:${TOPIC_COLORS[t]}" data-act="newsTopic" data-v="${esc(t)}" aria-pressed="${sel.includes(t)}"><i></i>${esc(t)}<span class="cnt">${counts[t]}</span></button>`).join('')}
     </div>${deck(items)}</div>`;
-  return `<div class="page news-page"><div class="page-h"><div><h1>News</h1></div>${viewSeg}</div>
+  return `<div class="page news-page"><div class="page-h"><div><h1>News</h1></div>${viewSeg}</div>${S.newsSender ? `<div style="margin-bottom:12px"><button class="chip sm on" data-act="newsAll">From ${esc(((newsletters().find(e => unsubKey(e) === S.newsSender) || {})._raw?.author) || (newsletters().find(e => unsubKey(e) === S.newsSender) || {}).from || S.newsSender)} ✕</button></div>` : ''}
     <div class="topic-filter" role="group" aria-label="Filter by topic">
       <button class="chip sm ${sel.length ? '' : 'on'}" data-act="newsTopic" data-v="">All<span class="cnt">${all.length}</span></button>
       ${topics.map(t => `<button class="chip sm topic-chip ${sel.includes(t) ? 'on' : ''}" style="--c:${TOPIC_COLORS[t]}" data-act="newsTopic" data-v="${esc(t)}" aria-pressed="${sel.includes(t)}"><i></i>${esc(t)}<span class="cnt">${counts[t]}</span></button>`).join('')}
@@ -2203,7 +2230,7 @@ function deck(items){
     <p class="deck-hint">Use <kbd>←</kbd> <kbd>→</kbd> to move between articles, <kbd>R</kbd> to mark as read${'ontouchstart' in window ? ', or swipe' : ''}.</p>
   </div>`;
 }
-function deckItems(){ const all = newsletters(), sel = S.newsTopics || []; return sel.length ? all.filter(e => topicsOf(e).some(t => sel.includes(t))) : all; }
+function deckItems(){ const all = newsPool(), sel = S.newsTopics || []; return sel.length ? all.filter(e => topicsOf(e).some(t => sel.includes(t))) : all; }
 function cardMove(d){ const n = deckItems().length; const next = Math.max(0, Math.min((S.cardIdx || 0) + d, n)); if(next === S.cardIdx) return; S.cardIdx = next; S.cardDir = d > 0 ? 'from-right' : 'from-left'; render({noFocus:true}); S.cardDir = ''; }
 function cardToggleRead(id){
   const r = S.corr.newsRead || (S.corr.newsRead = []);
@@ -2286,7 +2313,10 @@ function pSettings(){
     <div class="set-row"><div><b>Learned from your corrections</b><span>${c.vip.length} always-prioritised senders, ${c.ignore.length} ignored senders, ${Object.keys(c.override).length} manual priorities</span></div><button class="btn sm ghost" data-act="resetCorr" ${c.vip.length + c.ignore.length + Object.keys(c.override).length ? '' : 'disabled'}>Reset</button></div>
     <div class="set-row"><div><b>Dark mode</b><span>Follows your system unless you choose.</span></div><button class="switch ${dark ? 'on':''}" data-act="theme" role="switch" aria-checked="${dark}" aria-label="Dark mode"></button></div>
     ${S.mode === 'live'
-      ? `<div class="set-row" style="display:block"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><div><b>Memory</b><span>What Clearday remembers about you. Stored only on this server (data/memory.json).</span></div><div style="display:flex;gap:8px"><button class="btn sm" data-act="memAdd">Add</button><button class="btn sm ghost" data-act="memClear" ${(S.mem?.facts?.length || 0) + Object.keys(S.mem?.senders || {}).length + (S.mem?.summaries?.length || 0) ? '' : 'disabled'}>Clear</button></div></div>
+      ? `<div class="set-row"><div><b>Scan my spam folder</b><span>Clearday reads recent spam (summaries only, never links) so it can warn you when something real was filtered and answer questions about it.</span></div><button class="switch ${S.spamScan !== false ? 'on' : ''}" data-act="spamToggle" role="switch" aria-checked="${S.spamScan !== false}" aria-label="Scan spam folder"></button></div>
+      <div class="set-row"><div><b>Spam memory</b><span>${S.mem?.spamCount || 0} spam mails remembered (kept 30 days).</span></div><button class="btn sm ghost" data-act="spamClear" ${S.mem?.spamCount ? '' : 'disabled'}>Forget</button></div>
+      ${connectedAccs().map(a => `<div class="set-row"><div><b>Calendar: ${esc(a.name)}</b><span>${esc(a.email)} · ${a.calendar === 'ok' ? 'Clearday may add events, but only after you press Add.' : a.calendar === 'ics' ? 'This provider has no calendar link, so you get a .ics file to open.' : 'Not allowed yet.'}</span></div>${a.calendar === 'needs_consent' ? `<button class="btn sm" data-act="reconnect" data-slot="${a.id}">Allow</button>` : ''}</div>`).join('')}
+      <div class="set-row" style="display:block"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><div><b>Memory</b><span>What Clearday remembers about you. Stored privately in your account on this server.</span></div><div style="display:flex;gap:8px"><button class="btn sm" data-act="memAdd">Add</button><button class="btn sm ghost" data-act="memClear" ${(S.mem?.facts?.length || 0) + Object.keys(S.mem?.senders || {}).length + (S.mem?.summaries?.length || 0) ? '' : 'disabled'}>Clear</button></div></div>
         <ul style="margin:10px 0 0;padding:0;list-style:none;display:grid;gap:6px">${[
           ...(S.mem?.facts || []).map(f => [f.id, f.text]),
           ...Object.entries(S.mem?.senders || {}).map(([k, v]) => [k, `${k}: ${v.priority ? 'treat as ' + v.priority + '. ' : ''}${v.note || ''}`]),
@@ -2381,24 +2411,35 @@ function formatAnswer(t){
 /* ---------- board ---------- */
 const ACC_ICON = {personal:'👤', university:'🎓', startup:'🚀', work:'💼'};
 const STATUS_LABEL = {awaiting:'Awaiting reply', replied:'Replied', fyi:'No reply needed'};
-function boardEmails(catId){
+// "Needs attention" = someone waits on you, there is an action/deadline, or it was rated critical/important (and you haven't dealt with it).
+const needsAttention = e => !e.replied && !e.done && (e.status === 'awaiting' || e.requiresAction || RANK.indexOf(e.priority) <= 1);
+function boardEmails(catId, all){
   const custom = String(catId).startsWith('c_');
-  return S.emails.filter(e => S.accounts[e.acc]?.enabled !== false && e.boardCat === catId &&
-    (custom || S.boardScope === 'all' || (RANK.indexOf(e.priority) <= 2 && e.kind !== 'newsletter')));
+  return S.emails.filter(e => S.accounts[e.acc]?.enabled !== false && e.boardCat === catId && !(e.kind === 'newsletter' && (S.corr.unsub || []).includes(unsubKey(e))) &&
+    (custom || catId === 'newsletters' || all || S.boardScope === 'all' || (RANK.indexOf(e.priority) <= 2 && e.kind !== 'newsletter')));
 }
 /* ---------- Board categories (inbox folders + your own categories) ---------- */
 const CAT_COLORS = ['#8B5CF6','#0EA5A4','#F59E0B','#10B981','#F43F5E','#6366F1','#0891B2','#D946EF'];
 const CAT_ICONS = ['star','coin','users','calendar','plane','heart','tag','book'];
 const catKey = () => 'cats:' + (S.mode === 'live' ? 'live' : 'demo');
-function saveCats(){ store.set(catKey(), S.cats); }
+function saveCats(){ store.set(catKey(), S.cats); syncState(); }
+// The server is the source of truth for folders, read/replied marks and the profile, so a returning user (or a new device) gets them back.
+let stateTimer = null;
+function syncState(){
+  if(S.mode !== 'live' || !LIVE.available) return;
+  clearTimeout(stateTimer);
+  stateTimer = setTimeout(() => { api('/api/state', {method:'PUT', body:{corr:S.corr, boardCats:S.cats || [], profile:S.profile}}).catch(() => {}); }, 1200);
+}
 function boardCats(){
   const base = connectedAccs().filter(a => S.accounts[a.id].enabled !== false)
     .map(a => ({id:'acc:' + a.id, name:a.name, color:`var(--acc-${a.id})`, icon:ACC_SVG[a.id] || 'user', kind:'inbox', email:a.email}));
-  return [...base, ...S.cats.map(c => ({...c, kind:'custom'}))];
+  const news = S.emails.some(e => e.boardCat === 'newsletters') ? [{id:'newsletters', name:'Newsletters', color:'#6366F1', icon:'news', kind:'news', desc:'Subscriptions and digests, grouped by sender'}] : [];
+  return [...base, ...news, ...S.cats.map(c => ({...c, kind:'custom'}))];
 }
 function assignCat(e){
+  for(const c of (S.cats || [])) if(c.ids?.includes(e.id)) return c.id; // mails you placed yourself stay where you put them
+  if(e.kind === 'newsletter') return 'newsletters'; // newsletters leave the other folders and collect in their own
   for(const c of (S.cats || [])){
-    if(c.ids?.includes(e.id)) return c.id;
     if(c.ai && S.mode === 'live' && (e._raw.cat === c.name || e.category === c.name)) return c.id;
     if(c.auto){ const d = orgDomain(e.fromEmail); if((d && c.domains?.includes(d)) || c.senders?.includes(e.fromEmail)) return c.id; }
   }
@@ -2499,11 +2540,100 @@ function ruleText(c){
   const parts = [...(c.domains || []).map(d => '@' + d), ...(c.senders || [])];
   return parts.length ? parts.slice(0, 3).join(', ') + (parts.length > 3 ? ` and ${parts.length - 3} more` : '') : '';
 }
+
+/* ---------- v3: newsletters folder, status bar, spam + meeting strips, calendar confirmation ---------- */
+function newsGroups(list){
+  const g = new Map();
+  list.forEach(e => { const k = unsubKey(e); if(!g.has(k)) g.set(k, {k, e0:e, items:[]}); g.get(k).items.push(e); });
+  return [...g.values()].map((x, i) => {
+    const e = x.e0, unread = x.items.filter(m => !m.seen).length;
+    const digest = e._raw.why || e._raw.sums?.one || e.summary;
+    return `<li><div class="letter fyi ng" style="--c:#6366F1">
+      ${badge(e, 40)}
+      <span class="l-main"><span class="l-top"><span class="l-from">${esc(e._raw.author || e.from)}</span><span class="l-org">${x.items.length} ${x.items.length === 1 ? 'issue' : 'issues'}${unread ? ` · ${unread} unread` : ''}</span></span>
+        <span class="l-subj">${esc(e.subject)}</span><span class="l-sum">${esc(digest)}</span></span>
+      <span class="l-right ng-actions"><button class="btn sm primary" data-act="newsRead" data-v="${esc(x.k)}">Read</button><button class="btn sm ghost" data-act="unsub" data-id="${e.id}">Unsubscribe</button></span>
+    </div></li>`; }).join('');
+}
+function boardStatus(){
+  if(S.mode !== 'live') return '';
+  const errs = LIVE.errors || [], reauth = errs.filter(e => e.error === 'reauth');
+  let h = '';
+  if(reauth.length) h += `<div class="ai-note" style="margin-bottom:14px"><span>⚠</span><span style="flex:1">${esc(reauth.map(e => accById(e.slot)?.email || SLOT_NAMES[e.slot]).join(', '))} needs you to sign in again. Showing the last mails we have.</span><button class="btn sm" data-act="reconnect" data-slot="${reauth[0].slot}">Reconnect</button></div>`;
+  else if(errs.length) h += `<div class="ai-note" style="margin-bottom:14px"><span>⚠</span><span style="flex:1">${esc(syncErrorText())}</span></div>`;
+  const when = LIVE.lastSync ? LIVE.lastSync.toLocaleString('en-GB', {hour:'2-digit', minute:'2-digit', day:'numeric', month:'short'}) : '';
+  h += `<div class="board-status">${LIVE.syncing ? '<span class="dots"><i></i><i></i><i></i></span>Updating…' : when ? `Updated ${esc(when)}` : ''}<button class="btn sm ghost" data-act="sync" ${LIVE.syncing ? 'disabled' : ''}>Sync now</button></div>`;
+  return h;
+}
+function spamStrip(){
+  const n = (S.spamImp || []).length;
+  return S.mode === 'live' && n ? `<button class="strip warn" data-act="spamOpen">${ICON('shield', 16)}<span><b>${n}</b> ${n === 1 ? 'mail' : 'mails'} in Spam may be important</span><span class="chev">Review</span></button>` : '';
+}
+const calDone = e => (S.corr.calDone || []).includes(e.id) || !!e._raw.calId;
+const pendingMeetings = () => events().filter(e => !calDone(e) && !(S.corr.calSkip || []).includes(e.id) && e.event.date >= dayStart(NOW));
+function meetingStrip(){
+  const n = pendingMeetings().length;
+  return n ? `<button class="strip" data-act="evtList">${ICON('calendar', 16)}<span><b>${n}</b> ${n === 1 ? 'meeting' : 'meetings'} found in your mail. Add to your calendar?</span><span class="chev">Review</span></button>` : '';
+}
+async function loadSpamImportant(){
+  if(S.mode !== 'live') return;
+  try{ const r = await api('/api/spam?important=1'); S.spamImp = r.items || []; S.spamScan = r.scan !== false; if(S.view === 'app' && (S.page === 'board' || S.page === 'settings')) render({noFocus:true}); }catch(e){}
+}
+const hhmm = t => /^\d{1,2}:\d{2}/.test(t || '') ? t.match(/^\d{1,2}:\d{2}/)[0].padStart(5, '0') : '';
+function openEvent(id, extra){
+  const e = byId(id); if(!e?.event) return;
+  if(S.mode !== 'live'){ const w = window.open(calLink(e), '_blank', 'noopener'); if(!w) toast('Allow pop-ups to open your calendar'); return; }
+  S.evtList = false;
+  S.evt = {id, title:e.event.title, date:ymdDash(e.event.date), time:hhmm(e.event.time), place:e.event.place || '', busy:false, error:'', ...(extra || {})};
+  render({noFocus:true});
+}
+function vEvt(){
+  const v = S.evt, e = byId(v.id); if(!e) return '';
+  const acc = accById(e.acc), st = acc?.calendar, prov = acc?.provider || 'your';
+  return `<div class="modal" role="dialog" aria-modal="true" aria-label="Add to calendar"><div class="overlay" data-act="evtClose"></div>
+    <div class="modal-card" style="max-width:480px"><div class="modal-in">
+      <div class="k">${ICON('calendar', 14)} Add to your ${esc(prov)} calendar?</div>
+      <h2 class="cu-h" style="font-size:22px">${esc(v.title)}</h2>
+      <p class="cu-sub">Found in “${esc(e.subject)}” from ${esc(e.from)}. Nothing is added unless you press the button.</p>
+      <div class="evt-fields">
+        <label>Date<input class="input" type="date" id="evDate" value="${esc(v.date)}"></label>
+        <label>Time<input class="input" type="time" id="evTime" value="${esc(v.time)}"></label>
+        <label class="wide">Place<input class="input" id="evPlace" value="${esc(v.place)}" placeholder="Optional"></label>
+      </div>
+      ${!v.time ? '<p class="muted" style="font-size:13px;margin-top:8px">No time found, so it will be an all-day event.</p>' : ''}
+      ${st === 'needs_consent' ? `<p class="oauth-note"><span>🔒</span><span>Clearday needs your permission to add events to your calendar. You will be sent to ${esc(prov)} once.</span></p>` : ''}
+      ${v.error ? `<p class="oauth-note" style="color:var(--crit)"><span>⚠</span><span>${esc(v.error)}</span></p>` : ''}
+    </div>
+    <div class="modal-foot"><button class="btn sm ghost" data-act="evtSkip">Not now</button>
+      ${st === 'needs_consent' ? `<button class="btn sm primary" data-act="evtConsent">Allow calendar access</button>` : `<button class="btn sm primary" data-act="evtAdd" ${v.busy ? 'disabled' : ''}>${v.busy ? 'Adding…' : st === 'ics' ? 'Download .ics file' : 'Add to calendar'}</button>`}</div>
+    </div></div>`;
+}
+function vEvtList(){
+  const l = pendingMeetings();
+  return `<div class="modal" role="dialog" aria-modal="true" aria-label="Meetings found"><div class="overlay" data-act="evtClose"></div>
+    <div class="modal-card" style="max-width:520px"><div class="modal-in">
+      <div class="k">${ICON('calendar', 14)} Meetings found in your mail</div>
+      <h2 class="cu-h" style="font-size:22px">Add any of these to your calendar?</h2>
+      <ol class="cu-list">${l.map(e => `<li><div style="display:flex;gap:10px;align-items:center;justify-content:space-between"><div><div class="cu-text" style="font-weight:600">${esc(e.event.title)}</div><div class="muted" style="font-size:13px">${fmtDay(e.event.date)}${hhmm(e.event.time) ? ', ' + hhmm(e.event.time) : ''}${e.event.place ? ' · ' + esc(e.event.place) : ''}</div></div><div style="display:flex;gap:6px"><button class="btn sm primary" data-act="evtOpen" data-id="${e.id}">Review</button><button class="btn sm ghost" data-act="evtDismiss" data-id="${e.id}">Not now</button></div></div></li>`).join('') || '<li class="muted">All handled.</li>'}</ol>
+    </div><div class="modal-foot"><span></span><button class="btn sm" data-act="evtClose">Done</button></div></div></div>`;
+}
+function vSpam(){
+  return `<div class="modal" role="dialog" aria-modal="true" aria-label="Possibly important in Spam"><div class="overlay" data-act="spamClose"></div>
+    <div class="modal-card" style="max-width:560px"><div class="modal-in">
+      <div class="k">${ICON('shield', 14)} From your Spam folder</div>
+      <h2 class="cu-h" style="font-size:22px">These look like real mail that got filtered.</h2>
+      <p class="cu-sub">Summaries only. Be careful: spam can be dangerous even when it looks genuine, so check the sender before you trust it.</p>
+      <ol class="cu-list">${(S.spamList || []).map(x => `<li><div style="display:flex;gap:10px;align-items:center;justify-content:space-between"><div style="min-width:0"><div class="cu-text" style="font-weight:600">${esc(x.subject)}</div><div class="muted" style="font-size:13px">${esc(x.from)} · ${esc((x.date || '').slice(0, 10))}</div><div style="font-size:13.5px;margin-top:2px">${esc(x.gist)}</div></div><div style="display:flex;flex-direction:column;gap:6px">${x.link ? `<a class="btn sm" href="${esc(x.link)}" target="_blank" rel="noopener">Open in Spam ↗</a>` : ''}<button class="btn sm ghost" data-act="spamDismiss" data-id="${esc(x.id)}">Dismiss</button></div></div></li>`).join('') || '<li class="muted">Nothing to review.</li>'}</ol>
+    </div><div class="modal-foot"><span></span><button class="btn sm" data-act="spamClose">Done</button></div></div></div>`;
+}
 function pBoard(){
   const cats = boardCats();
   const open = S.boardOpen && cats.find(c => c.id === S.boardOpen);
   if(open){
-    const cat = open, list = boardEmails(cat.id);
+    const cat = open, list = boardEmails(cat.id, true);
+    const att = list.filter(needsAttention);
+    const tab = cat.kind === 'news' ? 'all' : (S.catTab === 'all' ? 'all' : 'attention');
+    const shown = tab === 'attention' ? att : list;
     const ls = list.filter(e => e.seen).length, la = list.filter(e => e.status === 'awaiting').length;
     const custom = cat.kind === 'custom';
     return `<div class="board"><div class="board-in">
@@ -2512,7 +2642,7 @@ function pBoard(){
         <aside class="spread-side">
           ${folder(cat, list, true)}
           <h2 class="sp-name">${esc(cat.name)}</h2>
-          <p class="sp-mail">${esc(custom ? cat.desc : cat.email)}</p>
+          <p class="sp-mail">${esc(custom || cat.kind === 'news' ? cat.desc : cat.email)}</p>
           ${custom ? `<p class="sp-rule">${cat.auto && ruleText(cat) ? `New emails from ${esc(ruleText(cat))} are sorted here automatically.` : 'Holds only the emails you picked.'}</p>` : ''}
           <div class="sp-stats">
             <div><b>${ls}<span>/${list.length}</span></b><small>read</small></div>
@@ -2526,13 +2656,16 @@ function pBoard(){
           </div>
         </aside>
         <div class="spread-main">
-          <p class="sp-hint">Ordered by what matters most. Open a letter to read it, reply, or mark it as replied.</p>
-          ${list.length ? `<ol class="letters">${list.map((e, i) => letter(e, i, cat.color)).join('')}</ol>` : `<div class="empty"><b>Nothing here yet</b>${custom ? 'New emails that match will land here.' : 'No important emails in this inbox.'}</div>`}
+          ${cat.kind === 'news' ? '' : `<div class="cat-tabs" role="tablist" aria-label="Show"><button role="tab" aria-selected="${tab === 'attention'}" class="${tab === 'attention' ? 'on' : ''}" data-act="catTab" data-v="attention">Needs attention<span class="cnt">${att.length}</span></button><button role="tab" aria-selected="${tab === 'all'}" class="${tab === 'all' ? 'on' : ''}" data-act="catTab" data-v="all">All<span class="cnt">${list.length}</span></button></div>`}
+          <p class="sp-hint">${cat.kind === 'news' ? 'Your subscriptions, grouped by sender. Read them in the News reader, or unsubscribe.' : tab === 'attention' ? 'Someone is waiting on you, there is a deadline, or it is important. Open a letter to read it, reply, or mark it as replied.' : 'Everything in this folder, ordered by what matters most.'}</p>
+          ${cat.kind === 'news' ? (list.length ? `<ol class="letters">${newsGroups(list)}</ol>` : `<div class="empty"><b>No newsletters</b>Subscriptions will collect here.</div>`)
+            : shown.length ? `<ol class="letters">${shown.map((e, i) => letter(e, i, cat.color)).join('')}</ol>` : tab === 'attention' ? `<div class="empty"><b>Nothing needs you here</b>No replies, deadlines or important mail waiting in this folder. <button class="link" data-act="catTab" data-v="all">See all ${list.length}</button></div>` : `<div class="empty"><b>Nothing here yet</b>${custom ? 'New emails that match will land here.' : 'No emails in this folder.'}</div>`}
         </div>
       </div>
     </div></div>`;
   }
   return `<div class="board"><div class="board-in">
+    ${boardStatus()}${spamStrip()}${meetingStrip()}
     <div class="board-grid">${cats.map(c => { const list = boardEmails(c.id); const s = list.filter(e => e.seen).length;
       return `<button class="folder-wrap" data-act="boardOpen" data-v="${c.id}" aria-label="Open ${esc(c.name)}: ${list.length} emails, ${list.length - s} unread">
         ${folder(c, list, false)}
@@ -2821,7 +2954,8 @@ function vApp(){
   ${S.openId ? vSheet() : ''}
   ${S.catchup ? vCatchup() : ''}
   ${S.catFlow ? vCatFlow() : ''}
-  ${S.imapForm ? vImapForm() : ''}`;
+  ${S.imapForm ? vImapForm() : ''}
+  ${S.evtList ? vEvtList() : ''}${S.evt ? vEvt() : ''}${S.spamOpen ? vSpam() : ''}`;
 }
 
 /* =========================================================================
@@ -2888,8 +3022,9 @@ async function connectAcc(id){
 async function analyze(){
   S.view = 'analyzing'; render();
   const live = S.mode === 'live';
-  const job = (live ? liveSync({quiet:true}) : (async () => { for(const a of connectedAccs()) await providers[a.provider].fetchMessages(a); })())
+  const runJob = () => (live ? liveSync({quiet:true}) : (async () => { for(const a of connectedAccs()) await providers[a.provider].fetchMessages(a); })())
     .then(r => ({ok:true, r}), e => ({ok:false, e}));
+  const job = runJob();
   let finished = false; job.then(() => { finished = true; });
   const lis = [...document.querySelectorAll('#asteps li')];
   for(let i = 0; i < lis.length; i++){
@@ -2897,7 +3032,8 @@ async function analyze(){
     if(i === lis.length - 1) while(!finished) await wait(200);
     lis[i].classList.add('done'); lis[i].querySelector('.ic').textContent = '✓';
   }
-  const res = await job;
+  let res = await job;
+  if(!res.ok && live && res.e?.status === 429){ await wait(8500); res = await runJob(); } // synced a moment ago: wait out the cooldown once
   if(!res.ok){ S.view = live ? 'connect' : 'landing'; render({top:true}); toast(res.e.message); return; }
   if(live && LIVE.errors.length) setTimeout(() => toast(syncErrorText()), 400);
   if(!live) runPipeline();
@@ -3036,6 +3172,8 @@ window.addEventListener('livevoice-tool', e => {
     render({noFocus:true});
   }
   if(u.memory) loadMemory();
+  if(u.proposeEvent){ const p = u.proposeEvent, acc = accById((byId(p.emailId) || {}).acc); if(acc && p.calendar) acc.calendar = p.calendar; S.evtList = false; S.evt = {id:p.emailId, title:p.event.title, date:p.event.date, time:hhmm(p.event.time), place:p.event.place || '', pendingId:p.pendingId, busy:false, error:''}; render({noFocus:true}); }
+  if(u.confirmEvent){ if(S.evt && S.evt.id === u.confirmEvent.emailId){ S.evt.pendingId = u.confirmEvent.pendingId; ACT.evtAdd(); } }
 });
 window.addEventListener('livevoice-error', e => { S.liveState = 'idle'; render({noFocus:true}); toast(e.detail || 'Voice stopped'); });
 async function loadMemory(){
@@ -3164,7 +3302,7 @@ const ACT = {
   open(el){ S.sheetCompact = !!el.dataset.compact || S.page === 'board'; S.openId = el.dataset.id; S.catchup = false; if(!S.corr.seen.includes(el.dataset.id)){ S.corr.seen.push(el.dataset.id); persist(); runPipeline(); } render({sheetTop:true, noFocus:true}); setTimeout(() => document.querySelector('.sheet .icon-btn')?.focus(), 20); },
   openFromCatch(el){ S.catchup = false; S.openId = el.dataset.id; if(!S.corr.seen.includes(el.dataset.id)){ S.corr.seen.push(el.dataset.id); persist(); runPipeline(); } render({sheetTop:true, noFocus:true}); },
   close(){ S.openId = null; render({noFocus:true}); },
-  boardOpen(el){ S.boardOpen = el.dataset.v; S.boardDeal = true; render({top:true, noFocus:true}); S.boardDeal = false; },
+  boardOpen(el){ S.boardOpen = el.dataset.v; S.catTab = boardEmails(el.dataset.v, true).some(needsAttention) ? 'attention' : 'all'; S.boardDeal = true; render({top:true, noFocus:true}); S.boardDeal = false; },
   boardAsk(){ const i = document.getElementById('boardQ'); i?.focus(); i?.scrollIntoView({block:'center', behavior:'smooth'}); },
   boardSend(){ const v = (document.getElementById('boardQ')?.value || '').trim(); if(v) ask(v); else ACT.boardAsk(); },
   boardMic(){ S.askOpen = true; render({noFocus:true}); toggleMic(); },
@@ -3267,7 +3405,7 @@ const ACT = {
   boardScope(el){ S.boardScope = el.dataset.v; S.boardDeal = !!S.boardOpen; render({noFocus:true}); S.boardDeal = false; },
   boardAcc(el){ const st = S.accounts[el.dataset.id]; st.enabled = st.enabled === false; if(S.boardOpen === el.dataset.id && !st.enabled) S.boardOpen = null; persist(); render({noFocus:true}); },
   toggleReplied(el){ const id = el.dataset.id; S.corr.replied = toggleIn(S.corr.replied, id); persist(); runPipeline(); render({noFocus:true}); toast(S.corr.replied.includes(id) ? 'Marked as replied' : 'Marked as awaiting reply'); },
-  markAllSeen(el){ const ids = boardEmails(el.dataset.v).map(e => e.id); S.corr.seen = [...new Set([...S.corr.seen, ...ids])]; persist(); runPipeline(); render({noFocus:true}); },
+  markAllSeen(el){ const ids = boardEmails(el.dataset.v, true).map(e => e.id); S.corr.seen = [...new Set([...S.corr.seen, ...ids])]; persist(); runPipeline(); render({noFocus:true}); },
   catchup(){ S.catchup = true; S.navOpen = false; render({noFocus:true}); },
   closeCatch(){ S.catchup = false; try{ speechSynthesis.cancel(); }catch(e){} render({noFocus:true}); },
   readAloud(){ const m = matter(); speak(`You received ${visible().length} emails. Only ${m.length} are important. ` + m.map((e,i) => `${i+1}. ${e.catchLine}`).join(' ')); },
@@ -3320,7 +3458,41 @@ ${firstName()}`, tone:'Professional'}; render({noFocus:true}); document.getEleme
   },
   copyDraft(el){ copy(document.getElementById('draftText')?.value || ''); },
   openClient(el){ const em = byId(el.dataset.id); if(em?.link){ window.open(em.link, '_blank', 'noopener'); return; } toast(`Demo mode: in production this opens the draft in ${el.dataset.v}, where you send it yourself`); },
-  addCal(el){ const e = byId(el.dataset.id); if(e?.event){ const w = window.open(calLink(e), '_blank', 'noopener'); if(!w) toast('Allow pop-ups to open your calendar'); } },
+  addCal(el){ openEvent(el.dataset.id); },
+  catTab(el){ S.catTab = el.dataset.v; render({noFocus:true}); },
+  newsRead(el){ S.newsSender = el.dataset.v; S.newsTopics = []; S.cardIdx = 0; S.page = 'news'; S.openId = null; render({top:true, noFocus:true}); },
+  newsAll(){ S.newsSender = null; S.cardIdx = 0; render({top:true, noFocus:true}); },
+  reconnect(el){
+    const a = accById(el.dataset.slot); if(!a) return;
+    if(['google', 'microsoft'].includes(a.providerKey)) location.href = `/auth/${a.providerKey}/start?slot=${encodeURIComponent(a.id)}`;
+    else ACT.imapConnect({dataset:{slot:a.id, p:a.providerKey}});
+  },
+  async spamOpen(){ try{ const r = await api('/api/spam?important=1'); S.spamList = r.items || []; }catch(e){ S.spamList = []; } S.spamOpen = true; render({noFocus:true}); },
+  spamClose(){ S.spamOpen = false; render({noFocus:true}); },
+  async spamDismiss(el){ try{ await api('/api/spam/' + encodeURIComponent(el.dataset.id), {method:'DELETE'}); }catch(e){} S.spamList = S.spamList.filter(x => x.id !== el.dataset.id); S.spamImp = S.spamImp.filter(x => x.id !== el.dataset.id); render({noFocus:true}); },
+  async spamToggle(){ try{ const r = await api('/api/settings', {method:'PUT', body:{spamScan:S.spamScan === false}}); S.spamScan = r.spamScan; if(!S.spamScan) S.spamImp = []; render({noFocus:true}); }catch(e){ toast(e.message); } },
+  async spamClear(){ if(!confirm('Forget everything Clearday remembers about your spam folder?')) return; try{ await api('/api/spam', {method:'DELETE'}); S.spamImp = []; loadMemory(); render({noFocus:true}); }catch(e){ toast(e.message); } },
+  evtList(){ S.evtList = true; render({noFocus:true}); },
+  evtOpen(el){ openEvent(el.dataset.id); },
+  evtDismiss(el){ S.corr.calSkip = [...new Set([...(S.corr.calSkip || []), el.dataset.id])]; persist(); render({noFocus:true}); },
+  evtClose(){ S.evt = null; S.evtList = false; render({noFocus:true}); },
+  evtSkip(){ if(S.evt) { S.corr.calSkip = [...new Set([...(S.corr.calSkip || []), S.evt.id])]; persist(); } S.evt = null; render({noFocus:true}); },
+  evtConsent(){ const e = S.evt && byId(S.evt.id), a = e && accById(e.acc); if(a) location.href = `/auth/${a.providerKey}/start?slot=${encodeURIComponent(a.id)}`; },
+  async evtAdd(){
+    const v = S.evt; if(!v || v.busy) return;
+    v.busy = true; v.error = ''; render({noFocus:true});
+    try{
+      const r = await api('/api/calendar/add', {method:'POST', body:{emailId:v.id, pendingId:v.pendingId || undefined, title:v.title, date:v.date, time:v.time, place:v.place, tz:Intl.DateTimeFormat().resolvedOptions().timeZone}});
+      if(r.ics){ const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([r.ics], {type:'text/calendar'})); a.download = r.filename || 'event.ics'; document.body.appendChild(a); a.click(); a.remove(); toast('Calendar file downloaded. Open it to add the event.'); }
+      else toast(r.already ? 'That event is already on your calendar' : 'Added to your calendar', r.link ? 'Open' : null, r.link ? () => window.open(r.link, '_blank', 'noopener') : null);
+      S.corr.calDone = [...new Set([...(S.corr.calDone || []), v.id])]; persist(); S.evt = null;
+    }catch(e){
+      v.busy = false;
+      if(e.data?.needsConsent){ const a = accById((byId(v.id) || {}).acc); if(a) a.calendar = 'needs_consent'; v.error = ''; }
+      else v.error = e.message;
+    }
+    render({noFocus:true});
+  },
   openDraft(el){ S.sheetCompact = S.page === 'board'; const m = S.chat[+el.dataset.i]; if(m && m.draft) S.drafts[el.dataset.id] = {text:m.draft, tone:'Professional'}; S.openId = el.dataset.id; render({sheetTop:true, noFocus:true}); setTimeout(() => document.querySelector('.ai .ai-block:last-child')?.scrollIntoView({block:'start', behavior:'smooth'}), 60); },
   copyText(el){ const m = S.chat[+el.dataset.i]; if(m) copy(m.draft); },
   ask(el){ ask(el.dataset.v); },
@@ -3355,6 +3527,7 @@ document.addEventListener('input', ev => {
   if(t.dataset && t.dataset.who && S.whoCats){ const [i, k] = t.dataset.who.split(':'); if(S.whoCats[+i]) S.whoCats[+i][k] = t.value; }
   if(t.id === 'cfName' && S.catFlow){ S.catFlow.name = t.value; S.catFlow.pick = -1; S.catFlow.terms = null; S.catFlow.personal = false; }
   if(t.id === 'cfDesc' && S.catFlow){ S.catFlow.desc = t.value; S.catFlow.terms = null; S.catFlow.personal = false; }
+  if(S.evt && (t.id === 'evDate' || t.id === 'evTime' || t.id === 'evPlace')){ S.evt[t.id === 'evDate' ? 'date' : t.id === 'evTime' ? 'time' : 'place'] = t.value; }
   if(t.id === 'chatInput'){ t.style.height = 'auto'; t.style.height = Math.min(140, t.scrollHeight) + 'px'; }
 });
 document.addEventListener('mousedown', ev => { if(ev.target.closest('.ask-chips button')) ev.preventDefault(); });
@@ -3394,10 +3567,34 @@ document.addEventListener('keydown', ev => {
   if(!LIVE.available){ if(S.mode === 'live'){ S.mode = 'demo'; S.profile = store.get('profile', null) || defaultProfile(); render(); } return; }
   const qs = new URLSearchParams(location.search);
   let me = null; try{ me = await api('/api/me'); }catch(e){}
+  const hydrate = m => {
+    if(m?.boardCats?.length){ S.cats = m.boardCats; saveCats(); }
+    else if((S.cats || []).length) syncState();
+    if(m?.state?.corr) S.corr = Object.assign({vip:[], ignore:[], override:{}, done:[], seen:[], replied:[]}, m.state.corr);
+    else syncState();
+    S.spamScan = m?.spamScan !== false; S.spamImp = new Array(m?.spamImportant || 0).fill(0);
+  };
+  const resume = async m => {
+    hydrate(m); setLiveAccounts(m.accounts);
+    if(m.hasSnapshot){
+      try{
+        const snap = await api('/api/snapshot');
+        if(snap.items?.length){
+          MAILBOX = snap.items.map(liveToRaw); LIVE.lastSync = snap.savedAt ? new Date(snap.savedAt) : null; LIVE.errors = [];
+          runPipeline(); S.view = 'app'; S.page = 'board'; S.boardOpen = null; render({top:true});
+          // Show what we have right away, then refresh quietly in the background.
+          liveSync({quiet:true}).then(() => setTimeout(loadSpamImportant, 6000)).catch(e => { if(e.status !== 429) toast(e.message); }).finally(() => { loadSpamImportant(); });
+          return;
+        }
+      }catch(e){ /* fall back to a normal first sync */ }
+    }
+    analyze();
+  };
   if(qs.has('connected') || qs.has('auth_error')){
     history.replaceState(null, '', location.pathname);
     S.mode = 'live'; store.set('mode', 'live'); S.cats = store.get('cats:live', []);
     S.profile = store.get('liveProfile', null) || me?.profile || blankProfile();
+    if(!qs.has('auth_error') && me?.hasSnapshot && me.accounts?.length){ S.profile = me.profile || S.profile; await resume(me); toast('Welcome back'); return; }
     setLiveAccounts(me?.accounts || []);
     S.view = 'connect'; render({top:true});
     toast(qs.get('auth_error') ? `Couldn't connect: ${qs.get('auth_error')}` : `${SLOT_NAMES[qs.get('connected')] || 'Inbox'} connected`);
@@ -3405,10 +3602,10 @@ document.addEventListener('keydown', ev => {
   }
   if(S.mode === 'live' && me?.accounts?.length){
     S.profile = me.profile || S.profile;
-    setLiveAccounts(me.accounts);
-    analyze();
+    await resume(me);
     return;
   }
+  if(me?.accounts?.length && me?.hasSnapshot){ S.mode = 'live'; store.set('mode', 'live'); S.cats = store.get('cats:live', []); S.profile = me.profile || blankProfile(); await resume(me); return; }
   render();
 })();
 </script>
@@ -3443,6 +3640,8 @@ async function startMic(){
 function flushTurn(){
   const u = LV.inTxt.trim(), a = LV.outTxt.trim(); LV.inTxt = ''; LV.outTxt = '';
   window.dispatchEvent(new CustomEvent('livevoice-turn', {detail:{user:u, ai:a}}));
+  if(u) LV.lastUser = u;
+  if(u) LV.lastUser = u;
   if(u) LV.log.push('User: ' + u); if(a) LV.log.push('Assistant: ' + a);
 }
 
@@ -3454,6 +3653,10 @@ async function onMessage(m){
     const out = [];
     for(const fc of m.toolCall.functionCalls){
       let result;
+      // A calendar event is only ever added after the user clearly said yes, never on the model's own say-so.
+      if(fc.name === 'confirm_event' && !/\b(yes|yeah|yep|yup|sure|please|ok|okay|go ahead|do it|add it|sounds good)\b/i.test(((LV.inTxt || '') + ' ' + (LV.lastUser || '')).slice(-160))){
+        out.push({id:fc.id, name:fc.name, response:{result:{error:'The user has not said yes yet. Ask them again and wait for a clear yes.'}}}); continue;
+      }
       try{
         const r = await fetch('/api/live/tool', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({name:fc.name, args:fc.args || {}})});
         const j = await r.json(); result = j.result || {error:'no result'};

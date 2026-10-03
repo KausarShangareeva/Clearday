@@ -32,6 +32,17 @@ export function ensureUser(uid) {
   return db.users[uid];
 }
 export function deleteUser(uid) { delete db.users[uid]; save(); }
+export const userCount = () => Object.keys(db.users).length;
+// A mailbox identifies its owner: the same provider+address always maps back to the same user record.
+export function findUserByAccount(provider, email, exceptUid) {
+  const want = String(email || '').toLowerCase();
+  if (!want) return null;
+  for (const [uid, u] of Object.entries(db.users)) {
+    if (uid === exceptUid) continue;
+    if (Object.values(u.accounts || {}).some(a => a.provider === provider && String(a.email || '').toLowerCase() === want)) return uid;
+  }
+  return null;
+}
 
 export function pruneCache(u, max = 1500) {
   const keys = Object.keys(u.cache);

@@ -8,8 +8,11 @@ export const SCOPES = [
   'openid', 'email', 'profile',
   'https://www.googleapis.com/auth/gmail.readonly', // read mail
   'https://www.googleapis.com/auth/gmail.compose',  // create drafts (the app never calls send)
+  'https://www.googleapis.com/auth/calendar.events', // add meetings to the calendar, only after the user confirms
 ];
+export const CAL_SCOPE = 'https://www.googleapis.com/auth/calendar.events';
 export const label = 'Gmail';
+export const hasCalendar = tokens => (tokens?.scope || '').includes('calendar');
 export const configured = () => !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
 const redirectUri = () => `${process.env.APP_URL}/auth/google/callback`;
 
@@ -42,7 +45,7 @@ export async function exchange(code) {
   const me = await (await fetch('https://openidconnect.googleapis.com/v1/userinfo', { headers: { authorization: `Bearer ${j.access_token}` } })).json();
   return {
     email: me.email, name: me.name || '',
-    tokens: { access_token: j.access_token, refresh_token: j.refresh_token, expires_at: Date.now() + (j.expires_in - 60) * 1000 },
+    tokens: { access_token: j.access_token, refresh_token: j.refresh_token, expires_at: Date.now() + (j.expires_in - 60) * 1000, scope: j.scope || '' },
   };
 }
 
@@ -142,4 +145,32 @@ export async function createDraft(token, { to, subject, body, threadId, inReplyT
   const raw = Buffer.from(`${lines.join('\r\n')}\r\n\r\n${body}`, 'utf8').toString('base64url');
   const d = await g('/drafts', token, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ message: { raw, threadId } }) });
   return { id: d.id, link: `https://mail.google.com/mail/u/?authuser=${encodeURIComponent(selfEmail)}#drafts` };
+}
+
+// Latest spam-folder mail (read-only, for the spam memory). Bodies are trimmed and never shown on the board.
+export async function fetchSpam(token, { max = 30, selfEmail }) {
+  const list = await g(`/messages?${new URLSearchParams({ q: 'in:spam', includeSpamTrash: 'true', maxResults: String(max) })}`, token);
+  const msgs = (await pMap((list.messages || []).map(m => m.id), id => g(`/messages/${id}?format=full`, token).catch(() => null), 8)).filter(Boolean);
+  return msgs.map(m => {
+    const from = parseAddress(header(m.payload, 'From'));
+    return {
+      providerId: m.id, fromName: from.name, fromEmail: from.email,
+      subject: header(m.payload, 'Subject') || '(no subject)', date: new Date(+m.internalDate).toISOString(),
+      body: clip(stripQuoted(extractBody(m.payload)), 1500), snippet: (m.snippet || '').replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&'),
+      link: `https://mail.google.com/mail/u/?authuser=${encodeURIComponent(selfEmail)}#spam/${m.id}`,
+    };
+  });
+}
+
+// Adds an event to the primary calendar. Only ever called after the user pressed "Add".
+export async function createEvent(token, { title, start, end, allDay, place, description, tz }) {
+  const body = { summary: title, location: place || undefined, description: description || undefined,
+    start: allDay ? { date: start.slice(0, 10) } : { dateTime: start, timeZone: tz },
+    end: allDay ? { date: end.slice(0, 10) } : { dateTime: end, timeZone: tz } };
+  const r = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', { method: 'POST', headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => ({}));
+  if (r.status === 401) throw new ReauthError();
+  if (r.status === 403) throw Object.assign(new Error('Calendar permission missing. Reconnect Gmail and allow calendar access.'), { code: 'nocalendar' });
+  if (!r.ok) throw new Error(`Google Calendar ${r.status}: ${j.error?.message || 'request failed'}`);
+  return { id: j.id, link: j.htmlLink };
 }
