@@ -725,6 +725,7 @@ a.btn:not(.primary){color:var(--ink)}
 .ask-orb.live-speaking{box-shadow:0 0 0 7px color-mix(in srgb,var(--acc-personal) 20%,transparent)}
 .ask-orb.live-speaking .orb-bars i{animation-duration:.6s}
 .live-pill{margin-left:8px;font-size:12px;font-weight:500;padding:2px 9px;border-radius:999px;background:color-mix(in srgb,var(--crit) 12%,transparent);color:var(--crit)}
+.demo-flag{display:inline-block;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;background:color-mix(in srgb,var(--imp) 16%,transparent);color:color-mix(in srgb,var(--imp) 80%,var(--ink));margin-bottom:12px}
 /* modal stacking fix */
 .modal > .overlay{z-index:0}
 .modal > .modal-card{z-index:1}
@@ -1987,10 +1988,11 @@ function vConnect(){
   return `<div class="setup">
     <div class="setup-top"><div class="logo"><span class="logo-mark"></span>Clearday</div><span class="muted" style="font-size:13px">Connect inboxes</span></div>
     <div class="setup-body"><div class="q">
-      <h2>Connect the inboxes you check.</h2>
-      <p class="hint">Clearday reads new mail and writes drafts. It never sends anything, and you can disconnect any account at any time.</p>
+      <div class="demo-flag">Demo</div>
+      <h2>These are sample inboxes.</h2>
+      <p class="hint">This demo uses an imaginary person, Alex, with made-up email accounts. Nothing here is your real mail. To connect your own Gmail, run Clearday on your computer and sign in with Google there.</p>
       <div class="acc-list">${rows}</div>
-      <p class="oauth-note"><span>🔒</span><span>Demo mode: sign-in is simulated and no real credentials are requested. In production each account connects through Google or Microsoft OAuth with read and draft permissions only.</span></p>
+      <p class="oauth-note"><span>ℹ</span><span>Demo mode: "Connect" is simulated and asks for no password. In the real app each button opens Google's, Microsoft's, Yahoo's or Mail.ru's own sign-in.</span></p>
       <div class="q-actions">
         <button class="btn ghost" data-act="connectAll">Connect all four</button>
         <span class="spacer"></span>
