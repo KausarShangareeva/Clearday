@@ -5,8 +5,9 @@ const tenant = () => process.env.MICROSOFT_TENANT || 'common';
 const AUTH = () => `https://login.microsoftonline.com/${tenant()}/oauth2/v2.0/authorize`;
 const TOKEN = () => `https://login.microsoftonline.com/${tenant()}/oauth2/v2.0/token`;
 const GRAPH = 'https://graph.microsoft.com/v1.0';
-export const SCOPES = ['offline_access', 'openid', 'email', 'User.Read', 'Mail.ReadWrite']; // ReadWrite only to create reply drafts
+export const SCOPES = ['offline_access', 'openid', 'email', 'User.Read', 'Mail.ReadWrite', 'Calendars.ReadWrite']; // Mail.ReadWrite only to create reply drafts; Calendars.ReadWrite only after the user confirms an event
 export const label = 'Outlook';
+export const hasCalendar = tokens => /calendars\./i.test(tokens?.scope || '');
 export const configured = () => !!(process.env.MICROSOFT_CLIENT_ID && process.env.MICROSOFT_CLIENT_SECRET);
 const redirectUri = () => `${process.env.APP_URL}/auth/microsoft/callback`;
 
@@ -35,7 +36,7 @@ export async function exchange(code) {
   const me = await (await fetch(`${GRAPH}/me?$select=mail,userPrincipalName,displayName`, { headers: { authorization: `Bearer ${j.access_token}` } })).json();
   return {
     email: (me.mail || me.userPrincipalName || '').toLowerCase(), name: me.displayName || '',
-    tokens: { access_token: j.access_token, refresh_token: j.refresh_token, expires_at: Date.now() + (j.expires_in - 60) * 1000 },
+    tokens: { access_token: j.access_token, refresh_token: j.refresh_token, expires_at: Date.now() + (j.expires_in - 60) * 1000, scope: j.scope || '' },
   };
 }
 
@@ -43,7 +44,7 @@ export async function refresh(tokens) {
   if (tokens.expires_at > Date.now()) return null;
   if (!tokens.refresh_token) throw new ReauthError();
   const j = await tokenRequest({ refresh_token: tokens.refresh_token, grant_type: 'refresh_token' });
-  return { access_token: j.access_token, refresh_token: j.refresh_token || tokens.refresh_token, expires_at: Date.now() + (j.expires_in - 60) * 1000 };
+  return { access_token: j.access_token, refresh_token: j.refresh_token || tokens.refresh_token, expires_at: Date.now() + (j.expires_in - 60) * 1000, scope: j.scope || tokens.scope || '' };
 }
 
 // Microsoft has no token-revocation endpoint for this flow; we delete tokens and the
@@ -60,10 +61,12 @@ async function m(path, token, opts = {}) {
   return j;
 }
 
+const hdr = (x, name) => (x.internetMessageHeaders || []).find(h => h.name.toLowerCase() === name.toLowerCase())?.value || '';
+
 export async function fetchMessages(token, { max, selfEmail }) {
   const inbox = await m(`/me/mailFolders/inbox/messages?${new URLSearchParams({
     $top: String(max), $orderby: 'receivedDateTime desc',
-    $select: 'id,subject,from,receivedDateTime,isRead,body,bodyPreview,conversationId,webLink,internetMessageId,inferenceClassification',
+    $select: 'id,subject,from,receivedDateTime,isRead,body,bodyPreview,conversationId,webLink,internetMessageId,inferenceClassification,internetMessageHeaders',
   })}`, token);
   // Only look at sent mail back to the oldest inbox message we fetched.
   const since = (inbox.value || []).reduce((a, x) => (x.receivedDateTime < a ? x.receivedDateTime : a), new Date().toISOString());
@@ -88,7 +91,8 @@ export async function fetchMessages(token, { max, selfEmail }) {
       snippet: x.bodyPreview || '',
       unread: !x.isRead,
       replied: (lastSent.get(x.conversationId) || 0) > received,
-      listUnsubscribe: false,
+      listUnsubscribe: !!hdr(x, 'List-Unsubscribe'),
+      unsub: hdr(x, 'List-Unsubscribe'), unsubPost: hdr(x, 'List-Unsubscribe-Post'),
       providerCategory: null,
       messageIdHeader: x.internetMessageId,
       link: x.webLink,
@@ -113,4 +117,25 @@ export async function createDraft(token, { providerId, body }) {
     method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ comment: body }),
   });
   return { id: d.id, link: d.webLink || 'https://outlook.office.com/mail/drafts' };
+}
+
+// Latest Junk Email folder mail (read-only, for the spam memory).
+export async function fetchSpam(token, { max = 30, selfEmail }) {
+  const j = await m(`/me/mailFolders/junkemail/messages?${new URLSearchParams({ $top: String(max), $orderby: 'receivedDateTime desc', $select: 'id,subject,from,receivedDateTime,bodyPreview,body,webLink' })}`, token);
+  return (j.value || []).map(x => {
+    const body = x.body?.contentType === 'html' ? htmlToText(x.body.content) : (x.body?.content || '');
+    return { providerId: x.id, fromName: x.from?.emailAddress?.name || '', fromEmail: (x.from?.emailAddress?.address || '').toLowerCase(), subject: x.subject || '(no subject)', date: new Date(x.receivedDateTime).toISOString(), body: clip(stripQuoted(body), 1500), snippet: x.bodyPreview || '', link: x.webLink || 'https://outlook.office.com/mail/junkemail' };
+  }).filter(x => x.fromEmail && x.fromEmail !== selfEmail);
+}
+
+// Adds an event to the default calendar. Only ever called after the user pressed "Add".
+export async function createEvent(token, { title, start, end, allDay, place, description, tz }) {
+  const body = { subject: title, isAllDay: !!allDay, location: place ? { displayName: place } : undefined, body: description ? { contentType: 'text', content: description } : undefined,
+    start: { dateTime: allDay ? start.slice(0, 10) + 'T00:00:00' : start, timeZone: tz || 'UTC' }, end: { dateTime: allDay ? end.slice(0, 10) + 'T00:00:00' : end, timeZone: tz || 'UTC' } };
+  const r = await fetch(`${GRAPH}/me/events`, { method: 'POST', headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => ({}));
+  if (r.status === 401) throw new ReauthError();
+  if (r.status === 403) throw Object.assign(new Error('Calendar permission missing. Reconnect Outlook and allow calendar access.'), { code: 'nocalendar' });
+  if (!r.ok) throw new Error(`Outlook Calendar ${r.status}: ${j.error?.message || 'request failed'}`);
+  return { id: j.id, link: j.webLink };
 }

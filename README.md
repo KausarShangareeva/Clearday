@@ -156,3 +156,24 @@ server/store.js          JSON-хранилище; OAuth-токены зашиф�
 | «Gmail permission was not granted» | На экране согласия отметь галочки Gmail. |
 | `AADSTS65001` / need admin approval | Рабочий аккаунт закрыт админом. Попробуй личный outlook.com. |
 | `invalid_client` (Microsoft) | В `.env` вставлен Secret ID вместо **Value** секрета. |
+
+## v3: returning users, many users, newsletters, spam memory, calendar
+
+- **Your mailbox is your login.** Connect (or "Continue with Google/Microsoft") and you get your folders, memory and last mails back, even after clearing cookies or on another device. Mail text from your last sync (trimmed to ~2000 characters per mail) is kept **encrypted** on the server so the app opens instantly; "Delete my data" in Settings wipes it.
+- **Per-user data.** Memory, folders, spam digest and snapshot all live in each user's own record (`DATA_DIR/db.json`). Back up that folder; on a host use a persistent disk.
+- **Category pages** have two tabs: *Needs attention* (waiting on your reply, has an action/deadline, or rated critical/important) and *All*.
+- **Newsletters** collect in their own folder, grouped by sender, with Read and Unsubscribe.
+- **Spam memory.** Clearday reads your 30 latest spam mails (summaries only, no links, kept 30 days; switch off in Settings). It flags real-looking mail that got filtered and can answer "did X end up in spam?". Spam text is treated as untrusted.
+- **Calendar, always asked first.** Meetings found in mail show a card; nothing is added until you press **Add** (or say "yes" to the voice assistant). Gmail and Outlook use their calendar APIs; other providers (Yahoo, iCloud, ...) give you a `.ics` file.
+  - Google: add the scope `https://www.googleapis.com/auth/calendar.events` under *Data access* on the OAuth consent screen, and enable the **Google Calendar API** in the project.
+  - Microsoft: add the delegated permission `Calendars.ReadWrite`.
+  - People who connected earlier see "Allow calendar access" once and reconnect.
+- **More IMAP providers** (app password): Yahoo, iCloud, GMX, AOL, Zoho, Mail.ru.
+
+### Opening it to other people (hosting checklist)
+1. Deploy somewhere with a persistent disk and HTTPS (Render, Railway, Fly.io or a VPS). Set `APP_URL=https://your-domain`, a long `SESSION_SECRET`, `DATA_DIR` on the disk, and your Gemini key.
+2. Add `https://your-domain/auth/google/callback` and `https://your-domain/auth/microsoft/callback` as redirect URIs.
+3. **Google:** OAuth consent screen → set Publishing status to **In production** so anyone can sign in (no test-user list). Gmail read/compose are *restricted* scopes: until Google verifies the app people see an "unverified app" warning and you are limited to 100 users. Verification needs a privacy policy URL, a homepage and a demo video.
+4. **Microsoft:** supported account types must include personal and organisational accounts (`MICROSOFT_TENANT=common`). Some company tenants need an admin to approve the app.
+5. Protect your bill: `AI_DAILY_CAP` limits analysed emails per user per day; `MAX_USERS` caps sign-ups.
+6. The JSON file store suits a demo-sized host. For real scale move `server/store.js` to Postgres or SQLite.
