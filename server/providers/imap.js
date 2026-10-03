@@ -3,6 +3,7 @@
 import { ImapFlow } from 'imapflow';
 import { simpleParser } from 'mailparser';
 import { clip, stripQuoted, htmlToText, ReauthError } from '../util.js';
+import { resolveSafe, cleanHost } from './discover.js';
 
 const headerLine = (parsed, key) => {
   const l = (parsed?.headerLines || []).find(h => h.key === key);
@@ -10,9 +11,19 @@ const headerLine = (parsed, key) => {
 };
 const encodeHeader = s => (/^[\x00-\x7F]*$/.test(s) ? s : `=?UTF-8?B?${Buffer.from(s, 'utf8').toString('base64')}?=`);
 
-export function makeImapProvider({ key, label, host, port = 993, webmail, draftsWeb }) {
+// generic: host/port come from the stored credentials (custom-domain mailboxes); the host is re-checked on every
+// connection (SSRF guard + DNS pinning, so a name that later resolves to a private address is refused).
+export function makeImapProvider({ key, label, host: fixedHost, port: fixedPort = 993, webmail, draftsWeb, generic = false }) {
   async function withClient(creds, fn) {
-    const c = new ImapFlow({ host, port, secure: true, auth: { user: creds.user, pass: creds.pass }, logger: false, connectionTimeout: 15000, greetingTimeout: 15000, socketTimeout: 45000 });
+    let host = fixedHost, port = fixedPort, secure = true, extra = {};
+    if (generic) {
+      const h = cleanHost(creds.host); port = +creds.port || 993;
+      if (!h || !(port === 993 || port === 143)) throw new Error(`${label}: the saved mail server settings are not valid. Reconnect this inbox.`);
+      secure = port === 993;
+      let r; try { r = await resolveSafe(h); } catch (e) { throw new Error(`${label}: ${e.message}`); }
+      host = r.address; extra = { servername: h, doSTARTTLS: !secure ? true : undefined };
+    }
+    const c = new ImapFlow({ host, port, secure, ...extra, auth: { user: creds.user, pass: creds.pass }, logger: false, connectionTimeout: 15000, greetingTimeout: 15000, socketTimeout: 45000 });
     try { await c.connect(); }
     catch (e) {
       const msg = `${e.message} ${e.responseText || ''}`;
@@ -25,11 +36,12 @@ export function makeImapProvider({ key, label, host, port = 993, webmail, drafts
   return {
     key, label, imap: true,
     configured: () => true,
-    async verify(user, pass) {
+    async verify(user, pass, opts = {}) {
       const email = String(user || '').trim().toLowerCase();
       if (!email || !pass) throw new Error('Enter your email address and app password.');
-      await withClient({ user: email, pass }, c => c.mailboxOpen('INBOX', { readOnly: true }));
-      return { email, name: '', tokens: { user: email, pass } };
+      const creds = generic ? { user: email, pass, host: opts.host, port: opts.port, secure: opts.port === 993 } : { user: email, pass };
+      await withClient(creds, c => c.mailboxOpen('INBOX', { readOnly: true }));
+      return { email, name: '', tokens: creds };
     },
     refresh: async () => null,
     revoke: async () => {},
@@ -55,7 +67,7 @@ export function makeImapProvider({ key, label, host, port = 993, webmail, drafts
             unread: !flags.has('\\Seen'), replied: flags.has('\\Answered'),
             listUnsubscribe: !!headerLine(parsed, 'list-unsubscribe'),
             unsub: headerLine(parsed, 'list-unsubscribe'), unsubPost: headerLine(parsed, 'list-unsubscribe-post'),
-            providerCategory: null, messageIdHeader: m.envelope?.messageId || '', link: webmail,
+            providerCategory: null, messageIdHeader: m.envelope?.messageId || '', link: webmail || null,
           });
         }
         return out.reverse().filter(x => x.fromEmail && x.fromEmail !== selfEmail);
@@ -80,12 +92,12 @@ export function makeImapProvider({ key, label, host, port = 993, webmail, drafts
     async createDraft(creds, { to, subject, body, inReplyTo, selfEmail }) {
       return withClient(creds, async c => {
         const boxes = await c.list();
-        const drafts = boxes.find(b => b.specialUse === '\\Drafts')?.path || boxes.find(b => /draft|черновик/i.test(b.name))?.path || 'Drafts';
+        const drafts = boxes.find(b => b.specialUse === '\\Drafts')?.path || boxes.find(b => /draft|черновик|brouillon|entw/i.test(b.name))?.path || 'Drafts';
         const subj = /^re:/i.test(subject) ? subject : `Re: ${subject}`;
         const lines = [`From: ${selfEmail}`, `To: ${to}`, `Subject: ${encodeHeader(subj)}`, `Date: ${new Date().toUTCString()}`, 'MIME-Version: 1.0', 'Content-Type: text/plain; charset=UTF-8', 'Content-Transfer-Encoding: 8bit'];
         if (inReplyTo) lines.push(`In-Reply-To: ${inReplyTo}`, `References: ${inReplyTo}`);
         await c.append(drafts, Buffer.from(`${lines.join('\r\n')}\r\n\r\n${body}`, 'utf8'), ['\\Draft', '\\Seen']);
-        return { id: 'draft', link: draftsWeb || webmail };
+        return { id: 'draft', link: draftsWeb || webmail || null };
       });
     },
   };
@@ -93,3 +105,4 @@ export function makeImapProvider({ key, label, host, port = 993, webmail, drafts
 
 export const yahoo = makeImapProvider({ key: 'yahoo', label: 'Yahoo', host: 'imap.mail.yahoo.com', webmail: 'https://mail.yahoo.com/', draftsWeb: 'https://mail.yahoo.com/d/folders/3' });
 export const mailru = makeImapProvider({ key: 'mailru', label: 'Mail.ru', host: 'imap.mail.ru', webmail: 'https://e.mail.ru/inbox/', draftsWeb: 'https://e.mail.ru/drafts/' });
+export const imapGeneric = makeImapProvider({ key: 'imap', label: 'Work email', generic: true });

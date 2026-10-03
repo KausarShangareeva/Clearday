@@ -10,10 +10,10 @@ export const label = 'Outlook';
 export const configured = () => !!(process.env.MICROSOFT_CLIENT_ID && process.env.MICROSOFT_CLIENT_SECRET);
 const redirectUri = () => `${process.env.APP_URL}/auth/microsoft/callback`;
 
-export function authUrl(state) {
+export function authUrl(state, { loginHint } = {}) {
   return `${AUTH()}?${new URLSearchParams({
     client_id: process.env.MICROSOFT_CLIENT_ID, response_type: 'code', redirect_uri: redirectUri(),
-    response_mode: 'query', scope: SCOPES.join(' '), state, prompt: 'select_account',
+    response_mode: 'query', scope: SCOPES.join(' '), state, prompt: 'select_account', ...(loginHint ? { login_hint: loginHint } : {}),
   })}`;
 }
 

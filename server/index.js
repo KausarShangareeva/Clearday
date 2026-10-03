@@ -7,14 +7,19 @@ import { getUser, ensureUser, deleteUser, save, pruneCache, encrypt, decrypt, si
 import * as google from './providers/google.js';
 import * as microsoft from './providers/microsoft.js';
 import * as mock from './providers/mock.js';
-import { yahoo, mailru } from './providers/imap.js';
+import { yahoo, mailru, imapGeneric } from './providers/imap.js';
+import { discover, parseEmail, cleanHost, resolveSafe } from './providers/discover.js';
 import { hasAI, aiProvider, classify, heuristic, answer, rewrite, suggestCategories, matchCategory, summarize, suggestFromAbout } from './ai.js';
 import * as memory from './memory.js';
 import { LIVE_TOOLS, liveSystemPrompt } from './live.js';
 
-const PROVIDERS = { google, microsoft, yahoo, mailru, ...(process.env.DEV_MOCK === '1' ? { mock } : {}) };
-const SLOTS = ['personal', 'university', 'startup', 'work'];
-const SLOT_NAMES = { personal: 'Personal', university: 'University', startup: 'Startup', work: 'Work' };
+const PROVIDERS = { google, microsoft, yahoo, mailru, imap: imapGeneric, ...(process.env.DEV_MOCK === '1' ? { mock } : {}) };
+// Six connection slots. The ids are only identifiers (kept for old data); what the user sees is the account's
+// nickname or email address (see slotLabel), never these default words.
+const SLOTS = ['personal', 'university', 'startup', 'work', 'extra1', 'extra2'];
+const SLOT_NAMES = { personal: 'Personal', university: 'University', startup: 'Startup', work: 'Work', extra1: 'Inbox 5', extra2: 'Inbox 6' }; // legacy defaults, not shown for connected accounts
+const slotLabel = (u, slot) => { const a = u?.accounts?.[slot]; return a ? (a.nickname || a.email || SLOT_NAMES[slot]) : SLOT_NAMES[slot]; };
+const providerLabel = a => a.provider === 'imap' ? `Work email: ${String(a.email || '').split('@')[1] || 'custom'}` : (PROVIDERS[a.provider]?.label || a.provider);
 const APP_URL = (process.env.APP_URL || `http://localhost:${process.env.PORT || 3000}`).replace(/\/$/, '');
 process.env.APP_URL = APP_URL;
 const SECURE = APP_URL.startsWith('https');
@@ -60,7 +65,7 @@ const limit = (key, ms) => { const now = Date.now(), last = hits.get(key) || 0; 
 // ---------- helpers ----------
 const publicAccounts = u => SLOTS.filter(s => u?.accounts?.[s]).map(s => {
   const a = u.accounts[s];
-  return { slot: s, name: SLOT_NAMES[s], provider: PROVIDERS[a.provider]?.label || a.provider, providerKey: a.provider, email: a.email, connectedAt: a.connectedAt, lastSync: a.lastSync || null, error: a.error || null };
+  return { slot: s, name: slotLabel(u, s), nickname: a.nickname || '', provider: providerLabel(a), providerKey: a.provider, email: a.email, connectedAt: a.connectedAt, lastSync: a.lastSync || null, error: a.error || null };
 });
 
 async function freshToken(acc) {
@@ -102,11 +107,12 @@ app.delete('/api/me', async (req, res) => {
 app.get('/auth/:provider/start', (req, res) => {
   const P = PROVIDERS[req.params.provider];
   const slot = SLOTS.includes(req.query.slot) ? req.query.slot : 'personal';
+  const hintP = parseEmail(req.query.hint);
   if (!P) return res.status(404).send('Unknown provider');
   if (!P.configured()) return res.redirect(`/?auth_error=${encodeURIComponent(`${P.label} is not configured on the server yet (missing client ID/secret in .env)`)}`);
   const nonce = crypto.randomBytes(16).toString('hex');
   setCookie(res, 'cd_oauth', sign(`${req.params.provider}:${slot}:${nonce}`), 600);
-  res.redirect(P.authUrl(nonce));
+  res.redirect(P.authUrl(nonce, { loginHint: hintP?.email }));
 });
 
 app.get('/auth/:provider/callback', async (req, res) => {
@@ -145,13 +151,24 @@ app.delete('/api/accounts/:slot', async (req, res) => {
 
 // ---------- Yahoo / Mail.ru: connect with an app password (IMAP) ----------
 app.post('/api/imap/connect', async (req, res) => {
-  const { slot, provider, email, password } = req.body || {};
+  const { slot, provider, email, password, host, port } = req.body || {};
   const P = PROVIDERS[provider];
   if (!P?.imap) return res.status(400).json({ error: 'Unknown mail provider' });
   if (!SLOTS.includes(slot)) return res.status(400).json({ error: 'Unknown slot' });
+  // Custom-domain mailbox ('imap'): host and port come from the user, so validate them before connecting.
+  let opts = {};
+  if (provider === 'imap') {
+    const pe = parseEmail(email), h = cleanHost(host), pn = +port;
+    if (!pe) return res.status(400).json({ error: 'Enter a valid email address.' });
+    if (!password) return res.status(400).json({ error: 'Enter your email address and app password.' });
+    if (!h) return res.status(400).json({ error: 'Enter the mail server name, for example imap.yourcompany.com.' });
+    if (pn !== 993 && pn !== 143) return res.status(400).json({ error: 'Use port 993 (SSL) or 143 (STARTTLS).' });
+    try { await resolveSafe(h); } catch (e) { return res.status(400).json({ error: e.message }); }
+    opts = { host: h, port: pn };
+  }
   if (!limit('imap:' + req.uid, 2000)) return res.status(429).json({ error: 'One moment…' });
   try {
-    const { email: addr, tokens } = await P.verify(String(email || ''), String(password || ''));
+    const { email: addr, tokens } = await P.verify(String(email || ''), String(password || ''), opts);
     const u = ensureUser(req.uid);
     for (const s of SLOTS) if (u.accounts[s]?.email === addr && s !== slot) delete u.accounts[s];
     u.accounts[slot] = { provider, email: addr, name: '', tokens: encrypt(tokens), connectedAt: Date.now(), error: null };
@@ -192,11 +209,11 @@ app.post('/api/sync', async (req, res) => {
   for (const f of fetched) {
     const c = u.cache[f.id];
     if (c && c.ph === ph) continue;
-    if (f.m.providerCategory) { u.cache[f.id] = { a: heuristic(f.m, `Filed under ${f.m.providerCategory} by ${PROVIDERS[f.acc.provider].label}`), ph, t: Date.now() }; continue; }
+    if (f.m.providerCategory) { u.cache[f.id] = { a: heuristic(f.m, `Filed under ${f.m.providerCategory} by ${providerLabel(f.acc)}`), ph, t: Date.now() }; continue; }
     if (!hasAI()) { u.cache[f.id] = { a: heuristic(f.m, 'Basic rules (AI key not configured)'), ph, t: Date.now() }; continue; }
     todo.push(f);
   }
-  const analyses = await classify(todo.map(f => ({ id: f.id, inbox: SLOT_NAMES[f.slot], ...f.m })), { profile: u.profile, categories: cats, today: todayStr(), hints });
+  const analyses = await classify(todo.map(f => ({ id: f.id, inbox: slotLabel(u, f.slot), ...f.m })), { profile: u.profile, categories: cats, today: todayStr(), hints });
   for (const f of todo) u.cache[f.id] = { a: analyses[f.id] || heuristic(f.m), ph, t: Date.now() };
   for (const f of fetched) {
     // keep what the draft endpoint needs (no body stored)
@@ -221,7 +238,7 @@ app.post('/api/sync', async (req, res) => {
   const dom = e => (e.split('@')[1] || '').toLowerCase().split('.').slice(-2).join('.');
   liveItems.set(req.uid, items.map(i => {
     const c = (u.boardCats || []).find(c => c.ids.includes(i.id) || (c.ai && i.cat === c.name) || (c.auto && (c.domains.includes(dom(i.fromEmail)) || c.senders.includes(i.fromEmail))));
-    return { ...i, folder: c ? c.name : SLOT_NAMES[i.acc] };
+    return { ...i, folder: c ? c.name : slotLabel(u, i.acc) };
   }));
   res.json({ items, accounts: publicAccounts(u), errors, ai: hasAI(), aiProvider: aiProvider(), analysed: todo.length });
 });
@@ -238,7 +255,7 @@ async function saveDraft(u, id, body) {
       to: c.meta.fromEmail, subject: c.meta.subject, body: String(body).slice(0, 10000), threadId: c.meta.threadId,
       inReplyTo: c.meta.messageIdHeader, providerId: c.meta.providerId, selfEmail: acc.email,
     });
-    return { link: d.link, provider: PROVIDERS[acc.provider].label };
+    return { link: d.link, provider: providerLabel(acc) };
   } catch (e) {
     if (e.code === 'reauth') throw Object.assign(new Error('Reconnect this inbox to save drafts.'), { status: 401 });
     throw e;
@@ -287,7 +304,7 @@ app.delete('/api/memory', (req, res) => { memory.clearMemory(); res.json(memory.
 // The browser talks to Gemini Live directly with a short-lived ephemeral token; the real key stays on the server.
 const LIVE_MODEL = () => process.env.GEMINI_LIVE_MODEL || 'gemini-3.8-live';
 function liveConfig(u) {
-  const inboxes = Object.keys(u?.accounts || {}).map(s => ({ name: SLOT_NAMES[s], hint: 'inbox' }));
+  const inboxes = Object.keys(u?.accounts || {}).map(s => ({ name: slotLabel(u, s), hint: 'inbox' }));
   const cats = [...inboxes, ...(u?.boardCats || []).map(c => ({ name: c.name, hint: c.desc }))];
   return {
     responseModalities: ['AUDIO'],
@@ -403,7 +420,7 @@ async function scanMailbox(u, uid) {
     try {
       const token = await freshToken(acc);
       const list = await PROVIDERS[acc.provider].fetchIndex(token, { max, selfEmail: acc.email });
-      list.forEach(m => items.push({ id: `${slot}_${m.providerId}`.replace(/[^\w-]/g, '').slice(0, 120), inbox: SLOT_NAMES[slot], from: m.fromName || m.fromEmail, fromEmail: m.fromEmail, subject: m.subject, snippet: m.snippet, date: m.date }));
+      list.forEach(m => items.push({ id: `${slot}_${m.providerId}`.replace(/[^\w-]/g, '').slice(0, 120), inbox: slotLabel(u, slot), from: m.fromName || m.fromEmail, fromEmail: m.fromEmail, subject: m.subject, snippet: m.snippet, date: m.date }));
     } catch (e) { console.error(`scan ${slot}:`, e.message); }
   }));
   scanCache.set(uid, { t: Date.now(), items });
@@ -466,6 +483,24 @@ app.get('/api/logo', async (req, res) => {
   if (!hit) return res.status(404).end();
   res.set({ 'Content-Type': hit.type, 'Cache-Control': 'public, max-age=604800', 'Content-Security-Policy': "default-src 'none'" });
   res.send(hit.buf);
+});
+
+// ---------- Custom-domain mail + account nicknames ----------
+// Detect how to connect name@theirstartup.com (Google Workspace / Microsoft 365 -> OAuth, else IMAP settings).
+app.post('/api/mail/discover', async (req, res) => {
+  const p = parseEmail(req.body?.email);
+  if (!p) return res.status(400).json({ error: 'Enter a valid work email address, like you@yourstartup.com.' });
+  if (!limit('disc:' + req.uid, 1500)) return res.status(429).json({ error: 'One moment…' });
+  try { res.json({ email: p.email, domain: p.domain, ...(await discover(p.email)) }); }
+  catch (e) { console.error('discover:', e.message); res.json({ email: p.email, domain: p.domain, kind: 'manual', note: "We couldn't check that domain. Enter your mail server details manually." }); }
+});
+app.put('/api/accounts/:slot', (req, res) => {
+  const u = getUser(req.uid);
+  const a = u?.accounts?.[req.params.slot];
+  if (!a) return res.status(404).json({ error: 'Not connected' });
+  a.nickname = String(req.body?.nickname ?? '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 30);
+  save();
+  res.json({ accounts: publicAccounts(u) });
 });
 
 // ---------- static frontend ----------

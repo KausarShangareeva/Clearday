@@ -18,7 +18,7 @@
   --accent:#3446C7; --accent-ink:#FFFFFF; --accent-soft:#E9ECFA;
   --ai:#F4F2FC; --ai-line:#DFD9F4; --ai-ink:#4E3FA8;
   --crit:#D2343D; --imp:#C27C05; --norm:#7B8494; --low:#B2B8C2; --noise:#D2D6DD;
-  --acc-personal:#8B5CD6; --acc-university:#1F8A66; --acc-startup:#E0602A; --acc-work:#2C74D6;
+  --acc-personal:#8B5CD6; --acc-university:#1F8A66; --acc-startup:#E0602A; --acc-work:#2C74D6; --acc-extra1:#C0338F; --acc-extra2:#0F8FA3;
   --ok:#1F8A66;
   --serif:"Newsreader",Georgia,"Times New Roman",serif;
   --sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
@@ -661,6 +661,20 @@ a.btn:not(.primary){color:var(--ink)}
 .mail-btn{gap:8px}
 .prov-ico{display:block;flex:none;border-radius:4px}
 .acc-list .btn .prov-ico{margin-right:6px}
+.acc-meta b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acc-row{flex-wrap:wrap}
+.acc-row .acc-meta{flex:1 1 150px}
+.side-acc{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acc-add{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:14px}
+.btn.work{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.wk-steps{display:flex;gap:10px;align-items:center;margin:14px 0 4px;font-size:13px;color:var(--ink3)}
+.wk-found{display:flex;gap:12px;align-items:center;margin-top:16px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--sunk)}
+.wk-found b{display:block;font-weight:600}
+.wk-found span{font-size:13.5px;color:var(--ink2)}
+.wk-row{display:grid;grid-template-columns:1fr 130px;gap:10px}
+@media (max-width:520px){.wk-row{grid-template-columns:1fr}.modal-in{padding:22px 20px 20px}.modal-foot{padding:14px 20px}}
+.wk-help{font-size:13px;color:var(--ink3);margin-top:8px;line-height:1.45}
+select.input{appearance:auto}
 .acc-ico .prov-ico{border-radius:5px}
 .mail-ico{position:relative;width:16px;height:16px;display:grid;place-items:center}
 .mail-ico img{position:absolute;inset:0;width:16px;height:16px;border-radius:3px;background:var(--surface)}
@@ -869,7 +883,7 @@ a.btn:not(.primary){color:var(--ink)}
   --accent:#000000; --accent-ink:#FFFFFF; --accent-soft:#E5E9EB;
   --ai:#F3F3FF; --ai-line:#E3E3FF; --ai-ink:#4A42CC;
   --crit:#E5484D; --imp:#E58A00; --norm:#787878; --low:#B9BFC4; --noise:#D9DEE1;
-  --acc-personal:#6D5DF0; --acc-university:#1C9AD6; --acc-startup:#EA4C89; --acc-work:#3A6FF0;
+  --acc-personal:#6D5DF0; --acc-university:#1C9AD6; --acc-startup:#EA4C89; --acc-work:#3A6FF0; --acc-extra1:#D9822B; --acc-extra2:#12A594;
   --ok:#14A06B; --unread:#EA4C89;
   --board:#F7F9FA; --dot:#CBD2D6; --folder:#FFFFFF; --folder2:#F4F6F7; --glass:rgba(255,255,255,.72); --glass-line:rgba(255,255,255,.95); --paper-replied:#E5E9EB;
   --shadow:0 1px 2px rgba(0,0,0,.04),0 12px 32px rgba(0,0,0,.06);
@@ -1622,7 +1636,7 @@ const S = {
   theme: store.get('theme', null),
   mode: store.get('mode', 'demo'),
   cats: store.get('cats:' + store.get('mode', 'demo'), []),
-  catFlow: null, imapForm: null, whoCats: null, catsBusy: false, dictating: false, askOpen: false, liveState: 'idle', mem: null, inboxCat: 'all', newsTopics: [], newsView: store.get('newsView', 'list'), cardIdx: 0, cardDir: '',
+  catFlow: null, imapForm: null, workForm: null, whoCats: null, catsBusy: false, dictating: false, askOpen: false, liveState: 'idle', mem: null, inboxCat: 'all', newsTopics: [], newsView: store.get('newsView', 'list'), cardIdx: 0, cardDir: '',
   savedDrafts: {},
 };
 if(S.view === 'analyzing' || S.view === 'connect') S.view = 'landing';
@@ -1659,7 +1673,10 @@ const firstName = () => (S.profile.name || 'there').split(' ')[0];
    Live mode — real Gmail / Outlook through the Clearday server (server/index.js)
    ========================================================================= */
 const LIVE = { available:false, ai:false, providers:{}, syncing:false, lastSync:null, errors:[] };
-const SLOT_NAMES = {personal:'Personal', university:'University', startup:'Startup', work:'Work'};
+// Six connection slots. The ids stay for old data; what the user sees is the account's nickname or email (slotName).
+const SLOT_IDS = ['personal', 'university', 'startup', 'work', 'extra1', 'extra2'];
+const SLOT_NAMES = {personal:'Personal', university:'University', startup:'Startup', work:'Work', extra1:'Inbox 5', extra2:'Inbox 6'}; // fallback only
+const slotName = s => accById(s)?.name || SLOT_NAMES[s] || 'Inbox';
 async function api(path, opts = {}){
   const r = await fetch(path, {method: opts.method || 'GET', credentials:'same-origin', headers: opts.body ? {'content-type':'application/json'} : {}, body: opts.body ? JSON.stringify(opts.body) : undefined});
   const j = await r.json().catch(() => ({}));
@@ -1669,7 +1686,7 @@ async function api(path, opts = {}){
 const validDate = v => { if(!v) return null; const d = new Date(String(v).length === 10 ? v + 'T12:00:00' : v); return isNaN(d) ? null : d; };
 function setLiveAccounts(list){
   const prev = S.accounts || {};
-  ACCOUNTS = list.map(a => ({id:a.slot, name:a.name, email:a.email, provider:a.provider, providerKey:a.providerKey, error:a.error, lastSync:a.lastSync}));
+  ACCOUNTS = list.map(a => ({id:a.slot, name:a.name, email:a.email, provider:a.provider, providerKey:a.providerKey, nickname:a.nickname || '', error:a.error, lastSync:a.lastSync}));
   S.accounts = {};
   ACCOUNTS.forEach(a => { S.accounts[a.id] = {connected:true, enabled: prev[a.id]?.enabled !== false}; });
 }
@@ -1692,7 +1709,7 @@ async function liveSync({quiet} = {}){
     return r;
   } finally { LIVE.syncing = false; }
 }
-const syncErrorText = () => LIVE.errors.map(e => `${SLOT_NAMES[e.slot]}: ${e.error === 'reauth' ? 'sign-in expired, reconnect it' : e.error}`).join(' — ');
+const syncErrorText = () => LIVE.errors.map(e => `${slotName(e.slot)}: ${e.error === 'reauth' ? 'sign-in expired, reconnect it' : e.error}`).join(' — ');
 function blankProfile(){ return {...defaultProfile(), name:'', roles:[], focus:[], responsibilities:'', people:[], news:['AI & technology'], about:''}; }
 function startLive(){
   S.mode = 'live'; store.set('mode', 'live'); S.cats = store.get('cats:live', []);
@@ -1722,19 +1739,62 @@ function calLink(e){
   const nd = new Date(d); nd.setDate(nd.getDate() + 1);
   return `https://calendar.google.com/calendar/render?${new URLSearchParams({action:'TEMPLATE', text:ev.title, dates: allDay ? `${ymd(d)}/${ymd(nd)}` : `${fmt(start)}/${fmt(end)}`, details:e.summary || '', location:ev.place || ''})}`;
 }
+// Icon for a connected account: the provider's own icon, or a monogram badge for custom-domain mail.
+function accIcon(a, size = 20){
+  const i = provIcon(a.provider, size); if(i) return i;
+  if(a.providerKey === 'imap'){ const d = (a.email.split('@')[1] || '').toLowerCase(); return `<span class="ob org" style="--s:${size}px;--h:${avatarHue(d)}">${esc(monogram(d.split('.')[0] || '?'))}</span>`; }
+  return esc(a.provider[0]);
+}
+const freeSlot = () => SLOT_IDS.find(s => !accById(s));
 function liveAccRows(){
   const P = LIVE.providers;
-  return Object.keys(SLOT_NAMES).map(slot => {
+  const rows = SLOT_IDS.filter(s => accById(s)).map(slot => {
     const a = accById(slot);
-    const btn = (p, label) => `<button class="btn sm" data-act="${p === 'yahoo' || p === 'mailru' ? 'imapConnect' : 'liveConnect'}" data-slot="${slot}" data-p="${p}" ${P[p] ? '' : `disabled title="${label} sign-in isn't set up on the server yet (see README)"`}>${provIcon(label, 15)}${label}</button>`;
-    const right = a
-      ? `${a.error === 'reauth' ? `<button class="btn sm primary" data-act="liveConnect" data-slot="${slot}" data-p="${a.providerKey}">Reconnect</button>` : `<span class="status-ok">✓ Connected</span>`}<button class="btn sm ghost" data-act="disconnect" data-id="${slot}">Disconnect</button>`
-      : `${btn('google','Gmail')}${btn('microsoft','Outlook')}${btn('yahoo','Yahoo')}${btn('mailru','Mail.ru')}${P.mock ? btn('mock','Mock') : ''}`;
-    const sub = a ? `${esc(a.email)} — ${a.provider}${a.error === 'reauth' ? ' — sign-in expired' : a.error ? ' — ' + esc(a.error) : ''}` : 'Not connected';
-    return `<div class="acc-row"><span class="acc-ico">${a ? (provIcon(a.provider, 20) || a.provider[0]) : '+'}${accDot(slot)}</span>
-      <div class="acc-meta"><b>${SLOT_NAMES[slot]}</b><span>${sub}</span></div>
+    const right = `${a.error === 'reauth' ? (a.providerKey === 'imap' ? `<button class="btn sm primary" data-act="workOpen" data-slot="${slot}" data-email="${esc(a.email)}">Reconnect</button>` : `<button class="btn sm primary" data-act="${a.providerKey === 'yahoo' || a.providerKey === 'mailru' ? 'imapConnect' : 'liveConnect'}" data-slot="${slot}" data-p="${a.providerKey}">Reconnect</button>`) : `<span class="status-ok">✓ Connected</span>`}<button class="btn sm ghost" data-act="renameAcc" data-id="${slot}" title="Give this inbox a nickname">Rename</button><button class="btn sm ghost" data-act="disconnect" data-id="${slot}">Disconnect</button>`;
+    const sub = `${a.nickname ? esc(a.email) + ' — ' : ''}${esc(a.provider)}${a.error === 'reauth' ? ' — sign-in expired' : a.error ? ' — ' + esc(a.error) : ''}`;
+    return `<div class="acc-row"><span class="acc-ico">${accIcon(a)}${accDot(slot)}</span>
+      <div class="acc-meta"><b>${esc(a.name)}</b><span>${sub}</span></div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center">${right}</div></div>`;
   }).join('');
+  const slot = freeSlot();
+  const btn = (p, label) => `<button class="btn sm" data-act="${p === 'yahoo' || p === 'mailru' ? 'imapConnect' : 'liveConnect'}" data-slot="${slot}" data-p="${p}" ${P[p] ? '' : `disabled title="${label} sign-in isn't set up on the server yet (see README)"`}>${provIcon(label, 15)}${label}</button>`;
+  const add = slot
+    ? `<div class="acc-row" style="flex-wrap:wrap"><span class="acc-ico">+${accDot(slot)}</span>
+        <div class="acc-meta"><b>Add an inbox</b><span>${SLOT_IDS.filter(s => accById(s)).length} of ${SLOT_IDS.length} connected</span></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center"><button class="btn sm work" data-act="workOpen" data-slot="${slot}">Add your work email</button>${btn('google','Gmail')}${btn('microsoft','Outlook')}${btn('yahoo','Yahoo')}${btn('mailru','Mail.ru')}${P.mock ? btn('mock','Mock') : ''}</div></div>`
+    : `<div class="acc-row"><div class="acc-meta"><span>All ${SLOT_IDS.length} inbox slots are in use. Disconnect one to add another.</span></div></div>`;
+  return rows + add;
+}
+// ---- "Add your work email": detect how a custom-domain address connects (Workspace / Microsoft 365 -> sign-in, else IMAP) ----
+function vWorkForm(){
+  const f = S.workForm, dom = (f.email.split('@')[1] || '');
+  const oauthName = f.provider === 'google' ? 'Google' : 'Microsoft', oauthWhat = f.provider === 'google' ? 'Google Workspace' : 'Microsoft 365', oauthIcon = f.provider === 'google' ? 'Gmail' : 'Outlook';
+  let body = '', foot = '';
+  if(f.step === 'email'){
+    body = `<p class="cu-sub">Type your address at your startup's own domain. Clearday works out how to connect it, no settings needed in most cases.</p>
+      <label class="field" style="display:block;margin-top:16px"><span style="display:block;font-size:13px;color:var(--ink2);margin-bottom:6px">Work email address</span><input class="input" id="wkEmail" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" value="${esc(f.email)}" placeholder="you@yourstartup.com"></label>`;
+    foot = `<button class="btn sm ghost" data-act="workCancel">Cancel</button><button class="btn sm primary" data-act="workCheck" ${f.busy ? 'disabled' : ''}>${f.busy ? 'Checking…' : 'Continue'}</button>`;
+  } else if(f.step === 'oauth'){
+    const ok = LIVE.providers[f.provider];
+    body = `<div class="wk-found">${provIcon(oauthIcon, 32)}<div><b>Looks like ${oauthWhat}</b><span>${esc(f.email)} is hosted by ${oauthName}. Sign in on ${oauthName}'s own page, Clearday never sees your password.</span></div></div>
+      ${ok ? '' : `<p class="oauth-note"><span>⚠</span><span>${oauthName} sign-in isn't set up on this server yet (see README).</span></p>`}`;
+    foot = `<button class="btn sm ghost" data-act="workBack">Back</button><button class="btn sm primary" data-act="workGo" ${ok ? '' : 'disabled'}>Continue with ${oauthName}</button>`;
+  } else {
+    const found = f.step === 'imap';
+    body = `<div class="wk-found"><span class="ob org" style="--s:32px;--h:${avatarHue(dom)}">${esc(monogram(dom.split('.')[0] || '?'))}</span><div><b>${found ? 'Found your mail server' : "Couldn't detect your mail server"}</b><span>${esc(f.note || '')}</span></div></div>
+      <label class="field" style="display:block;margin-top:14px"><span style="display:block;font-size:13px;color:var(--ink2);margin-bottom:6px">Email address</span><input class="input" id="wkEmail" type="email" autocomplete="username" autocapitalize="off" spellcheck="false" value="${esc(f.email)}"></label>
+      <div class="wk-row" style="margin-top:12px">
+        <label class="field" style="display:block"><span style="display:block;font-size:13px;color:var(--ink2);margin-bottom:6px">Mail server (IMAP)</span><input class="input" id="wkHost" autocapitalize="off" spellcheck="false" value="${esc(f.host || '')}" placeholder="imap.${esc(dom || 'yourstartup.com')}"></label>
+        <label class="field" style="display:block"><span style="display:block;font-size:13px;color:var(--ink2);margin-bottom:6px">Port</span><select class="input" id="wkPort"><option value="993" ${+f.port === 993 ? 'selected' : ''}>993 · SSL</option><option value="143" ${+f.port === 143 ? 'selected' : ''}>143 · STARTTLS</option></select></label>
+      </div>
+      <label class="field" style="display:block;margin-top:12px"><span style="display:block;font-size:13px;color:var(--ink2);margin-bottom:6px">App password</span><input class="input" id="wkPass" type="password" autocomplete="off" value="${esc(f.pass || '')}" placeholder="xxxx xxxx xxxx xxxx"></label>
+      <p class="wk-help">Create an <b>app password</b> in your mail provider's security settings and paste it here; some hosts need your normal password instead. Clearday only reads mail and saves drafts, and stores the password encrypted.</p>
+      ${f.error ? `<p class="oauth-note" style="color:var(--crit)"><span>⚠</span><span>${esc(f.error)}</span></p>` : ''}`;
+    foot = `<button class="btn sm ghost" data-act="workBack">Back</button><button class="btn sm primary" data-act="workSubmit" ${f.busy ? 'disabled' : ''}>${f.busy ? 'Testing connection…' : 'Test and connect'}</button>`;
+  }
+  if(f.error && f.step !== 'imap' && f.step !== 'manual') body += `<p class="oauth-note" style="color:var(--crit)"><span>⚠</span><span>${esc(f.error)}</span></p>`;
+  return `<div class="modal" role="dialog" aria-modal="true" aria-label="Add your work email"><div class="overlay" data-act="workCancel"></div>
+    <div class="modal-card" style="width:min(500px,100%)"><div class="modal-in"><h2 class="cu-h" style="font-size:26px">Add your work email</h2>${body}</div><div class="modal-foot">${foot}</div></div></div>`;
 }
 const IMAP_HELP = {
   yahoo: {label:'Yahoo', steps:'Yahoo account → Account security → Generate app password. Copy the 16-character password it shows.', link:'https://help.yahoo.com/kb/SLN15241.html'},
@@ -1772,7 +1832,7 @@ function vConnectLive(){
         <span class="spacer"></span>
         <button class="btn primary" data-act="analyze" ${any ? '' : 'disabled'}>Analyse my inbox</button>
       </div>
-    </div></div></div>${S.imapForm ? vImapForm() : ''}`;
+    </div></div></div>${S.imapForm ? vImapForm() : ''}${S.workForm ? vWorkForm() : ''}`;
 }
 
 
@@ -2530,9 +2590,10 @@ function letter(e, i, color){
     </div>
   </li>`;
 }
-const mailProv = e => { const p = accById(e.acc)?.provider; return ['Outlook', 'Yahoo', 'Mail.ru'].includes(p) ? p : 'Gmail'; };
+const mailProv = e => { const p = accById(e.acc)?.provider; return ['Outlook', 'Yahoo', 'Mail.ru'].includes(p) ? p : /^Work email/.test(p || '') ? 'Work email' : 'Gmail'; };
 function mailHref(e){
   const prov = mailProv(e);
+  if(prov === 'Work email') return e.link || `mailto:${e.fromEmail}?subject=${encodeURIComponent(/^re:/i.test(e.subject) ? e.subject : 'Re: ' + e.subject)}`; // custom domains have no known webmail
   return e.link || (prov === 'Outlook' ? `https://outlook.office.com/mail/search?q=${encodeURIComponent(e.subject)}` : `https://mail.google.com/mail/u/0/#search/${encodeURIComponent(`from:${e.fromEmail} subject:"${e.subject}"`)}`);
 }
 function mailButton(e){
@@ -2856,7 +2917,7 @@ function vApp(){
       ${nav}
       <div class="nav-sep"></div>
       <div class="k" style="padding:0 10px">Inboxes</div>
-      <div class="side-accs">${accs}</div>
+      <div class="side-accs">${accs}${S.mode === 'live' && freeSlot() ? `<button class="side-acc" data-act="workOpen" data-slot="${freeSlot()}" title="Add your work email">+ Add inbox</button>` : ''}</div>
       <div class="side-bottom"><button class="nav-i" data-act="logout"><span class="ni">${ICON('exit')}</span>${S.mode === 'live' ? 'Back to start' : 'Exit demo'}</button></div>
     </aside>
     ${S.navOpen ? `<div class="overlay" style="z-index:54" data-act="navClose"></div>` : ''}
@@ -2870,7 +2931,7 @@ function vApp(){
   ${S.openId ? vSheet() : ''}
   ${S.catchup ? vCatchup() : ''}
   ${S.catFlow ? vCatFlow() : ''}
-  ${S.imapForm ? vImapForm() : ''}`;
+  ${S.imapForm ? vImapForm() : ''}${S.workForm ? vWorkForm() : ''}`;
 }
 
 /* =========================================================================
@@ -3266,6 +3327,58 @@ const ACT = {
   },
   imapConnect(el){ S.imapForm = {slot:el.dataset.slot, p:el.dataset.p, email:'', busy:false, error:''}; render({noFocus:true}); setTimeout(() => document.getElementById('imapEmail')?.focus(), 30); },
   imapCancel(){ S.imapForm = null; render({noFocus:true}); },
+  /* ---- Add your work email (custom domain) ---- */
+  workOpen(el){
+    const slot = el.dataset.slot && (!accById(el.dataset.slot) || el.dataset.email) ? el.dataset.slot : freeSlot();
+    if(!slot){ toast('All inbox slots are in use. Disconnect one first.'); return; }
+    S.navOpen = false;
+    S.workForm = {slot, step:'email', email:el.dataset.email || '', busy:false, error:'', host:'', port:993, pass:'', note:'', provider:''};
+    render({noFocus:true}); setTimeout(() => document.getElementById('wkEmail')?.focus(), 30);
+  },
+  workCancel(){ S.workForm = null; render({noFocus:true}); },
+  workBack(){ const f = S.workForm; if(!f) return; f.step = 'email'; f.error = ''; f.busy = false; render({noFocus:true}); setTimeout(() => document.getElementById('wkEmail')?.focus(), 30); },
+  async workCheck(){
+    const f = S.workForm; if(!f || f.busy) return;
+    f.email = (document.getElementById('wkEmail')?.value || f.email || '').trim().toLowerCase();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(f.email)){ f.error = 'Enter a valid work email address, like you@yourstartup.com.'; render({noFocus:true}); setTimeout(() => document.getElementById('wkEmail')?.focus(), 30); return; }
+    f.busy = true; f.error = ''; render({noFocus:true});
+    try{
+      const r = await api('/api/mail/discover', {method:'POST', body:{email:f.email}});
+      if(S.workForm !== f) return;
+      f.busy = false; f.email = r.email || f.email; f.note = r.note || '';
+      if(r.kind === 'oauth'){ f.step = 'oauth'; f.provider = r.provider; }
+      else if(r.kind === 'imap'){ f.step = 'imap'; f.host = r.host; f.port = r.port; }
+      else { f.step = 'manual'; f.host = ''; f.port = 993; }
+    }catch(e){ f.busy = false; f.error = e.message; }
+    render({noFocus:true});
+    setTimeout(() => document.getElementById(S.workForm?.step === 'email' ? 'wkEmail' : 'wkPass')?.focus(), 30);
+  },
+  async workGo(){
+    const f = S.workForm; if(!f) return;
+    persist();
+    try{ await api('/api/profile', {method:'PUT', body:{profile:S.profile}}); }catch(e){}
+    location.href = `/auth/${f.provider}/start?slot=${encodeURIComponent(f.slot)}&hint=${encodeURIComponent(f.email)}`;
+  },
+  async workSubmit(){
+    const f = S.workForm; if(!f || f.busy) return;
+    f.email = (document.getElementById('wkEmail')?.value || f.email).trim().toLowerCase();
+    f.host = (document.getElementById('wkHost')?.value || f.host || '').trim().toLowerCase();
+    f.port = +(document.getElementById('wkPort')?.value || f.port || 993);
+    f.pass = (document.getElementById('wkPass')?.value || f.pass || '').replace(/\s+/g, '');
+    if(!f.email || !f.host || !f.pass){ f.error = !f.host ? 'Enter your mail server name, for example imap.yourstartup.com.' : 'Enter your email address and the app password.'; render({noFocus:true}); return; }
+    f.busy = true; f.error = ''; render({noFocus:true});
+    try{
+      const r = await api('/api/imap/connect', {method:'POST', body:{slot:f.slot, provider:'imap', email:f.email, password:f.pass, host:f.host, port:f.port}});
+      setLiveAccounts(r.accounts); S.workForm = null; render({noFocus:true}); toast(`${f.email} connected`);
+      if(S.view === 'app'){ try{ await liveSync(); }catch(e){} render({noFocus:true}); }
+    }catch(e){ f.busy = false; f.error = e.message; render({noFocus:true}); }
+  },
+  async renameAcc(el){
+    const a = accById(el.dataset.id); if(!a) return;
+    const v = prompt(`Nickname for ${a.email} (leave empty to show the email address)`, a.nickname || '');
+    if(v === null) return;
+    try{ const r = await api(`/api/accounts/${a.id}`, {method:'PUT', body:{nickname:v}}); setLiveAccounts(r.accounts); render({noFocus:true}); }catch(e){ toast(e.message); }
+  },
   async imapSubmit(){
     const f = S.imapForm; if(!f || f.busy) return;
     f.email = (document.getElementById('imapEmail')?.value || '').trim();
@@ -3357,7 +3470,7 @@ ${firstName()}`, tone:'Professional'}; render({noFocus:true}); document.getEleme
     const body = document.getElementById('draftText')?.value || '';
     if(!body.trim()){ toast('The draft is empty'); return; }
     const prov = mailProv(e), subj = /^re:/i.test(e.subject) ? e.subject : 'Re: ' + e.subject;
-    const compose = (prov === 'Yahoo' || prov === 'Mail.ru') ? (e.link || (prov === 'Yahoo' ? 'https://mail.yahoo.com/' : 'https://e.mail.ru/inbox/')) : prov === 'Outlook'
+    const compose = prov === 'Work email' ? `mailto:${e.fromEmail}?${new URLSearchParams({subject:subj, body}).toString().replace(/\+/g, '%20')}` : (prov === 'Yahoo' || prov === 'Mail.ru') ? (e.link || (prov === 'Yahoo' ? 'https://mail.yahoo.com/' : 'https://e.mail.ru/inbox/')) : prov === 'Outlook'
       ? `https://outlook.office.com/mail/deeplink/compose?${new URLSearchParams({to:e.fromEmail, subject:subj, body})}`
       : `https://mail.google.com/mail/?${new URLSearchParams({view:'cm', fs:'1', to:e.fromEmail, su:subj, body})}`;
     const w = window.open('', '_blank');
@@ -3401,6 +3514,7 @@ document.addEventListener('input', ev => {
   if(t.id === 'f-search'){ S.query = t.value; render(); }
   if(t.id === 'draftText'){ const id = t.dataset.id; S.drafts[id] = {...(S.drafts[id] || {tone:'Professional'}), text:t.value}; }
   if(t.id === 'f-people'){ S.peopleInput = t.value; }
+  if(S.workForm){ const w = S.workForm; if(t.id === 'wkEmail') w.email = t.value; else if(t.id === 'wkHost') w.host = t.value; else if(t.id === 'wkPass') w.pass = t.value; }
   if(t.dataset && t.dataset.who && S.whoCats){ const [i, k] = t.dataset.who.split(':'); if(S.whoCats[+i]) S.whoCats[+i][k] = t.value; }
   if(t.id === 'cfName' && S.catFlow){ S.catFlow.name = t.value; S.catFlow.pick = -1; S.catFlow.terms = null; S.catFlow.personal = false; }
   if(t.id === 'cfDesc' && S.catFlow){ S.catFlow.desc = t.value; S.catFlow.terms = null; S.catFlow.personal = false; }
@@ -3430,6 +3544,8 @@ document.addEventListener('keydown', ev => {
   if(ev.key === 'Escape' && S.page === 'board' && S.askOpen && !S.openId && !S.catFlow){ S.askOpen = false; render({noFocus:true}); return; }
   if(ev.key === 'Enter' && S.imapForm && (t.id === 'imapPass' || t.id === 'imapEmail')){ ev.preventDefault(); ACT.imapSubmit(); return; }
   if(ev.key === 'Escape' && S.imapForm){ ACT.imapCancel(); return; }
+  if(S.workForm && ev.key === 'Enter' && /^wk(Email|Host|Pass)$/.test(t.id)){ ev.preventDefault(); if(S.workForm.step === 'email') ACT.workCheck(); else ACT.workSubmit(); return; }
+  if(ev.key === 'Escape' && S.workForm){ ACT.workCancel(); return; }
   if(ev.key === 'Escape' && S.catFlow){ ACT.catCancel(); return; }
   if(ev.key === 'Escape'){ if(S.catchup){ ACT.closeCatch(); } else if(S.openId){ ACT.close(); } else if(S.navOpen){ ACT.navClose(); } }
 });
@@ -3449,7 +3565,7 @@ document.addEventListener('keydown', ev => {
     S.profile = store.get('liveProfile', null) || me?.profile || blankProfile();
     setLiveAccounts(me?.accounts || []);
     S.view = 'connect'; render({top:true});
-    toast(qs.get('auth_error') ? `Couldn't connect: ${qs.get('auth_error')}` : `${SLOT_NAMES[qs.get('connected')] || 'Inbox'} connected`);
+    toast(qs.get('auth_error') ? `Couldn't connect: ${qs.get('auth_error')}` : `${accById(qs.get('connected'))?.name || 'Inbox'} connected`);
     return;
   }
   if(S.mode === 'live' && me?.accounts?.length){

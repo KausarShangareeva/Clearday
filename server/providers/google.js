@@ -13,10 +13,10 @@ export const label = 'Gmail';
 export const configured = () => !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
 const redirectUri = () => `${process.env.APP_URL}/auth/google/callback`;
 
-export function authUrl(state) {
+export function authUrl(state, { loginHint } = {}) {
   return `${AUTH}?${new URLSearchParams({
     client_id: process.env.GOOGLE_CLIENT_ID, redirect_uri: redirectUri(), response_type: 'code',
-    scope: SCOPES.join(' '), access_type: 'offline', prompt: 'consent', include_granted_scopes: 'true', state,
+    scope: SCOPES.join(' '), access_type: 'offline', prompt: 'consent', include_granted_scopes: 'true', state, ...(loginHint ? { login_hint: loginHint } : {}),
   })}`;
 }
 
