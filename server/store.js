@@ -26,6 +26,8 @@ export function save() {
   }, 150);
 }
 
+// Server-wide counters (e.g. Condense totals), persisted in the same db.json.
+export const getGlobal = () => (db.global ||= {});
 export const getUser = uid => db.users[uid] || null;
 export function ensureUser(uid) {
   if (!db.users[uid]) db.users[uid] = { profile: null, accounts: {}, cache: {}, createdAt: Date.now() };
