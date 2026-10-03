@@ -777,6 +777,11 @@ a.btn:not(.primary){color:var(--ink)}
 .l2-provs + .l2-sub{margin-top:14px}
 @media (min-width:861px){ .l2-provs{margin-top:2.4vh} .l2-prov{height:min(36px,4.4vh);font-size:min(14.5px,1.8vh)} .l2-provs + .l2-sub{margin-top:1.6vh} }
 
+
+/* landing: folders float on the page, no panel or ask bar */
+.l2-board{background:none !important;box-shadow:none !important;padding:0 24px !important;border-radius:0}
+@media (min-width:861px){ .l2-board{justify-content:center} .l2-preview{margin-top:5vh} .l2-grid{grid-template-columns:repeat(4,minmax(0,min(250px,30vh,22%)))} }
+
 /* modal stacking fix */
 .modal > .overlay{z-index:0}
 .modal > .modal-card{z-index:1}
@@ -1840,7 +1845,6 @@ function vLanding(){
   <section class="l2-preview" aria-hidden="true">
     <div class="l2-board">
       <div class="l2-grid">${preview.map(([c, list]) => `<div class="folder-wrap">${folder(c, list.slice().sort((x, y) => ['awaiting', 'fyi', 'replied'].indexOf(x.status) - ['awaiting', 'fyi', 'replied'].indexOf(y.status)), false)}<span class="f-name">${esc(c.name)}</span></div>`).join('')}</div>
-      <div class="l2-ask"><span class="ask-orb"><span class="orb-bars"><i></i><i></i><i></i><i></i><i></i></span></span><span class="l2-ask-text">What still needs my reply?</span><span class="send"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></span></div>
     </div>
   </section>
   </div>`;
