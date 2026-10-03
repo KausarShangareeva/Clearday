@@ -2378,7 +2378,7 @@ function boardCats(){
 function assignCat(e){
   for(const c of (S.cats || [])){
     if(c.ids?.includes(e.id)) return c.id;
-    if(c.ai && S.mode === 'live' && e.category === c.name) return c.id;
+    if(c.ai && S.mode === 'live' && (e._raw.cat === c.name || e.category === c.name)) return c.id;
     if(c.auto){ const d = orgDomain(e.fromEmail); if((d && c.domains?.includes(d)) || c.senders?.includes(e.fromEmail)) return c.id; }
   }
   return 'acc:' + e.acc;
