@@ -3,7 +3,7 @@ import express from 'express';
 import crypto from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { getUser, ensureUser, deleteUser, save, pruneCache, encrypt, decrypt, sign, unsign, findUserByAccount, userCount } from './store.js';
+import { getUser, ensureUser, deleteUser, allUsers, auditPush, getAudit, save, pruneCache, encrypt, decrypt, sign, unsign, findUserByAccount, userCount } from './store.js';
 import * as google from './providers/google.js';
 import * as microsoft from './providers/microsoft.js';
 import * as mock from './providers/mock.js';
@@ -31,7 +31,7 @@ const AI_DAILY_CAP = () => +process.env.AI_DAILY_CAP || 400; // analysed emails 
 function aiRoom(u) {
   const day = new Date().toISOString().slice(0, 10);
   if (!u.usage || u.usage.day !== day) u.usage = { day, n: 0 };
-  return Math.max(0, AI_DAILY_CAP() - u.usage.n);
+  return Math.max(0, (Number.isFinite(u.aiCapOverride) ? u.aiCapOverride : AI_DAILY_CAP()) - u.usage.n); // u.aiCapOverride: per-user cap set by an admin
 }
 const spend = (u, n) => { aiRoom(u); u.usage.n += n; };
 
@@ -101,7 +101,8 @@ app.get('/api/health', (req, res) => res.json({
 }));
 app.get('/api/me', (req, res) => {
   const u = getUser(req.uid);
-  res.json({ accounts: publicAccounts(u), profile: u?.profile || null, boardCats: u?.boardCats || [], state: u?.state || null, hasSnapshot: !!u?.snapshot, snapshotAt: u?.snapshotAt || null, spamScan: u?.settings?.spamScan !== false, spamImportant: u ? memory.importantSpam(u).length : 0 });
+  if (u && Date.now() - (u.lastSeen || 0) > 5 * 60e3) { u.lastSeen = Date.now(); save(); } // rate-limited write
+  res.json({ isAdmin: isAdmin(u), createdAt: u?.createdAt || null, accounts: publicAccounts(u), profile: u?.profile || null, boardCats: u?.boardCats || [], state: u?.state || null, hasSnapshot: !!u?.snapshot, snapshotAt: u?.snapshotAt || null, spamScan: u?.settings?.spamScan !== false, spamImportant: u ? memory.importantSpam(u).length : 0 });
 });
 // What the browser used to keep only in localStorage (read/replied/done marks, news read, custom folders) now lives on the server too,
 // so a returning user (or a second device) gets exactly what they left.
@@ -135,6 +136,14 @@ app.delete('/api/me', async (req, res) => {
   const u = getUser(req.uid);
   if (u) for (const a of Object.values(u.accounts)) { try { await PROVIDERS[a.provider]?.revoke(decrypt(a.tokens)); } catch {} }
   deleteUser(req.uid); // takes the snapshot, memory and spam digest with it
+  itemCache.delete(req.uid);
+  res.json({ ok: true });
+});
+
+// Sign out: this browser becomes anonymous again. The user record stays on the server and comes back
+// when the same mailbox signs in again (see adoptOwner).
+app.post('/api/signout', (req, res) => {
+  setCookie(res, 'cd_sid', '', 0);
   itemCache.delete(req.uid);
   res.json({ ok: true });
 });
@@ -645,6 +654,84 @@ app.get('/api/logo', async (req, res) => {
   res.set({ 'Content-Type': hit.type, 'Cache-Control': 'public, max-age=604800', 'Content-Security-Policy': "default-src 'none'" });
   res.send(hit.buf);
 });
+
+
+// ================= ADMIN (owner-only; ADMIN_EMAILS) =================
+// Admin = any connected mailbox address is listed in ADMIN_EMAILS (comma-separated, case-insensitive).
+// Never returns tokens or mail text. Emails are masked unless ADMIN_SHOW_EMAILS=1.
+function isAdmin(u) {
+  const list = String(process.env.ADMIN_EMAILS || '').toLowerCase().split(',').map(x => x.trim()).filter(Boolean);
+  if (!list.length || !u) return false;
+  return Object.values(u.accounts || {}).some(a => list.includes(String(a.email || '').toLowerCase()));
+}
+const adminGuard = (minMs) => (req, res, next) => {
+  if (!isAdmin(getUser(req.uid))) return res.status(403).json({ error: 'Admins only' });
+  if (!limit('admin:' + req.path + ':' + req.uid, minMs)) return res.status(429).json({ error: 'One moment…' });
+  next();
+};
+const shortId = uid => crypto.createHash('sha256').update('cd-admin:' + uid).digest('hex').slice(0, 10);
+const findByShortId = id => allUsers().find(([uid]) => shortId(uid) === id) || null;
+const maskEmail = e => { const [l = '', d = ''] = String(e || '').split('@'); return d ? `${l.slice(0, 1)}***@${d}` : '***'; };
+const adminUserRow = (uid, u) => {
+  const accts = Object.values(u.accounts || {});
+  const day = new Date().toISOString().slice(0, 10);
+  const used = u.usage?.day === day ? u.usage.n : 0;
+  const c = u.condense && typeof u.condense === 'object' ? u.condense : null;
+  const primary = accts[0]?.email || '';
+  const show = process.env.ADMIN_SHOW_EMAILS === '1';
+  return {
+    id: shortId(uid), email: show ? primary : maskEmail(primary), emails: show ? accts.map(a => a.email) : undefined,
+    domains: [...new Set(accts.map(a => String(a.email || '').split('@')[1]).filter(Boolean))],
+    createdAt: u.createdAt || null, lastSeen: u.lastSeen || null,
+    mailboxes: accts.length, providers: [...new Set(accts.map(a => a.provider))],
+    mails: itemsOf(uid, u).length, snapshotBytes: u.snapshot ? u.snapshot.length : 0, spam: u.memory?.spam?.length || 0,
+    aiToday: used, aiCap: Number.isFinite(u.aiCapOverride) ? u.aiCapOverride : AI_DAILY_CAP(), capOverridden: Number.isFinite(u.aiCapOverride),
+    condense: c ? { calls: +c.calls || 0, saved: +c.saved || 0, inTokens: +c.inTokens || 0, outTokens: +c.outTokens || 0, fallbacks: +c.fallbacks || 0, lastStatus: String(c.lastStatus || '').slice(0, 60) } : null,
+    flags: [!accts.length && 'no mailbox', accts.some(a => a.error) && 'mailbox error', u.settings?.spamScan === false && 'spam scan off', isAdmin(u) && 'admin'].filter(Boolean),
+  };
+};
+app.get('/api/admin/overview', adminGuard(500), (req, res) => {
+  const now = Date.now(), day = new Date().toISOString().slice(0, 10);
+  const users = allUsers();
+  const rows = users.map(([uid, u]) => adminUserRow(uid, u));
+  const byProvider = {};
+  for (const [, u] of users) for (const a of Object.values(u.accounts || {})) byProvider[a.provider] = (byProvider[a.provider] || 0) + 1;
+  const sum = f => rows.reduce((n, r) => n + f(r), 0);
+  const withCondense = rows.filter(r => r.condense);
+  res.json({
+    totals: {
+      users: users.length,
+      active24h: users.filter(([, u]) => now - (u.lastSeen || 0) < 864e5).length,
+      active7d: users.filter(([, u]) => now - (u.lastSeen || 0) < 7 * 864e5).length,
+      mailboxes: sum(r => r.mailboxes), mailboxesByProvider: byProvider,
+      analysedToday: users.reduce((n, [, u]) => n + (u.usage?.day === day ? u.usage.n : 0), 0),
+      spamEntries: sum(r => r.spam), mailsInSnapshots: sum(r => r.mails), snapshotBytes: sum(r => r.snapshotBytes),
+      condenseSaved: withCondense.length ? withCondense.reduce((n, r) => n + r.condense.saved, 0) : null,
+    },
+    users: rows, audit: getAudit().slice(-50).reverse(), defaultCap: AI_DAILY_CAP(), showEmails: process.env.ADMIN_SHOW_EMAILS === '1',
+  });
+});
+app.post('/api/admin/users/:id/delete', adminGuard(800), async (req, res) => {
+  const hit = findByShortId(String(req.params.id));
+  if (!hit) return res.status(404).json({ error: 'No such user' });
+  const [uid, u] = hit;
+  if (uid === req.uid) return res.status(400).json({ error: 'Use "Delete my data" in the account menu for your own account.' });
+  for (const a of Object.values(u.accounts || {})) { try { await PROVIDERS[a.provider]?.revoke(decrypt(a.tokens)); } catch {} }
+  deleteUser(uid); itemCache.delete(uid);
+  auditPush({ by: shortId(req.uid), action: 'delete-user', target: req.params.id });
+  res.json({ ok: true });
+});
+app.put('/api/admin/users/:id', adminGuard(300), (req, res) => {
+  const hit = findByShortId(String(req.params.id));
+  if (!hit) return res.status(404).json({ error: 'No such user' });
+  const raw = req.body?.aiDailyCap;
+  if (raw !== null && !(Number.isInteger(raw) && raw >= 0 && raw <= 100000)) return res.status(400).json({ error: 'aiDailyCap must be an integer 0-100000, or null to reset' });
+  if (raw === null) delete hit[1].aiCapOverride; else hit[1].aiCapOverride = raw;
+  save();
+  auditPush({ by: shortId(req.uid), action: 'set-ai-cap', target: req.params.id, value: raw });
+  res.json({ ok: true, user: adminUserRow(hit[0], hit[1]) });
+});
+// ================= /ADMIN =================
 
 // ---------- static frontend ----------
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

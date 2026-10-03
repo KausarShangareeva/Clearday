@@ -964,6 +964,62 @@ body{font-family:var(--sans);letter-spacing:-.006em}
   .main{margin:0;border-radius:0;height:100%;box-shadow:none}
   .sheet{border-radius:0}
 }
+/* ---- account menu + admin (Users feature) ---- */
+.acct{position:relative;margin-bottom:6px}
+.acct-btn{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border-radius:10px;text-align:left;border:1px solid var(--line);background:var(--surface)}
+.acct-btn:hover{background:var(--hover)}
+.acct-av{flex:none;width:30px;height:30px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-weight:600;font-size:13px}
+.acct-t{min-width:0;flex:1;line-height:1.25}
+.acct-t b{display:block;font-weight:500;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acct-t span{display:block;font-size:12px;color:var(--ink3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acct-pop{position:absolute;left:0;right:0;bottom:calc(100% + 8px);background:var(--surface);border:1px solid var(--line2);border-radius:14px;box-shadow:var(--shadow);padding:8px;z-index:60}
+.acct-pop .who{padding:6px 8px 8px;font-size:13px;color:var(--ink2)}
+.acct-pop .who b{display:block;color:var(--ink);font-weight:500;font-size:14px}
+.acct-pop .mb{display:flex;align-items:center;gap:8px;padding:5px 8px;font-size:13px;color:var(--ink2);min-width:0}
+.acct-pop .mb img{width:16px;height:16px;flex:none;border-radius:3px}
+.acct-pop .mb span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acct-pop hr{border:0;border-top:1px solid var(--line);margin:6px 0}
+.acct-pop .mi{display:flex;align-items:center;gap:10px;width:100%;height:34px;padding:0 8px;border-radius:8px;font-size:14px;color:var(--ink);text-align:left}
+.acct-pop .mi:hover{background:var(--hover)}
+.acct-pop .mi.danger{color:var(--crit)}
+.acct-pop .mi .ni{color:var(--ink3);display:inline-flex}
+.acct-card{display:flex;align-items:center;gap:14px;padding:16px;border:1px solid var(--line);border-radius:16px;background:var(--surface);margin-bottom:22px;flex-wrap:wrap}
+.acct-card .acct-av{width:46px;height:46px;font-size:18px}
+.acct-card .meta{flex:1;min-width:180px}
+.acct-card .meta b{font-weight:500;font-size:16px;display:block}
+.acct-card .meta span{font-size:13.5px;color:var(--ink3)}
+.adm-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px}
+.adm-card{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:14px 16px}
+.adm-card .n{font-family:var(--serif);font-size:30px;line-height:1.1;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.adm-card .l{font-size:12.5px;color:var(--ink3);margin-top:2px}
+.adm-charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-bottom:18px}
+.adm-chart{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:14px 16px}
+.adm-chart h3{font-size:14px;font-weight:500;margin-bottom:8px}
+.adm-chart svg{width:100%;height:auto;display:block}
+.adm-chart text{fill:var(--ink2);font-size:12px;font-family:var(--sans)}
+.adm-chart text.v{fill:var(--ink);font-weight:500}
+.adm-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 12px}
+.adm-tools input[type=search],.adm-tools select,.adm-in{height:36px;border:1px solid var(--line2);border-radius:10px;background:var(--surface);padding:0 12px;min-width:0}
+.adm-tools input[type=search]{flex:1;min-width:160px}
+.adm-table{width:100%;border-collapse:collapse;font-size:13.5px}
+.adm-table th{text-align:left;font-weight:500;color:var(--ink3);font-size:12px;padding:8px 10px;border-bottom:1px solid var(--line)}
+.adm-table td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
+.adm-table tr.open td{background:var(--hover)}
+.adm-table .num{font-variant-numeric:tabular-nums}
+.adm-flag{display:inline-block;font-size:11.5px;padding:1px 7px;border-radius:999px;background:var(--sunk);color:var(--ink2);margin:0 4px 2px 0}
+.adm-manage{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:4px 0}
+.adm-audit{margin-top:22px;font-size:13px;color:var(--ink2)}
+.adm-audit li{padding:6px 0;border-top:1px solid var(--line);list-style:none}
+.adm-audit ul{padding:0;margin:8px 0 0}
+@media (max-width:860px){
+  .adm-table thead{display:none}
+  .adm-table,.adm-table tbody,.adm-table tr,.adm-table td{display:block;width:100%}
+  .adm-table tr{border:1px solid var(--line);border-radius:12px;padding:6px 4px;margin-bottom:10px;background:var(--surface)}
+  .adm-table tr.adm-man{padding:6px 4px}
+  .adm-table td{border:0;display:flex;justify-content:space-between;gap:12px;padding:5px 10px;text-align:right}
+  .adm-table td[data-l]:not([data-l=""])::before{content:attr(data-l);color:var(--ink3);text-align:left;flex:none}
+  .acct-pop{position:fixed;left:14px;right:14px;bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+}
 </style>
 </head>
 <body>
@@ -2349,6 +2405,7 @@ function pSettings(){
   const dark = document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
   const c = S.corr;
   return `<div class="page"><div class="page-h"><div><h1>Settings</h1><p>Your priority profile and what Clearday has learned from you.</p></div></div>
+  ${vAccountCard()}
   <div class="profile-out" style="margin-top:0">
     <div class="who">${esc(S.profile.name)} <span class="muted" style="font-weight:400">— ${esc(S.profile.roles.join(' + '))}</span></div>
     <div class="tiers">
@@ -2978,8 +3035,8 @@ const NAV = [
 ];
 function vApp(){
   const counts = {inbox:visible().length, important:matter().length, action:openActions().length, news:newsletters().length};
-  const pages = {board:pBoard, briefing:pBriefing, inbox:pInbox, important:pImportant, action:pAction, news:pNews, categories:pCategories, assistant:pAssistant, accounts:pAccounts, privacy:pPrivacy, settings:pSettings};
-  const nav = NAV.map(n => n === 'sep' ? '<div class="nav-sep"></div>' :
+  const pages = {admin:pAdmin, board:pBoard, briefing:pBriefing, inbox:pInbox, important:pImportant, action:pAction, news:pNews, categories:pCategories, assistant:pAssistant, accounts:pAccounts, privacy:pPrivacy, settings:pSettings};
+  const nav = (ME.isAdmin ? [...NAV, ['admin','shield','Admin']] : NAV).map(n => n === 'sep' ? '<div class="nav-sep"></div>' :
     `<button class="nav-i ${S.page===n[0]?'on':''}" data-act="go" data-v="${n[0]}"><span class="ni">${ICON(n[1])}</span>${n[2]}${counts[n[0]] != null ? `<span class="count">${counts[n[0]]}</span>` : ''}</button>`).join('');
   const accs = connectedAccs().map(a => `<button class="side-acc ${S.accounts[a.id].enabled === false ? 'off':''}" data-act="toggleAcc" data-id="${a.id}" title="Show or hide ${a.name}">${accDot(a.id)}${a.name}</button>`).join('');
   const bn = [['board','board','Board'],['briefing','briefing','Briefing'],['inbox','inbox','Inbox'],['action','check','Actions']];
@@ -2990,7 +3047,7 @@ function vApp(){
       <div class="nav-sep"></div>
       <div class="k" style="padding:0 10px">Inboxes</div>
       <div class="side-accs">${accs}</div>
-      <div class="side-bottom"><button class="nav-i" data-act="logout"><span class="ni">${ICON('exit')}</span>${S.mode === 'live' ? 'Back to start' : 'Exit demo'}</button></div>
+      <div class="side-bottom">${vAccountMenu()}<button class="nav-i" data-act="logout"><span class="ni">${ICON('exit')}</span>${S.mode === 'live' ? 'Back to start' : 'Exit demo'}</button></div>
     </aside>
     ${S.navOpen ? `<div class="overlay" style="z-index:54" data-act="navClose"></div>` : ''}
     <main class="main ${S.page === 'board' ? 'main-board' : ''}" id="main">
@@ -3561,6 +3618,131 @@ ${firstName()}`, tone:'Professional'}; render({noFocus:true}); document.getEleme
   logout(){ S.view = 'landing'; S.openId = null; persist(); render({top:true}); },
 };
 
+/* =========================================================================
+   Users: account menu, account card, admin dashboard
+   ========================================================================= */
+const ME = {isAdmin:false, createdAt:null};
+const initialOf = s => (String(s || '?').trim()[0] || '?').toUpperCase();
+const displayName = () => (S.profile?.name || '').trim() || (connectedAccs()[0]?.email || 'You').split('@')[0];
+function vAccountMenu(){
+  if(S.mode !== 'live') return '';
+  const accs = connectedAccs(), primary = accs[0]?.email || '';
+  const open = !!S.acctMenu;
+  return `<div class="acct">
+    ${open ? `<div class="acct-pop" role="menu" aria-label="Account" id="acctPop">
+      <div class="who">Signed in as<b>${esc(displayName())}</b></div>
+      ${accs.map(a => `<div class="mb" title="${esc(a.email)}">${provIcon(a.provider, 16) || ICON("mail", 16)}<span>${esc(a.email)}</span></div>`).join('') || '<div class="mb"><span>No inbox connected</span></div>'}
+      <hr>
+      <button class="mi" role="menuitem" data-act="acctSettings"><span class="ni">${ICON('sliders', 16)}</span>Settings</button>
+      <button class="mi" role="menuitem" data-act="signOut"><span class="ni">${ICON('exit', 16)}</span>Sign out</button>
+      <button class="mi" role="menuitem" data-act="switchAccount"><span class="ni">${ICON('users', 16)}</span>Switch account</button>
+      <hr>
+      <button class="mi danger" role="menuitem" data-act="acctDelete"><span class="ni">${ICON('trash', 16)}</span>Delete my data</button>
+    </div>` : ''}
+    <button class="acct-btn" data-act="acctMenu" id="acctBtn" aria-haspopup="menu" aria-expanded="${open}" aria-label="Account menu for ${esc(displayName())}">
+      <span class="acct-av" aria-hidden="true">${esc(initialOf(displayName()))}</span>
+      <span class="acct-t"><b>${esc(displayName())}</b><span>${esc(primary)}</span></span>
+    </button></div>`;
+}
+function vAccountCard(){
+  if(S.mode !== 'live') return '';
+  const n = connectedAccs().length;
+  const since = ME.createdAt ? new Date(ME.createdAt).toLocaleDateString('en-GB', {month:'long', year:'numeric'}) : '';
+  return `<div class="acct-card"><span class="acct-av" aria-hidden="true">${esc(initialOf(displayName()))}</span>
+    <div class="meta"><b>${esc(displayName())}</b><span>${esc(connectedAccs()[0]?.email || '')}<br>${n} connected ${n === 1 ? 'inbox' : 'inboxes'}${since ? ' · member since ' + since : ''}</span></div>
+    <button class="btn sm" data-act="signOut">Sign out</button></div>`;
+}
+async function doSignOut(msg){
+  try{ await api('/api/signout', {method:'POST'}); }catch(e){ toast(e.message); return false; }
+  store.clear();
+  try{ sessionStorage.setItem('clearday:flash', msg); }catch(e){}
+  location.href = location.pathname; return true;
+}
+Object.assign(ACT, {
+  acctMenu(){ S.acctMenu = !S.acctMenu; render({noFocus:true}); if(S.acctMenu) setTimeout(() => document.querySelector('#acctPop .mi')?.focus(), 0); else document.getElementById('acctBtn')?.focus(); },
+  acctSettings(){ S.acctMenu = false; ACT.go({dataset:{v:'settings'}}); },
+  acctDelete(){ S.acctMenu = false; ACT.deleteData(); },
+  signOut(){ S.acctMenu = false; doSignOut('Signed out. Your data is safe: sign in with the same inbox to get it back.'); },
+  switchAccount(){ S.acctMenu = false; doSignOut('Signed out. Continue with another Google or Microsoft account, or connect an inbox.'); },
+});
+document.addEventListener('click', ev => { if(S.acctMenu && !ev.target.closest('.acct')){ S.acctMenu = false; render({noFocus:true}); } });
+document.addEventListener('keydown', ev => {
+  if(!S.acctMenu) return;
+  const items = [...document.querySelectorAll('#acctPop .mi')];
+  if(ev.key === 'Escape'){ ev.stopPropagation(); S.acctMenu = false; render({noFocus:true}); document.getElementById('acctBtn')?.focus(); }
+  else if((ev.key === 'ArrowDown' || ev.key === 'ArrowUp') && items.length){ ev.preventDefault(); const i = items.indexOf(document.activeElement); items[(i + (ev.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus(); }
+}, true);
+
+/* ---- admin dashboard (only reachable when /api/me says isAdmin; the server re-checks every call) ---- */
+const ADM = {data:null, err:'', loading:false, sort:'lastSeen', q:'', open:null};
+const nfmt = n => Number(n || 0).toLocaleString('en-GB');
+const ago = t => { if(!t) return 'never'; const s = (Date.now() - t) / 1000; if(s < 90) return 'just now'; if(s < 5400) return Math.round(s / 60) + ' min ago'; if(s < 129600) return Math.round(s / 3600) + ' h ago'; return Math.round(s / 86400) + ' d ago'; };
+const kb = b => b < 1024 ? b + ' B' : b < 1048576 ? (b / 1024).toFixed(1) + ' KB' : (b / 1048576).toFixed(1) + ' MB';
+async function loadAdmin(){
+  ADM.loading = true; ADM.err = '';
+  try{ ADM.data = await api('/api/admin/overview'); }catch(e){ ADM.err = e.message; }
+  ADM.loading = false; if(S.view === 'app' && S.page === 'admin') render({noFocus:true});
+}
+function admBars(title, rows, colorOf){
+  const max = Math.max(1, ...rows.map(r => r[1])), h = 30, W = 300, lw = 78;
+  const summary = rows.map(r => `${r[0]}: ${r[1]}`).join(', ');
+  return `<div class="adm-chart"><h3>${esc(title)}</h3><svg viewBox="0 0 ${W} ${rows.length * h + 4}" role="img" aria-label="${esc(title + '. ' + summary)}">
+    ${rows.map((r, i) => { const w = Math.max(r[1] ? 3 : 0, (W - lw - 40) * r[1] / max); return `<text x="0" y="${i * h + 19}">${esc(r[0])}</text><rect x="${lw}" y="${i * h + 6}" width="${w}" height="16" rx="4" style="fill:${colorOf(r[0], i)}"/><text class="v" x="${lw + w + 6}" y="${i * h + 19}">${nfmt(r[1])}</text>`; }).join('')}</svg></div>`;
+}
+function pAdmin(){
+  const d = ADM.data;
+  const head = `<div class="page-h"><div><h1>Admin</h1><p>Who uses Clearday, and how much. Emails are masked and no mail text is ever shown here.</p></div><button class="btn sm" data-act="admRefresh" ${ADM.loading ? 'disabled' : ''}>${ADM.loading ? 'Loading…' : 'Refresh'}</button></div>`;
+  if(ADM.err) return `<div class="page">${head}<div class="ai-note"><span>⚠</span><span style="flex:1">${esc(ADM.err)}</span></div></div>`;
+  if(!d) return `<div class="page">${head}<p class="muted">Loading…</p></div>`;
+  const t = d.totals;
+  const cards = [[t.users, 'Users'], [t.active7d, 'Active in 7 days'], [t.active24h, 'Active in 24 hours'], [t.mailboxes, 'Connected inboxes'], [t.analysedToday, 'Mails analysed today'], [t.spamEntries, 'Spam digest entries'], [kb(t.snapshotBytes), `Snapshots (${nfmt(t.mailsInSnapshots)} mails)`]];
+  if(t.condenseSaved != null) cards.push([nfmt(t.condenseSaved), 'Tokens saved by Condense (est.)']);
+  const provCol = {google:'var(--acc-work)', microsoft:'var(--acc-personal)', yahoo:'var(--acc-startup)', mailru:'var(--acc-university)', mock:'var(--norm)'};
+  const provRows = Object.entries(t.mailboxesByProvider || {}).sort((a, b) => b[1] - a[1]);
+  const q = ADM.q.trim().toLowerCase();
+  const sorters = {lastSeen:(a, b) => (b.lastSeen || 0) - (a.lastSeen || 0), mailboxes:(a, b) => b.mailboxes - a.mailboxes, usage:(a, b) => b.aiToday - a.aiToday};
+  const rows = d.users.filter(u => !q || [u.email, u.id, ...u.domains, ...u.providers, ...u.flags].join(' ').toLowerCase().includes(q)).sort(sorters[ADM.sort]);
+  const tr = u => `<tr class="${ADM.open === u.id ? 'open' : ''}">
+    <td data-l="User"><div><b style="font-weight:500">${esc(u.email || '(no inbox)')}</b><br><span class="muted">${esc(u.id)}${u.domains.length ? ' · ' + esc(u.domains.join(', ')) : ''}</span><div>${u.flags.map(f => `<span class="adm-flag">${esc(f)}</span>`).join('')}</div></div></td>
+    <td data-l="Joined" class="num">${u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-GB') : '-'}</td>
+    <td data-l="Last seen" class="num">${ago(u.lastSeen)}</td>
+    <td data-l="Inboxes" class="num">${u.mailboxes} <span class="muted">${esc(u.providers.join(', '))}</span></td>
+    <td data-l="Mails" class="num">${nfmt(u.mails)}</td>
+    <td data-l="AI today / cap" class="num">${nfmt(u.aiToday)} / ${nfmt(u.aiCap)}${u.capOverridden ? ' <span class="adm-flag">custom</span>' : ''}</td>
+    <td data-l="Condense" class="num">${u.condense ? nfmt(u.condense.saved) + ' saved' : '-'}</td>
+    <td data-l=""><button class="btn sm" data-act="admOpen" data-id="${esc(u.id)}" aria-expanded="${ADM.open === u.id}">Manage</button></td></tr>${ADM.open === u.id ? `<tr class="open adm-man"><td colspan="8"><div class="adm-manage">
+        <label class="muted" for="admCap">Daily AI cap</label><input class="adm-in" id="admCap" type="number" min="0" max="100000" value="${u.aiCap}" style="width:96px">
+        <button class="btn sm" data-act="admCap" data-id="${esc(u.id)}">Save</button><button class="btn sm ghost" data-act="admCapReset" data-id="${esc(u.id)}">Reset to default</button>
+        <span style="flex:1"></span><input class="adm-in" id="admDel" placeholder="Type ${esc(u.id)} to delete" aria-label="Type the user id to confirm deletion" style="width:200px"><button class="btn sm" data-act="admDelete" data-id="${esc(u.id)}" style="color:var(--crit)">Delete user</button></div></td></tr>` : ''}`;
+  return `<div class="page">${head}
+    <div class="adm-cards">${cards.map(c => `<div class="adm-card"><div class="n">${typeof c[0] === 'number' ? nfmt(c[0]) : esc(c[0])}</div><div class="l">${esc(c[1])}</div></div>`).join('')}</div>
+    <div class="adm-charts">
+      ${admBars('Inboxes by provider', provRows.length ? provRows : [['none', 0]], (k, i) => provCol[k] || ['var(--acc-work)', 'var(--acc-personal)', 'var(--acc-startup)', 'var(--acc-university)'][i % 4])}
+      ${admBars('Users by recent activity', [['Total', t.users], ['7 days', t.active7d], ['24 hours', t.active24h]], () => 'var(--acc-work)')}
+    </div>
+    <div class="adm-tools"><input type="search" id="admQ" placeholder="Search users, domains, providers" aria-label="Search users" value="${esc(ADM.q)}">
+      <label class="muted" for="admSort">Sort by</label><select id="admSort"><option value="lastSeen" ${ADM.sort === 'lastSeen' ? 'selected' : ''}>Last seen</option><option value="mailboxes" ${ADM.sort === 'mailboxes' ? 'selected' : ''}>Inboxes</option><option value="usage" ${ADM.sort === 'usage' ? 'selected' : ''}>AI usage today</option></select></div>
+    <table class="adm-table"><thead><tr><th>User</th><th>Joined</th><th>Last seen</th><th>Inboxes</th><th>Mails</th><th>AI today / cap</th><th>Condense</th><th></th></tr></thead><tbody>${rows.map(tr).join('') || '<tr><td>No users match.</td></tr>'}</tbody></table>
+    <div class="adm-audit"><b style="font-weight:500;color:var(--ink)">Admin activity</b><ul>${d.audit.map(a => `<li>${new Date(a.at).toLocaleString('en-GB')} · ${esc(a.by)} · ${esc(a.action)} ${esc(a.target || '')}${a.value != null ? ' = ' + esc(a.value) : ''}</li>`).join('') || '<li>Nothing yet.</li>'}</ul></div>
+  </div>`;
+}
+Object.assign(ACT, {
+  admRefresh(){ loadAdmin(); render({noFocus:true}); },
+  admOpen(el){ ADM.open = ADM.open === el.dataset.id ? null : el.dataset.id; render({noFocus:true}); },
+  async admCap(el){
+    const v = document.getElementById('admCap')?.value;
+    try{ await api('/api/admin/users/' + el.dataset.id, {method:'PUT', body:{aiDailyCap: Math.floor(+v)}}); toast('Daily AI cap saved'); await loadAdmin(); }catch(e){ toast(e.message); }
+  },
+  async admCapReset(el){ try{ await api('/api/admin/users/' + el.dataset.id, {method:'PUT', body:{aiDailyCap: null}}); toast('Back to the default cap'); await loadAdmin(); }catch(e){ toast(e.message); } },
+  async admDelete(el){
+    if((document.getElementById('admDel')?.value || '').trim() !== el.dataset.id){ toast('Type the user id exactly to confirm'); return; }
+    try{ await api(`/api/admin/users/${el.dataset.id}/delete`, {method:'POST'}); ADM.open = null; toast('User deleted'); await loadAdmin(); }catch(e){ toast(e.message); }
+  },
+});
+{ const goBase = ACT.go; ACT.go = el => { goBase(el); if(el.dataset.v === 'admin') loadAdmin(); }; }
+document.addEventListener('input', ev => { if(ev.target.id === 'admQ'){ ADM.q = ev.target.value; render(); } });
+document.addEventListener('change', ev => { if(ev.target.id === 'admSort'){ ADM.sort = ev.target.value; render({noFocus:true}); } });
+
 document.addEventListener('click', ev => {
   const el = ev.target.closest('[data-act]');
   if(!el || el.disabled) return;
@@ -3616,6 +3798,8 @@ document.addEventListener('keydown', ev => {
   if(!LIVE.available){ if(S.mode === 'live'){ S.mode = 'demo'; S.profile = store.get('profile', null) || defaultProfile(); render(); } return; }
   const qs = new URLSearchParams(location.search);
   let me = null; try{ me = await api('/api/me'); }catch(e){}
+  ME.isAdmin = !!me?.isAdmin; ME.createdAt = me?.createdAt || null;
+  try{ const f = sessionStorage.getItem('clearday:flash'); if(f){ sessionStorage.removeItem('clearday:flash'); setTimeout(() => toast(f), 300); } }catch(e){}
   const hydrate = m => {
     if(m?.boardCats?.length){ S.cats = m.boardCats; saveCats(); }
     else if((S.cats || []).length) syncState();
