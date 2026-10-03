@@ -237,6 +237,32 @@ app.post('/api/chat', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ---------- Sender logos (organisation site icons, proxied + cached) ----------
+// Fetched server-side so the user's browser doesn't leak which senders they have to third parties.
+const logoCache = new Map();
+app.get('/api/logo', async (req, res) => {
+  const d = String(req.query.d || '').toLowerCase();
+  if (!/^(?!-)[a-z0-9-]{1,63}(\.[a-z0-9-]{1,63})*\.[a-z]{2,24}$/.test(d) || d.length > 120) return res.status(400).end();
+  let hit = logoCache.get(d);
+  if (hit === undefined) {
+    hit = null;
+    for (const url of [`https://${d}/apple-touch-icon.png`, `https://icons.duckduckgo.com/ip3/${d}.ico`, `https://${d}/favicon.ico`]) {
+      try {
+        const r = await fetch(url, { signal: AbortSignal.timeout(3500), redirect: 'follow' });
+        const type = (r.headers.get('content-type') || '').split(';')[0];
+        if (!r.ok || !/^image\/(png|jpeg|gif|webp|x-icon|vnd\.microsoft\.icon|ico)$/.test(type)) continue; // no SVG (could carry script)
+        const buf = Buffer.from(await r.arrayBuffer());
+        if (buf.length > 300 && buf.length < 400000) { hit = { buf, type }; break; }
+      } catch { /* try next source */ }
+    }
+    logoCache.set(d, hit);
+    if (logoCache.size > 3000) logoCache.delete(logoCache.keys().next().value);
+  }
+  if (!hit) return res.status(404).end();
+  res.set({ 'Content-Type': hit.type, 'Cache-Control': 'public, max-age=604800', 'Content-Security-Policy': "default-src 'none'" });
+  res.send(hit.buf);
+});
+
 // ---------- static frontend ----------
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 app.use(express.static(path.join(__dirname, '..', 'public'), { extensions: ['html'] }));

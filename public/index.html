@@ -6,7 +6,7 @@
 <title>Clearday — an AI chief of staff for your email</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,400&display=swap" rel="stylesheet">
 <style>
 :root{
   box-sizing:border-box;
@@ -470,7 +470,7 @@ textarea.input{height:auto;padding:12px 14px;line-height:1.55;resize:vertical}
 .letters{list-style:none;margin:0;padding:0;display:grid;gap:10px}
 .letters li.deal{animation:deal .5s cubic-bezier(.2,.85,.25,1) both;animation-delay:calc(var(--i) * 70ms)}
 @keyframes deal{from{opacity:0;transform:translate(-110px,-30px) rotate(-7deg) scale(.9)}}
-.letter{width:100%;display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:14px;align-items:start;text-align:left;padding:16px 18px;border-radius:14px;background:var(--surface);border:1px solid var(--line);box-shadow:0 1px 2px rgba(20,24,40,.05);transition:transform .15s,box-shadow .15s,border-color .15s;position:relative;overflow:hidden}
+.letter{width:100%;display:grid;grid-template-columns:22px 40px minmax(0,1fr) auto;gap:14px;align-items:start;text-align:left;padding:16px 18px;border-radius:14px;background:var(--surface);border:1px solid var(--line);box-shadow:0 1px 2px rgba(20,24,40,.05);transition:transform .15s,box-shadow .15s,border-color .15s;position:relative;overflow:hidden}
 .letter:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(20,24,40,.08)}
 .letter.awaiting{background:color-mix(in srgb,var(--c) 9%,var(--surface));border-color:color-mix(in srgb,var(--c) 30%,var(--line))}
 .letter.awaiting::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c)}
@@ -499,7 +499,8 @@ textarea.input{height:auto;padding:12px 14px;line-height:1.55;resize:vertical}
   .avatars{left:10px;bottom:10px}
   .av{width:22px;height:22px;font-size:9px;margin-left:-6px}
   .f-new{right:10px;bottom:13px;font-size:11px}
-  .av:nth-child(n+3){display:none}
+  .avatars .ob:nth-child(n+3){display:none}
+  .avatars .ob{--s:22px !important}
   .board-ai{margin-top:60px}
   .board-in > .board-grid{margin-top:48px}
   .pa-from{font-size:8.5px}
@@ -511,7 +512,9 @@ textarea.input{height:auto;padding:12px 14px;line-height:1.55;resize:vertical}
   .spread-side .folder .stamp,.spread-side .folder .avatars{display:none}
   .sp-name{margin-top:0;font-size:24px}
   .sp-stats,.meter,.spread-side > .btn{grid-column:1 / -1}
-  .letter{grid-template-columns:minmax(0,1fr);padding:14px}
+  .letter{grid-template-columns:36px minmax(0,1fr);padding:14px;gap:12px}
+  .letter .ob{--s:36px !important}
+  .l-status{grid-column:2}
   .l-num{display:none}
   .l-org{display:none}
   .l-status{justify-self:start}
@@ -545,6 +548,34 @@ html.theming, html.theming *{transition:background-color .35s ease, color .35s e
 .orb-chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px}
 .orb-chips .chip{background:var(--surface)}
 
+/* sender badges */
+.ob{position:relative;display:inline-grid;place-items:center;flex:none;width:var(--s,28px);height:var(--s,28px);font-weight:600;font-size:calc(var(--s,28px) * .38);letter-spacing:-.02em;line-height:1;overflow:hidden;color:hsl(var(--h) 45% 27%);background:hsl(var(--h) 60% 90%)}
+.ob.person{border-radius:50%}
+.ob.org{border-radius:calc(var(--s,28px) * .3);box-shadow:inset 0 0 0 1px rgba(20,24,40,.07)}
+.ob.more{border-radius:50%;background:var(--sunk);color:var(--ink2)}
+.ob img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#fff;padding:14%}
+:root[data-theme="dark"] .ob{color:hsl(var(--h) 70% 85%);background:hsl(var(--h) 30% 26%)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ob{color:hsl(var(--h) 70% 85%);background:hsl(var(--h) 30% 26%)}}
+.avatars .ob{border:2px solid var(--surface);margin-left:-7px;box-sizing:content-box}
+.avatars .ob:first-child{margin-left:0}
+.pa-top .ob{border:0}
+.paper.replied .ob{filter:grayscale(1)}
+.letter.replied .ob{filter:grayscale(1);opacity:.7}
+
+
+/* article source */
+a.btn{text-decoration:none}
+.news-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--ink3)}
+.news-meta b{color:var(--ink);font-weight:500}
+.news-meta .sep-dot{width:3px;height:3px;border-radius:50%;background:var(--ink3);opacity:.6}
+.news-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.src-card{display:grid;grid-template-columns:44px minmax(0,1fr);gap:14px;align-items:center;background:var(--surface);border:1px solid var(--ai-line);border-radius:1rem;padding:14px}
+.src-card > div > b{display:block;font-weight:500;line-height:1.3}
+.src-card > div > span{display:block;font-size:13px;color:var(--ink3);margin-top:2px}
+.src-card .btn{grid-column:1 / -1;justify-self:start}
+.fresh{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;color:var(--ok)}
+.fresh::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--ok)}
+
 /* mobile */
 .bottom-nav{display:none}
 @media (max-width:860px){
@@ -572,6 +603,90 @@ html.theming, html.theming *{transition:background-color .35s ease, color .35s e
   .modal-foot{padding:14px 20px}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ===== Unified visual system — DM Sans, monochrome with pastel tints, soft 1rem radii, pill controls ===== */
+:root{
+  --bg:#EFF2F3; --surface:#FFFFFF; --sunk:#E5E9EB; --hover:#F5F7F8;
+  --ink:#000000; --ink2:#3F3F3F; --ink3:#787878;
+  --line:#E5E9EB; --line2:#D9D9D9;
+  --accent:#000000; --accent-ink:#FFFFFF; --accent-soft:#E5E9EB;
+  --ai:#F3F3FF; --ai-line:#E3E3FF; --ai-ink:#4A42CC;
+  --crit:#E5484D; --imp:#E58A00; --norm:#787878; --low:#B9BFC4; --noise:#D9DEE1;
+  --acc-personal:#6D5DF0; --acc-university:#1C9AD6; --acc-startup:#EA4C89; --acc-work:#3A6FF0;
+  --ok:#14A06B; --unread:#EA4C89;
+  --board:#F7F9FA; --dot:#CBD2D6; --folder:#FFFFFF; --folder2:#F4F6F7; --glass:rgba(255,255,255,.72); --glass-line:rgba(255,255,255,.95); --paper-replied:#E5E9EB;
+  --shadow:0 1px 2px rgba(0,0,0,.04),0 12px 32px rgba(0,0,0,.06);
+  --sans:"DM Sans",Mazzard,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --serif:var(--sans);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#000000; --surface:#141414; --sunk:#1E1E1E; --hover:#1A1A1A; --ink:#FFFFFF; --ink2:#C7C7C7; --ink3:#8A8A8A; --line:#242424; --line2:#333333;
+  --accent:#FFFFFF; --accent-ink:#000000; --accent-soft:#262626; --ai:#14132A; --ai-line:#28264D; --ai-ink:#B6B1FF;
+  --low:#4A4A4A; --noise:#333333; --unread:#FF6FA8;
+  --board:#0A0A0A; --dot:#222222; --folder:#1A1A1A; --folder2:#141414; --glass:rgba(32,32,32,.72); --glass-line:rgba(255,255,255,.07); --paper-replied:#262626;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.4);
+}}
+:root[data-theme="dark"]{
+  --bg:#000000; --surface:#141414; --sunk:#1E1E1E; --hover:#1A1A1A; --ink:#FFFFFF; --ink2:#C7C7C7; --ink3:#8A8A8A; --line:#242424; --line2:#333333;
+  --accent:#FFFFFF; --accent-ink:#000000; --accent-soft:#262626; --ai:#14132A; --ai-line:#28264D; --ai-ink:#B6B1FF;
+  --low:#4A4A4A; --noise:#333333; --unread:#FF6FA8;
+  --board:#0A0A0A; --dot:#222222; --folder:#1A1A1A; --folder2:#141414; --glass:rgba(32,32,32,.72); --glass-line:rgba(255,255,255,.07); --paper-replied:#262626;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.4);
+}
+body{font-family:var(--sans);letter-spacing:-.006em}
+.hero h1,.f-out,.q h2,.analyze h2,.page-h h1,.brief-sentence,.news-i h3,.subj,.cu-h,.chat-hello h1,.board-head h1,.sp-name,.orb-title{font-family:var(--sans);font-weight:500;letter-spacing:-.035em}
+.hero h1{font-size:clamp(44px,6.2vw,78px);line-height:1;letter-spacing:-.05em}
+.brief-sentence{line-height:1.08;letter-spacing:-.04em}
+.brief-sentence .n,.f-out .n{font-size:1em;font-weight:500;letter-spacing:-.04em}
+.logo{font-weight:600;letter-spacing:-.03em;font-size:17px}
+.ico{display:block}
+.btn{border-radius:999px;height:42px;padding:0 20px;font-weight:500}
+.btn.sm{height:34px;padding:0 14px;border-radius:999px}
+.catch-btn,.board-btn{border-radius:999px;font-weight:500}
+.chip{font-weight:500;border-color:var(--line2)}
+.seg{border-radius:999px;background:var(--sunk)}
+.seg button{border-radius:999px}
+.input{border-radius:.75rem}
+.side{border-right:0;padding:18px 14px}
+.nav-i{border-radius:999px;height:38px;padding:0 14px;font-weight:500;color:var(--ink3);gap:11px}
+.nav-i:hover{background:var(--surface);color:var(--ink)}
+.nav-i.on{background:var(--ink);color:var(--surface);box-shadow:none}
+.nav-i .ni,.nav-i.on .ni{color:inherit;width:18px;display:grid;place-items:center}
+.nav-i.on .count{color:inherit;opacity:.6}
+.side-acc{border-radius:999px;font-weight:500}
+.main{margin:12px 12px 12px 0;border-radius:2rem;background:var(--surface);height:calc(100% - 24px);box-shadow:0 0 0 1px var(--line)}
+.main.main-board{background-color:var(--board);background-image:radial-gradient(circle,var(--dot) 1px,transparent 1.3px);background-size:22px 22px;background-attachment:local}
+.page-h p,.brief-date,.k{letter-spacing:0}
+.stat b{font-weight:500;letter-spacing:-.04em;font-size:26px}
+.letter{border-radius:1rem}
+.f-back,.f-front{border-radius:1.4rem}
+.f-back::before{border-radius:1.1rem 1.1rem 0 0}
+.paper{border-radius:.75rem}
+.f-emoji.f-ico{left:14px;top:14px;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 14%,var(--surface));color:var(--c);font-size:0}
+.paper.unseen::after,.l-new,.f-new i,.lg.unread{background:var(--unread)}
+.ai{border-radius:1.25rem}
+.draft{border-radius:1rem}
+.modal-card{border-radius:2rem}
+.sheet{border-radius:2rem 0 0 2rem}
+.funnel{border-radius:2rem}
+.f-item{border-radius:.75rem}
+.acc-list{border-radius:1.25rem}
+.cat{border-radius:1rem}
+.composer-box{border-radius:1.5rem}
+.orb-box{border-radius:999px}
+.send{border-radius:50%}
+.mic{border-radius:50%}
+.mic.live::after{border-radius:50%}
+.icon-btn{border-radius:50%}
+.toast{border-radius:999px;padding:11px 18px}
+.profile-out{border-radius:1.25rem}
+.ai-note{border-radius:1rem}
+.bottom-nav button.on{color:var(--ink)}
+.bottom-nav .ni svg{margin:0 auto}
+@media (max-width:860px){
+  .main{margin:0;border-radius:0;height:100%;box-shadow:none}
+  .sheet{border-radius:0}
+}
 </style>
 </head>
 <body>
@@ -808,7 +923,7 @@ ${sig}`,
   },
   {
     id:'u2', acc:'university', hoursAgo:9, from:'Prof. Karin Lindqvist', org:'Department of Business Studies', fromEmail:'karin.lindqvist@nordvik.edu',
-    subject:'Exam date for Strategy & Innovation moved', cat:'University', kind:'personal',
+    subject:'Exam date for Strategy & Innovation moved', cat:'University', kind:'personal', needsReply:false,
     body:`Dear students,
 
 Due to a room booking conflict, the written exam for Strategy & Innovation (FE2104) has moved from ${fmtDay(D.examOld)} to ${fmtDay(D.examNew)}, 09:00–13:00, Hall B.
@@ -938,84 +1053,98 @@ Mika`,
     summary:'Mika uploaded draft project slides and will merge everyone\'s parts Sunday evening.'
   },
   // newsletters
-  {
-    id:'n1', acc:'personal', hoursAgo:4, from:'Model Weekly', org:'Newsletter', fromEmail:'hello@modelweekly.news',
-    subject:'Smaller models, longer memory', cat:'News', kind:'newsletter', readMin:9,
-    body:`This week in AI: two labs shipped compact models with very long context windows at a fraction of last year's flagship prices.
-
-Early benchmarks show they trail the largest models on multi-step reasoning, but hold up well on extraction and summarisation tasks.
-
-Also in this issue: a new open-weight model aimed at on-device use; a study finding that agent reliability drops sharply after ten or more consecutive tool calls; and reminders that several providers are retiring older model versions over the coming quarter.
-
-[Full newsletter continues for another 2,000 words with benchmarks, links and commentary.]`,
-    base:'normal', reasons:['Newsletter you follow: AI & technology','No action needed'],
-    summary:'Two labs released smaller, cheaper models that can read much longer documents in one go.',
-    sums:{
-      one:'Two labs released smaller, cheaper models that can read much longer documents in one go.',
-      s30:'Two AI labs released compact models with context windows big enough to process whole contracts or patient files at once, priced well below last year\'s flagships. They trail the largest models on reasoning but hold up on extraction and summarisation. Long-document workflows just got a lot cheaper.',
-      m2:'Two AI labs released compact models with context windows big enough to process whole contracts or patient files at once, priced well below last year\'s flagships. They trail the largest models on reasoning but hold up on extraction and summarisation.\n\nThe issue also covers a new open-weight model for on-device use, a study showing agent reliability drops sharply after ten or more tool calls in a row, and a reminder that several providers are retiring older model versions next quarter — worth checking which versions your product depends on.',
-      detailed:'Main story: two labs shipped compact long-context models at much lower prices. Benchmarks put them behind flagship models on multi-step reasoning, but close on extraction and summarisation — the kind of work most document products actually do.\n\nOn-device: a new open-weight model targets laptops and phones, which matters for privacy-sensitive products that can\'t send data to the cloud.\n\nAgents: a study found reliability drops sharply after about ten consecutive tool calls. The authors recommend shorter plans, checkpoints, and letting users confirm before irreversible steps.\n\nHousekeeping: several providers are retiring older model versions over the next quarter. Check your pinned versions and test migrations early.'
-    },
-    why:'You\'re building Clinicflow on LLM APIs. Cheaper long-context models could cut the cost of summarising patient intake forms, and the retirement notices may affect the model versions you use.'
-  },
-  {
-    id:'n2', acc:'startup', hoursAgo:16, from:'Founder Notes', org:'Newsletter', fromEmail:'letters@foundernotes.eu',
-    subject:'What seed rounds look like in Europe this autumn', cat:'News', kind:'newsletter', readMin:7,
-    body:`Seed rounds are taking longer to close this autumn. Investors we spoke to are spending more time on revenue quality, and pilots on their own carry less weight than a year ago.
-
-What moves conversations forward: a clear story from pilot to paid contract — how many pilots, how many converted, at what price.
-
-Healthcare and vertical AI remain among the more active categories.
-
-[Full essay continues with founder interviews and term-sheet examples.]`,
-    base:'normal', reasons:['Newsletter you follow: startups & funding','No action needed'],
-    summary:'Seed rounds in Europe are closing more slowly, and investors want a clear pilot-to-paid story.',
-    sums:{
-      one:'Seed rounds in Europe are closing more slowly, and investors want a clear pilot-to-paid story.',
-      s30:'Founders and investors say seed rounds are taking longer this autumn, with more diligence on revenue quality. Pilots alone carry less weight; what helps is showing how pilots turn into paid contracts. Healthcare and vertical AI remain active.',
-      m2:'Founders and investors say seed rounds are taking longer this autumn, with more diligence on revenue quality. Pilots alone carry less weight; what helps is showing how pilots turn into paid contracts. Healthcare and vertical AI remain active.\n\nThe piece recommends preparing a simple conversion story — pilots started, pilots converted, price — and warns against chasing valuation at the expense of terms.',
-      detailed:'Timing: rounds take longer to close, with more diligence calls and reference checks.\n\nWhat investors want: evidence that pilots convert. A simple table of pilots started, converted and at what price beats a long traction slide.\n\nSectors: healthcare and vertical AI are among the more active categories.\n\nAdvice: optimise for clean terms and the right partner rather than headline valuation; keep 18+ months of runway when you can.'
-    },
-    why:'Maria at Northwind asked exactly about pilot-to-paid conversion. This is the question to prepare for before your call.'
-  },
-  {
-    id:'n3', acc:'work', hoursAgo:22, from:'Nordic Tech Digest', org:'Newsletter', fromEmail:'digest@nordictech.news',
-    subject:'EU AI Act: what founders should prepare for next', cat:'News', kind:'newsletter', readMin:6,
-    body:`The next phase of the EU AI Act brings more obligations for AI systems used in sensitive areas such as health, education and employment.
-
-Expect requirements around documentation, human oversight and data quality. Smaller companies get some support measures, but our contributors recommend starting documentation now rather than retrofitting it later.
-
-[Full digest continues with a checklist and expert commentary.]`,
-    base:'normal', reasons:['Newsletter you follow: EU regulation','No action needed'],
-    summary:'The next phase of the EU AI Act adds obligations for AI used in sensitive areas like health.',
-    sums:{
-      one:'The next phase of the EU AI Act adds obligations for AI used in sensitive areas like health.',
-      s30:'The digest walks through what comes next under the EU AI Act. AI used in sensitive areas such as healthcare may face requirements on documentation, human oversight and data quality. Smaller companies get some support, but starting documentation early is strongly recommended.',
-      m2:'The digest walks through what comes next under the EU AI Act. AI used in sensitive areas such as healthcare may face requirements on documentation, human oversight and data quality. Smaller companies get some support, but starting documentation early is strongly recommended.\n\nIt includes a short checklist: map where AI is used in your product, record training and evaluation data sources, define when a human reviews outputs, and keep logs.',
-      detailed:'Scope: obligations depend on how risky the use case is; health, education and employment are typical sensitive areas.\n\nLikely requirements: technical documentation, data quality controls, human oversight, logging and transparency to users.\n\nFor startups: support measures exist, but contributors recommend building documentation into your process now.\n\nChecklist: map AI use, record data sources, define human review points, keep logs, assign an owner.'
-    },
-    why:'Clinicflow works with clinics and patient data, so it may fall into the stricter categories. Worth a short check with an advisor before you scale the pilot.'
-  },
-  {
-    id:'n4', acc:'university', hoursAgo:28, from:'Campus Weekly', org:'Nordvik University', fromEmail:'news@nordvik.edu',
-    subject:'Career fair, new study rooms and longer library hours', cat:'News', kind:'newsletter', readMin:4,
-    body:`Nordvik's autumn career fair takes place on ${fmtDay(D.fair)} in the main hall, with more than 60 employers including several startups.
-
-New study rooms on floor 3 of the library can be booked from Monday, and opening hours are extended to 22:00 on weekdays during the exam period.
-
-[More campus news inside.]`,
-    base:'normal', reasons:['University newsletter','No action needed'],
-    summary:'Career fair on '+fmtShort(D.fair)+'; library open until 22:00 on weekdays during exams.',
-    sums:{
-      one:'Career fair on '+fmtShort(D.fair)+'; library open until 22:00 on weekdays during exams.',
-      s30:'The autumn career fair is on '+fmtDay(D.fair)+' in the main hall, with 60+ employers including startups. New bookable study rooms open on library floor 3 from Monday, and the library stays open until 22:00 on weekdays during exams.',
-      m2:'The autumn career fair is on '+fmtDay(D.fair)+' in the main hall, with 60+ employers including startups. New bookable study rooms open on library floor 3 from Monday, and the library stays open until 22:00 on weekdays during exams.\n\nThe student union is also looking for volunteers for the fair, and the café in building C reopens after renovation.',
-      detailed:'Career fair: '+fmtDay(D.fair)+', main hall, 60+ employers.\n\nLibrary: new study rooms on floor 3 (book from Monday); open until 22:00 on weekdays during exams.\n\nOther: volunteers wanted for the fair; building C café reopens.'
-    },
-    why:'Your exam moved earlier — the longer library hours land right in your revision window.'
-  }
   ];
 
+  // Real, recent IT articles (Medium Daily Digest picks). Summaries are Clearday's own words,
+  // based on the publicly visible part of each story; the button opens the original.
+  const NEWS = [
+  {
+    id:'n1', acc:'personal', hoursAgo:3, from:'Medium Daily Digest', org:'Python in Plain English', fromEmail:'noreply@medium.com',
+    subject:'10 Programming Concepts That Took Me Years to Understand — Until I Saw These Examples', cat:'News', kind:'newsletter', readMin:6,
+    url:'https://python.plainenglish.io/10-programming-concepts-that-took-me-years-to-understand-until-i-saw-these-examples-c323f0c10891',
+    site:'plainenglish.io', pub:'Python in Plain English', author:'Abdul Ahad', published:'2026-09-07', platform:'Medium',
+    body:`From today's Medium Daily Digest.\n\n"10 Programming Concepts That Took Me Years to Understand — Until I Saw These Examples"\nby Abdul Ahad, in Python in Plain English (6 min read)\n\nOpen the original article with the button above.`,
+    base:'normal', reasons:['In your Medium Daily Digest','Matches your interest: programming & AI'],
+    summary:'A developer walks through ten programming concepts, starting with closures, using small working examples instead of abstract definitions.',
+    catch:'Python in Plain English explains ten tricky programming concepts with hands-on examples.',
+    sums:{
+      one:'Ten hard-to-grasp programming concepts, each explained through a small working example.',
+      s30:'Abdul Ahad revisits ten concepts he kept looking up for years and explains each through a project he built around it. It opens with closures, framed as a way for a function to remember state without a class. The angle is practical: patterns many Python developers misuse, shown so they finally make sense.',
+      m2:'Abdul Ahad revisits ten concepts he kept looking up for years and explains each through a project he built around it. It opens with closures, framed as a way for a function to remember state without a class.\n\nThe article is aimed at developers who already write Python but feel shaky on the ideas behind the code. Each concept gets a short, runnable example and a note on where it helps in automation work. It is a quick refresher rather than a deep reference.',
+      detailed:'Who it is for: developers who write Python daily but keep re-googling the same core ideas.\n\nApproach: instead of definitions, each of the ten concepts is tied to a small project the author built, so the example does the explaining.\n\nStarting point: closures, presented as functions that carry hidden state, a lighter alternative to writing a class.\n\nTheme: the patterns are chosen for automation work, where getting them right saves repeated manual fixes.\n\nNote: it is a member story on Medium; the opening section is free to read.'
+    },
+    why:'You write Python for your bots and scripts. A 6-minute refresher on closures and similar patterns can make that code cleaner.'
+  },
+  {
+    id:'n2', acc:'startup', hoursAgo:5, from:'Medium Daily Digest', org:'CodeToDeploy', fromEmail:'noreply@medium.com',
+    subject:'How To Run Claude Like a Tech Lead, Not a Senior Engineer', cat:'News', kind:'newsletter', readMin:11,
+    url:'https://medium.com/codetodeploy/how-to-run-claude-like-a-tech-lead-not-a-senior-engineer-fba295ade37d',
+    site:'medium.com', pub:'CodeToDeploy', author:'Jerry PM', published:'2026-09-01', platform:'Medium',
+    body:`From today's Medium Daily Digest.\n\n"How To Run Claude Like a Tech Lead, Not a Senior Engineer"\nby Jerry PM, in CodeToDeploy (11 min read)\n\nOpen the original article with the button above.`,
+    base:'normal', reasons:['In your Medium Daily Digest','Matches your interest: AI & technology'],
+    summary:'An iOS engineer describes moving from pairing with one AI coding session to coordinating several in parallel, while still reviewing everything that ships.',
+    catch:'CodeToDeploy: how one engineer runs several AI coding sessions at once like a tech lead.',
+    sums:{
+      one:'Managing several AI coding agents in parallel, the way a tech lead manages a team.',
+      s30:'Jerry PM, an iOS engineer, explains how his work shifted from briefing one AI session to supervising four at once: one building a feature, one testing in the simulator, one running a migration, one reviewing a pull request. The point is that the human job becomes coordination and review, not typing.',
+      m2:'Jerry PM, an iOS engineer, explains how his work shifted from briefing one AI session to supervising four at once: one building a feature, one testing in the simulator, one running a migration, one reviewing a pull request.\n\nIt builds on his earlier advice to treat the assistant like a junior teammate: brief it well, plan before coding, and read the diff. This piece is the next step, about keeping quality high when several agents work in parallel and you only put your name on code you have actually checked.',
+      detailed:'Starting point: an earlier article by the same author on treating an AI assistant like a junior teammate, with clear briefs, a plan before code, and diff review.\n\nThe shift: around mid-year his setup became four parallel sessions, each with its own task (feature work, simulator testing, a migration in a separate worktree, and PR review).\n\nThe argument: at that scale the engineer acts as a tech lead. The skill is splitting work, setting boundaries for each session, and reviewing results.\n\nStandard: only ship code you would sign your own name to.\n\nNote: member story on Medium; the introduction is free.'
+    },
+    why:'You are building a hackathon product with AI tools on a deadline. Running parallel sessions with clear review steps is exactly that workflow.'
+  },
+  {
+    id:'n3', acc:'work', hoursAgo:7, from:'Medium Daily Digest', org:'Javarevisited', fromEmail:'noreply@medium.com',
+    subject:'How I Design APIs As Senior Developer For Better Results', cat:'News', kind:'newsletter', readMin:10,
+    url:'https://medium.com/javarevisited/how-i-design-apis-as-senior-developer-for-better-results-7209d40e6a29',
+    site:'medium.com', pub:'Javarevisited', author:'Vinod Pal', published:'2026-09-06', platform:'Medium',
+    body:`From today's Medium Daily Digest.\n\n"How I Design APIs As Senior Developer For Better Results"\nby Vinod Pal, in Javarevisited (10 min read)\n\nOpen the original article with the button above.`,
+    base:'normal', reasons:['In your Medium Daily Digest','Relevant to your web development work'],
+    summary:'A full-stack developer redesigns a real Orders API for a mobile app and shows which early design decisions most teams skip.',
+    catch:'Javarevisited: a senior developer redesigns a messy Orders API step by step.',
+    sums:{
+      one:'A step-by-step redesign of a real Orders API, focused on decisions made before writing code.',
+      s30:'Vinod Pal reviews the Orders API behind his team\'s new mobile app. It looked fine at first but had serious problems once read closely. He walks through the redesign: the basic decisions most developers know, then the often-ignored ones where bad API design really starts to hurt. His thesis: most bad APIs come from rushing, not from bad developers.',
+      m2:'Vinod Pal reviews the Orders API behind his team\'s new mobile app. It looked fine at first but had serious problems once read closely.\n\nHe walks through the redesign in order: the basic decisions most developers already know, then the often-ignored ones where bad API design really starts to hurt. Examples include endpoint naming such as a getOrderById-style route and the shape of the responses. His thesis is that most bad APIs come from rushing, not from bad developers, and that the important choices happen before the first line of API code.',
+      detailed:'Context: an existing Orders API powering a new mobile app, reviewed by the author last quarter.\n\nProblem: it looked acceptable at a glance but had serious issues on a careful read, including action-style endpoint names and response design.\n\nMethod: a redesign that starts with familiar basics and then moves to the decisions teams usually skip.\n\nThesis: rushed developers, not bad ones, write most bad APIs; the key work happens before coding.\n\nNote: member story on Medium; a free link is offered in the article.'
+    },
+    why:'You build websites and bot backends in Node.js. These API design habits apply directly to Clearday\'s own server endpoints.'
+  },
+  {
+    id:'n4', acc:'university', hoursAgo:9, from:'Medium Daily Digest', org:'Python in Plain English', fromEmail:'noreply@medium.com',
+    subject:'10 MCP Servers Every Local AI Developer Should Install', cat:'News', kind:'newsletter', readMin:8,
+    url:'https://python.plainenglish.io/10-mcp-servers-every-local-ai-developer-should-install-3d80ddb24001',
+    site:'plainenglish.io', pub:'Python in Plain English', author:'Arham Ali', published:'2026-09-17', platform:'Medium',
+    body:`From today's Medium Daily Digest.\n\n"10 MCP Servers Every Local AI Developer Should Install"\nby Arham Ali, in Python in Plain English (8 min read)\n\nOpen the original article with the button above.`,
+    base:'normal', reasons:['In your Medium Daily Digest','Matches your interest: AI & technology'],
+    summary:'A guide to Model Context Protocol servers that let a locally running AI model reach files, databases, Git, browsers and more.',
+    catch:'Python in Plain English lists ten MCP servers that connect local AI models to your files and tools.',
+    sums:{
+      one:'Ten MCP servers that give a local AI model access to files, databases, Git and the web.',
+      s30:'Arham Ali starts from a common frustration: a local AI model is smart but blind, so you end up copying code back and forth by hand. Model Context Protocol servers fix that by connecting the model to local files, databases, Git repositories, browsers and more. The article picks ten worth installing.',
+      m2:'Arham Ali starts from a common frustration: a local AI model is smart but blind. It cannot see your files, read current documentation, inspect your repository or query your database, so you end up acting as its eyes and hands by copying code back and forth.\n\nModel Context Protocol servers fix that by giving the model controlled access to those resources. The article picks ten servers worth installing for everyday development. One reader comment adds a sensible caution: start with least-privilege access and separate read-only tools from ones that can write.',
+      detailed:'Problem: a local model running without cloud fees still cannot see files, docs, repositories or databases, so developers copy and paste between editor and chat.\n\nIdea: Model Context Protocol (MCP) servers expose those resources to the model through a standard interface.\n\nContent: a shortlist of ten servers covering files, databases, Git, browsers and other tools.\n\nWorth adding: grant the minimum access needed, keep read-only and write tools separate, and pin versions before connecting real data.\n\nNote: member story on Medium; the introduction is free.'
+    },
+    why:'Clearday already connects AI to real data (Gmail and Outlook). The least-privilege points are the same ones judges will ask you about.'
+  },
+  {
+    id:'n5', acc:'personal', hoursAgo:12, from:'Medium Daily Digest', org:'Scott Batson', fromEmail:'noreply@medium.com',
+    subject:'What Should Programmers Do While the AI Writes Code?', cat:'News', kind:'newsletter', readMin:4,
+    url:'https://scottbatson.dev/what-should-programmers-do-while-the-ai-writes-code-a2ce2e6de88e',
+    site:'scottbatson.dev', pub:'Medium', author:'Scott Batson', published:'2026-08-31', platform:'Medium',
+    body:`From today's Medium Daily Digest.\n\n"What Should Programmers Do While the AI Writes Code?"\nby Scott Batson, on Medium (4 min read)\n\nOpen the original article with the button above.`,
+    base:'normal', reasons:['In your Medium Daily Digest','Popular: hundreds of reader responses'],
+    summary:'A developer argues that AI speed tempted him to take on five times as much work at once, and that the time AI saves should not be filled with yet more AI loops.',
+    catch:'Scott Batson on why the time AI saves you shouldn\'t go into starting even more AI tasks.',
+    sums:{
+      one:'AI made him five times faster, so he took on five times more work, and lost control.',
+      s30:'Scott Batson describes the first rush of AI-assisted coding: tasks that took days took hours, so he started saying yes to everything, from bug fixes to new pages and admin tools, with stacks of pull requests open at once. His point is that more parallel work is not the right use of the speed. The subtitle sums it up: don\'t just start another AI coding loop.',
+      m2:'Scott Batson describes the first rush of AI-assisted coding: tasks that took days took hours, and he felt about five times as productive.\n\nThe natural reaction, shared by many of his peers, was to take on five times as much work: infrastructure bugs, new settings pages, admin tools, with AI also writing tickets and summaries. He ended up with stacks of pull requests and the feeling of no longer being in control. The piece asks what programmers should do with the time AI frees up, and the answer is not another coding loop. It drew hundreds of responses from readers.',
+      detailed:'The rush: AI turned multi-day tasks into hours, roughly a fivefold speed-up for the author.\n\nThe trap: matching that speed with five times the scope, leading to many open pull requests and AI writing tickets, threads and summaries.\n\nThe cost: losing control of the work even while output went up.\n\nThe question: what to do while the AI is writing code. The author\'s answer is not to start yet another AI loop.\n\nReception: one of the more discussed developer posts of the month, with hundreds of responses.'
+    },
+    why:'You are juggling a degree, client work, bots and this hackathon. A 4-minute read on not overloading yourself just because AI makes things faster.'
+  }
+  ];
+  NEWS.forEach(x => detailed.push(x));
   extra.forEach(x => detailed.push(x));
   // Lower-priority mail, generated compactly: [acc, from, email, subject, snippet, cat, priority, kind, reason, hoursAgo]
   const F = [
@@ -1025,7 +1154,6 @@ New study rooms on floor 3 of the library can be booked from Monday, and opening
     ['personal','Foodie','hello@foodie.se','Free delivery this weekend','Order from 200+ restaurants with free delivery.','Promotions','noise','promo','Marketing email',12],
     ['personal','Parcelly','tracking@parcelly.se','Your parcel is on its way','Expected delivery tomorrow between 12:00 and 16:00.','Notifications','low','notice','Delivery update — no action needed',13],
     ['personal','SkyNordic','offers@skynordic.com','Weekend flights from 499 SEK','Grab a city break before prices go up.','Promotions','noise','promo','Marketing email',21],
-    ['personal','Phone','noreply@phone.com','Your weekly screen time report','Screen time was down 12% this week.','Notifications','noise','notice','Automated report',23],
 
     ['university','Nordvik Learn','noreply@learn.nordvik.edu','New announcement in FE2104','Lecture slides for week 6 are now available.','University','low','notice','Course platform notification',4],
     ['university','Nordvik Library','library@nordvik.edu','Loan due in 7 days','"Competitive Strategy" is due back next week.','University','low','notice','Reminder with plenty of time',6],
@@ -1213,7 +1341,7 @@ function defaultProfile(){
 }
 const S = {
   view: store.get('view', 'landing'),
-  page: 'briefing',
+  page: 'board',
   step: 0,
   profile: store.get('profile', null) || defaultProfile(),
   accounts: store.get('accounts', {}),
@@ -1363,6 +1491,30 @@ function vConnectLive(){
       </div>
     </div></div></div>`;
 }
+
+
+/* ---------- Line icon set (24px grid, 1.7 stroke) ---------- */
+const ICONS = {
+  board:'<path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H9l2 2h7.5A2.5 2.5 0 0 1 21 9.5v7a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 16.5z"/>',
+  briefing:'<path d="M12 3.5v2.5M5.7 7.2l1.6 1.6M18.3 7.2l-1.6 1.6M3 15h2.2M18.8 15H21M8 15a4 4 0 0 1 8 0M3 19h18"/>',
+  inbox:'<path d="M3 13.5h5l1.5 2.5h5l1.5-2.5h5"/><path d="M5.6 5h12.8l2.6 8.5V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4.5z"/>',
+  flag:'<path d="M5.5 21V4.5M5.5 4.5h11l-2.2 4 2.2 4h-11"/>',
+  check:'<circle cx="12" cy="12" r="8.5"/><path d="m8.6 12.3 2.4 2.4 4.4-4.9"/>',
+  news:'<rect x="3.5" y="4.5" width="13" height="15" rx="2"/><path d="M16.5 8.5h2a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-13M7 9h6M7 12.5h6M7 16h3.5"/>',
+  grid:'<rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/>',
+  link:'<path d="M10 14a4 4 0 0 0 5.7 0l3-3A4 4 0 0 0 13 5.3l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3A4 4 0 0 0 11 18.7l1-1"/>',
+  shield:'<path d="M12 3.2 5 6v5.2c0 4.3 2.9 7.7 7 9.6 4.1-1.9 7-5.3 7-9.6V6z"/><path d="m9.3 12 1.9 1.9 3.6-3.8"/>',
+  sliders:'<path d="M4 7.5h9.5M18 7.5h2M4 16.5h3.5M12 16.5h8"/><circle cx="15.8" cy="7.5" r="2.2"/><circle cx="9.8" cy="16.5" r="2.2"/>',
+  exit:'<path d="M14.5 4H18a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3.5M10 8l-4 4 4 4M6 12h10"/>',
+  menu:'<path d="M4 7h16M4 12h16M4 17h10"/>',
+  spark:'<path d="M12 3.5 13.9 9l5.6 1.9-5.6 1.9L12 18.5l-1.9-5.7-5.6-1.9L10.1 9z"/>',
+  user:'<circle cx="12" cy="8.2" r="3.6"/><path d="M5 20a7 7 0 0 1 14 0"/>',
+  cap:'<path d="M2.5 9.2 12 4.8l9.5 4.4-9.5 4.4z"/><path d="M6.6 11.2v4.3c0 1.5 2.4 3 5.4 3s5.4-1.5 5.4-3v-4.3M21.5 9.2v5"/>',
+  bolt:'<path d="M13.2 3 5.5 13.6h5.8l-.9 7.4 7.8-10.6h-5.8z"/>',
+  briefcase:'<rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M9 7V5.6A1.6 1.6 0 0 1 10.6 4h2.8A1.6 1.6 0 0 1 15 5.6V7M3 12.5h18"/>',
+};
+const ICON = (name, size = 18) => `<svg class="ico" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ''}</svg>`;
+const ACC_SVG = {personal:'user', university:'cap', startup:'bolt', work:'briefcase'};
 
 const SUN_SVG = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/></svg>';
 const MOON_SVG = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>';
@@ -1557,12 +1709,21 @@ function newsItem(e, compact){
   const len = S.sumLen[e.id] || 's30';
   const text = e.lengths ? e.lengths[len] : e.summary;
   return `<article class="news-i">
-    <div class="news-src">${accDot(e.acc)}${esc(e.from)}<span class="readtime">${e.readMin}-minute read, summarised</span></div>
+    ${articleMeta(e)}
     <h3><button data-act="open" data-id="${e.id}">${esc(e.subject)}</button></h3>
     ${compact ? '' : `<div style="margin-top:10px">${segLen(e.id, len)}</div>`}
     <p class="news-sum">${esc(text).replace(/\n\n/g,'<br><br>')}</p>
     ${e.why ? `<p class="news-why"><b>✦ Why it matters to you</b><span>${esc(e.why)}</span></p>` : ''}
+    ${e._raw.url ? `<div class="news-actions"><a class="btn sm primary" href="${esc(e._raw.url)}" target="_blank" rel="noopener">Read the original on ${esc(hostOf(e._raw.url))} ↗</a><button class="btn sm ghost" data-act="open" data-id="${e.id}">Open summary</button></div>` : ''}
   </article>`;
+}
+const hostOf = u => { try{ return new URL(u).hostname.replace(/^www\./, ''); }catch(_){ return u; } };
+function articleMeta(e){
+  const r = e._raw;
+  if(!r.url) return `<div class="news-src">${accDot(e.acc)}${esc(e.from)}<span class="readtime">${e.readMin}-minute read, summarised</span></div>`;
+  const d = new Date(r.published + 'T12:00:00');
+  const days = Math.round((dayStart(NOW) - dayStart(d)) / 864e5);
+  return `<div class="news-meta">${badge(e, 24)}<b>${esc(r.pub === 'Medium' ? r.author : r.pub)}</b>${r.pub !== 'Medium' ? `<span>by ${esc(r.author)}</span>` : ''}<span class="sep-dot"></span><span>${d.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'})}</span>${days <= 60 ? `<span class="fresh">${days <= 0 ? 'Today' : days + 'd ago'}</span>` : ''}<span class="sep-dot"></span><span>${e.readMin} min read on ${esc(r.platform)}</span></div>`;
 }
 function segLen(id, len){
   const opts = [['one','One line'],['s30','30 seconds'],['m2','2 minutes'],['detailed','Detailed']];
@@ -1779,10 +1940,45 @@ function boardEmails(acc){
 }
 const initials = n => n.replace(/^(Prof\.|Dr\.)\s*/,'').split(/\s+/).map(w => w[0]).slice(0,2).join('').toUpperCase();
 function avatarHue(n){ let h = 0; for(const c of n) h = (h*31 + c.charCodeAt(0)) % 360; return h; }
+// Sender identity: organisations get a rounded-square badge (their own site icon in live mode,
+// a monogram otherwise); people on free-mail domains get a round initials avatar.
+const FREE_MAIL = /^(gmail|googlemail|outlook|hotmail|live|msn|icloud|me|mac|yahoo|ymail|proton|protonmail|pm|gmx|mail|yandex|aol)\./;
+const ORG_LABELS = {'nordvik.edu':'Nordvik University','northwind.vc':'Northwind Ventures','haldengroup.se':'Halden Group','brightside.se':'Brightside Clinics','clinicflow.io':'Clinicflow','nordbank.se':'Nordbank','stockholmaifounders.se':'Stockholm AI Founders','nordrail.se':'Nordrail','sandberg.vc':'Sandberg Advisory','modelweekly.news':'Model Weekly','foundernotes.eu':'Founder Notes','nordictech.news':'Nordic Tech Digest','su.se':'Stockholm University','kth.se':'KTH Royal Institute of Technology','sh.se':'Södertörn University','ki.se':'Karolinska Institutet'};
+function orgDomain(email = ''){
+  const d = (email.split('@')[1] || '').toLowerCase();
+  if(!d || FREE_MAIL.test(d)) return null;
+  const parts = d.split('.');
+  const two = /^(co|ac|com|org|net|edu|gov)\.[a-z]{2}$/.test(parts.slice(-2).join('.'));
+  return parts.slice(two ? -3 : -2).join('.');
+}
+function orgLabel(e, dom){
+  if(ORG_LABELS[dom]) return ORG_LABELS[dom];
+  const o = (e.org || '').split(',').pop().trim();
+  if(o && !/^(newsletter|community|classmate|advisor|co-founder|colleague)$/i.test(o)) return o;
+  const base = dom.split('.')[0]; return base.charAt(0).toUpperCase() + base.slice(1);
+}
+function monogram(label){
+  const w = label.replace(/[^\p{L}\p{N} ]/gu, ' ').split(/\s+/).filter(x => x && !/^(of|the|and|for|ab|inc|ltd|royal|institute)$/i.test(x));
+  return w.length >= 2 ? (w[0][0] + w[1][0]).toUpperCase() : (w[0] || '?').slice(0, 2).replace(/^./, c => c.toUpperCase());
+}
+function senderKey(e){ return orgDomain(e.fromEmail) || e.from; }
+function badge(e, size = 28){
+  const r = e._raw || {};
+  if(r.site){
+    const label = r.pub && r.pub !== 'Medium' ? r.pub : (r.author || r.pub);
+    const img = S.mode === 'live' ? `<img src="/api/logo?d=${encodeURIComponent(r.site)}" alt="" loading="lazy" onerror="this.remove()">` : '';
+    return `<span class="ob org" style="--s:${size}px;--h:${avatarHue(r.site + label)}" title="${esc(label)} (${esc(r.site)})">${esc(monogram(label))}${img}</span>`;
+  }
+  const dom = orgDomain(e.fromEmail);
+  if(!dom) return `<span class="ob person" style="--s:${size}px;--h:${avatarHue(e.from)}" title="${esc(e.from)}">${esc(initials(e.from))}</span>`;
+  const label = orgLabel(e, dom);
+  const img = S.mode === 'live' ? `<img src="/api/logo?d=${encodeURIComponent(dom)}" alt="" loading="lazy" onerror="this.remove()">` : '';
+  return `<span class="ob org" style="--s:${size}px;--h:${avatarHue(dom)}" title="${esc(label)}">${esc(monogram(label))}${img}</span>`;
+}
 function avatars(list){
-  const names = [...new Set(list.map(e => e.from))];
-  const shown = names.slice(0,3);
-  return `<span class="avatars">${shown.map(n => `<span class="av" style="--h:${avatarHue(n)}" title="${esc(n)}">${esc(initials(n))}</span>`).join('')}${names.length > 3 ? `<span class="av more">+${names.length-3}</span>` : ''}</span>`;
+  const seen = new Set(), uniq = [];
+  for(const e of list){ const k = senderKey(e); if(!seen.has(k)){ seen.add(k); uniq.push(e); } }
+  return `<span class="avatars">${uniq.slice(0,3).map(e => badge(e, 28)).join('')}${uniq.length > 3 ? `<span class="ob more" style="--s:28px">+${uniq.length-3}</span>` : ''}</span>`;
 }
 function folder(acc, list, open){
   const a = accById(acc);
@@ -1791,12 +1987,12 @@ function folder(acc, list, open){
   const pos = [['2%',-8],['24%',-2],['44%',4],['60%',9]];
   const top = list.slice(0,4).reverse();
   const papers = top.map((e, i) => { const [l, r] = pos[i + (4 - top.length)];
-    return `<span class="paper ${e.status} ${e.seen ? '' : 'unseen'}" style="--l:${l};--r:${r}deg"><span class="pa-top"><span class="pa-av">${esc(initials(e.from))}</span><span class="pa-from">${esc(e.from)}</span></span><span class="pa-line"></span><span class="pa-line short"></span></span>`; }).join('');
+    return `<span class="paper ${e.status} ${e.seen ? '' : 'unseen'}" style="--l:${l};--r:${r}deg"><span class="pa-top">${badge(e, 18)}<span class="pa-from">${esc(e.from)}</span></span><span class="pa-line"></span><span class="pa-line short"></span></span>`; }).join('');
   return `<div class="folder ${open ? 'is-open' : ''}" style="--c:var(--acc-${acc})">
     <span class="f-back"></span>
     <span class="f-papers" aria-hidden="true">${open ? '' : papers}</span>
     <span class="f-front">
-      <span class="f-emoji" aria-hidden="true">${ACC_ICON[acc]}</span>
+      <span class="f-emoji f-ico" aria-hidden="true">${ICON(ACC_SVG[acc], 18)}</span>
       <span class="stamp ${awaiting ? '' : 'done'}"><b>${awaiting || '✓'}</b><small>${awaiting ? 'to reply' : 'all done'}</small></span>
       ${avatars(list)}
       <span class="f-new">${unseen ? `<i></i>${unseen} unread` : 'All read'}</span>
@@ -1807,6 +2003,7 @@ function letter(e, i){
   return `<li class="${S.boardDeal ? 'deal' : ''}" style="--i:${i}">
     <button class="letter ${e.status}" data-act="open" data-id="${e.id}" style="--c:var(--acc-${e.acc})">
       <span class="l-num">${i+1}</span>
+      ${badge(e, 40)}
       <span class="l-main">
         <span class="l-top">${e.seen ? '' : '<span class="l-new" title="Unread"></span>'}<span class="l-from">${esc(e.from)}</span>${e.org ? `<span class="l-org">${esc(e.org)}</span>` : ''}<span class="l-time">${timeLabel(e)}</span></span>
         <span class="l-subj">${esc(e.subject)}</span>
@@ -1902,6 +2099,7 @@ function vSheet(){
           ${e.lengths ? `<div style="margin:2px 0 10px">${segLen(e.id, len)}</div><p>${esc(e.lengths[len]).replace(/\n\n/g,'<br><br>')}</p>${e.readMin ? `<p class="muted" style="font-size:13px;margin-top:6px">${e.readMin}-minute read condensed</p>` : ''}` : `<p>${esc(e.summary)}</p>`}
         </div>
         ${e.why ? `<div class="ai-block"><div class="k">Why it matters to you</div><p>${esc(e.why)}</p></div>` : ''}
+        ${e._raw.url ? `<div class="ai-block"><div class="k">Original article</div><div class="src-card">${badge(e, 44)}<div><b>${esc(e.subject)}</b><span>by ${esc(e._raw.author)}${e._raw.pub !== 'Medium' ? ` in ${esc(e._raw.pub)}` : ''}, ${new Date(e._raw.published + 'T12:00:00').toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric'})}</span><span>${esc(hostOf(e._raw.url))} — ${e.readMin} min read on ${esc(e._raw.platform)}</span></div><a class="btn sm primary" href="${esc(e._raw.url)}" target="_blank" rel="noopener">Read the original ↗</a></div></div>` : ''}
         <div class="ai-block"><div class="k">Action</div>
           ${e.requiresAction ? `<div class="action-box"><button class="check" data-act="toggleDone" data-id="${e.id}" style="${e.done ? 'background:var(--ink);border-color:var(--ink);color:var(--bg)' : ''}" aria-label="Mark done">✓</button><div><div class="ab-t">${esc(e.action.description)}</div><div class="ab-s">${e.action.deadline ? `Deadline: ${fmtDay(e.action.deadline)}. ` : ''}${esc(e.action.how || '')}</div></div></div>`
             : `<p class="muted">No action required${e.kind === 'newsletter' ? ' — summary above' : ''}.</p>`}
@@ -1952,16 +2150,16 @@ function vCatchup(){
 
 /* ---------- shell ---------- */
 const NAV = [
-  ['briefing','✦','Briefing'],['board','◫','Board'],['inbox','≡','Inbox'],['important','!','Important'],['action','✓','Needs action'],['news','◎','News'],['categories','▦','Categories'],
-  'sep',['assistant','✺','AI Assistant'],'sep',['accounts','⇄','Connected accounts'],['privacy','◈','Privacy & security'],['settings','⚙','Settings']
+  ['board','board','Board'],['briefing','briefing','Briefing'],['inbox','inbox','Inbox'],['important','flag','Important'],['action','check','Needs action'],['news','news','News'],['categories','grid','Categories'],
+  'sep',['accounts','link','Connected accounts'],['privacy','shield','Privacy & security'],['settings','sliders','Settings']
 ];
 function vApp(){
   const counts = {inbox:visible().length, important:matter().length, action:openActions().length, news:newsletters().length};
   const pages = {board:pBoard, briefing:pBriefing, inbox:pInbox, important:pImportant, action:pAction, news:pNews, categories:pCategories, assistant:pAssistant, accounts:pAccounts, privacy:pPrivacy, settings:pSettings};
   const nav = NAV.map(n => n === 'sep' ? '<div class="nav-sep"></div>' :
-    `<button class="nav-i ${S.page===n[0]?'on':''}" data-act="go" data-v="${n[0]}"><span class="ni">${n[1]}</span>${n[2]}${counts[n[0]] != null ? `<span class="count">${counts[n[0]]}</span>` : ''}</button>`).join('');
+    `<button class="nav-i ${S.page===n[0]?'on':''}" data-act="go" data-v="${n[0]}"><span class="ni">${ICON(n[1])}</span>${n[2]}${counts[n[0]] != null ? `<span class="count">${counts[n[0]]}</span>` : ''}</button>`).join('');
   const accs = connectedAccs().map(a => `<button class="side-acc ${S.accounts[a.id].enabled === false ? 'off':''}" data-act="toggleAcc" data-id="${a.id}" title="Show or hide ${a.name}">${accDot(a.id)}${a.name}</button>`).join('');
-  const bn = [['briefing','✦','Briefing'],['board','◫','Board'],['assistant','✺','Assistant'],['inbox','≡','Inbox']];
+  const bn = [['board','board','Board'],['briefing','briefing','Briefing'],['inbox','inbox','Inbox'],['action','check','Actions']];
   return `<div class="shell">
     <aside class="side ${S.navOpen ? 'open':''}" aria-label="Navigation">
       <div class="side-top"><div class="logo"><span class="logo-mark"></span>Clearday</div>${themeBtn()}</div>
@@ -1969,14 +2167,14 @@ function vApp(){
       <div class="nav-sep"></div>
       <div class="k" style="padding:0 10px">Inboxes</div>
       <div class="side-accs">${accs}</div>
-      <div class="side-bottom"><button class="nav-i" data-act="logout"><span class="ni">↩</span>${S.mode === 'live' ? 'Back to start' : 'Exit demo'}</button></div>
+      <div class="side-bottom"><button class="nav-i" data-act="logout"><span class="ni">${ICON('exit')}</span>${S.mode === 'live' ? 'Back to start' : 'Exit demo'}</button></div>
     </aside>
     ${S.navOpen ? `<div class="overlay" style="z-index:54" data-act="navClose"></div>` : ''}
     <main class="main ${S.page === 'board' ? 'main-board' : ''}" id="main">
-      <div class="topbar"><button class="icon-btn" data-act="navOpen" aria-label="Menu">☰</button><div class="logo"><span class="logo-mark"></span>Clearday</div><div style="display:flex">${themeBtn()}<button class="icon-btn" data-act="catchup" aria-label="Catch me up">✦</button></div></div>
+      <div class="topbar"><button class="icon-btn" data-act="navOpen" aria-label="Menu">${ICON('menu')}</button><div class="logo"><span class="logo-mark"></span>Clearday</div><div style="display:flex">${themeBtn()}<button class="icon-btn" data-act="catchup" aria-label="Catch me up">${ICON('spark')}</button></div></div>
       ${pages[S.page]()}
     </main>
-    <nav class="bottom-nav">${bn.map(b => `<button class="${S.page===b[0]?'on':''}" data-act="go" data-v="${b[0]}"><span class="ni">${b[1]}</span>${b[2]}</button>`).join('')}<button data-act="navOpen"><span class="ni">☰</span>More</button></nav>
+    <nav class="bottom-nav">${bn.map(b => `<button class="${S.page===b[0]?'on':''}" data-act="go" data-v="${b[0]}"><span class="ni">${ICON(b[1], 20)}</span>${b[2]}</button>`).join('')}<button data-act="navOpen"><span class="ni">${ICON('menu', 20)}</span>More</button></nav>
   </div>
   ${S.openId ? vSheet() : ''}
   ${S.catchup ? vCatchup() : ''}`;
@@ -2059,7 +2257,7 @@ async function analyze(){
   if(live && LIVE.errors.length) setTimeout(() => toast(syncErrorText()), 400);
   if(!live) runPipeline();
   await wait(300);
-  S.view = 'app'; S.page = 'briefing'; persist(); render({top:true});
+  S.view = 'app'; S.page = 'board'; S.boardOpen = null; persist(); render({top:true});
 }
 
 /* ---------- Inbox assistant ---------- */
